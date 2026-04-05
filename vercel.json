@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build",
+  "buildCommand": "rm -rf node_modules/.bin/tsc node_modules/.bin/tsserver && npm install && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
