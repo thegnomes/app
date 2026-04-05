@@ -48,7 +48,7 @@ export interface ParticleData {
 /** State labels for UI display */
 export const STATE_LABELS: Record<AppState, string> = {
   0: 'Neural Brain',
-  1: 'Deep Dive',
+  1: 'Starfield',
   2: 'Charging Shell',
   3: 'Solar System',
   4: 'Collapse',

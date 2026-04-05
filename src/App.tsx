@@ -70,6 +70,7 @@ function App() {
   }, [state]);
 
   const handleVideoTransition = () => {
+    // Go to State 1 (starfield) after video zoom
     setState(1);
   };
 
