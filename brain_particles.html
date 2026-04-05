@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Particles - Anatomical Visualization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #050508; }
+        #canvas { width: 100vw; height: 100vh; }
+        .ui {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            pointer-events: none;
+            text-align: center;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-width: 200px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .control-group label {
+            color: rgba(255,255,255,0.7);
+            font-family: system-ui, sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00d4ff;
+        }
+        .toggle-btn {
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-family: system-ui, sans-serif;
+        }
+        .toggle-btn:hover { background: rgba(0, 212, 255, 0.25); }
+        .toggle-btn.active { 
+            background: rgba(0, 212, 255, 0.4); 
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        .loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: system-ui;
+            z-index: 100;
+            background: #050508;
+            transition: opacity 0.8s;
+        }
+        .loading-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 2px;
+        }
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 15px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #ff6b9d);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    
+    <div class="loading" id="loading">
+        <div class="loading-text">GENERATING NEURAL STRUCTURE</div>
+        <div class="loading-bar"><div class="loading-progress" id="progress"></div></div>
+    </div>
+    
+    <div class="controls" id="controls" style="display:none;">
+        <div class="control-group">
+            <label>Particle Count</label>
+            <input type="range" id="particleCount" min="5000" max="50000" value="30000" step="1000">
+        </div>
+        <div class="control-group">
+            <label>Fold Depth</label>
+            <input type="range" id="foldDepth" min="0" max="2" value="1" step="0.1">
+        </div>
+        <div class="control-group">
+            <label>Neural Activity</label>
+            <input type="range" id="activity" min="0" max="1" value="0.3" step="0.05">
+        </div>
+        <button class="toggle-btn active" id="rotateBtn" onclick="toggleRotation()">Auto Rotate</button>
+    </div>
+    
+    <div class="ui">
+        Drag to rotate • Scroll to zoom<br>
+        <span style="font-size:12px; opacity:0.5;">Procedural Brain Generation</span>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        
+        // ===== PERLIN NOISE =====
+        class PerlinNoise {
+            constructor() {
+                this.p = new Uint8Array(512);
+                this.perm = new Uint8Array(512);
+                this.grad3 = [
+                    [1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],
+                    [1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],
+                    [0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]
+                ];
+                this.seed(Math.random());
+            }
+            
+            seed(seed) {
+                for(let i=0; i<256; i++) this.p[i] = i;
+                for(let i=255; i>0; i--) {
+                    const j = Math.floor(seed * (i+1)) % 256;
+                    [this.p[i], this.p[j]] = [this.p[j], this.p[i]];
+                    seed = (seed * 16807) % 2147483647 / 2147483647;
+                }
+                for(let i=0; i<512; i++) this.perm[i] = this.p[i & 255];
+            }
+            
+            dot(g, x, y, z) { return g[0]*x + g[1]*y + g[2]*z; }
+            mix(a, b, t) { return a + (b-a) * t; }
+            fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+            
+            noise(x, y, z) {
+                const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+                x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+                const u = this.fade(x), v = this.fade(y), w = this.fade(z);
+                
+                const A = this.perm[X]+Y, AA = this.perm[A]+Z, AB = this.perm[A+1]+Z;
+                const B = this.perm[X+1]+Y, BA = this.perm[B]+Z, BB = this.perm[B+1]+Z;
+                
+                return this.mix(
+                    this.mix(
+                        this.mix(this.dot(this.grad3[this.perm[AA]%12], x, y, z),
+                                this.dot(this.grad3[this.perm[BA]%12], x-1, y, z), u),
+                        this.mix(this.dot(this.grad3[this.perm[AB]%12], x, y-1, z),
+                                this.dot(this.grad3[this.perm[BB]%12], x-1, y-1, z), u), v),
+                    this.mix(
+                        this.mix(this.dot(this.grad3[this.perm[AA+1]%12], x, y, z-1),
+                                this.dot(this.grad3[this.perm[BA+1]%12], x-1, y, z-1), u),
+                        this.mix(this.dot(this.grad3[this.perm[AB+1]%12], x, y-1, z-1),
+                                this.dot(this.grad3[this.perm[BB+1]%12], x-1, y-1, z-1), u), v),
+                    w
+                );
+            }
+            
+            fbm(x, y, z, octaves = 4) {
+                let value = 0, amplitude = 0.5, frequency = 1;
+                for(let i=0; i<octaves; i++) {
+                    value += amplitude * this.noise(x*frequency, y*frequency, z*frequency);
+                    amplitude *= 0.5;
+                    frequency *= 2;
+                }
+                return value;
+            }
+        }
+        
+        const noise = new PerlinNoise();
+        noise.seed(12345);
+        
+        // ===== CONFIG =====
+        const config = {
+            particleCount: 30000,
+            particleSize: 1.8,
+            foldDepth: 1.0,
+            neuralActivity: 0.3,
+            autoRotate: true,
+            rotationSpeed: 0.15
+        };
+        
+        // ===== SCENE =====
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050508, 0.018);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 55);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x050508, 1);
+        document.getElementById('canvas').appendChild(renderer.domElement);
+        
+        // ===== BRAIN GENERATION =====
+        function generateBrain() {
+            const positions = [];
+            const colors = [];
+            const activities = [];
+            
+            const updateProgress = (pct) => {
+                document.getElementById('progress').style.width = pct + '%';
+            };
+            
+            const count = config.particleCount;
+            
+            // === CEREBRUM: Two hemispheres with realistic shape ===
+            // Brain is ovoid: wider at top, narrower at bottom
+            // Tapers toward front (frontal) and back (occipital)
+            
+            const hemiCount = Math.floor(count * 0.88);
+            const gap = 1.5; // Longitudinal fissure
+            
+            for(let i = 0; i < hemiCount; i++) {
+                if(i % 500 === 0) updateProgress((i / hemiCount) * 90);
+                
+                const isLeft = i < hemiCount / 2;
+                const sign = isLeft ? -1 : 1;
+                
+                // Sample on sphere
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                let dx = Math.sin(phi) * Math.cos(theta);
+                let dy = Math.sin(phi) * Math.sin(theta);
+                let dz = Math.cos(phi);
+                
+                // Base ellipsoid dimensions
+                // Brain is NOT a perfect ellipsoid - it's ovoid
+                let rx = 9.5, ry = 11, rz = 10;
+                
+                // Position
+                let x = sign * (rx + gap/2) + sign * rx * dx;
+                let y = ry * dy;
+                let z = rz * dz;
+                
+                // === SHAPE REFINEMENTS ===
+                
+                // Get normalized position (-1 to 1 in each axis relative to hemisphere center)
+                const nx = sign * dx; // Front (+) to Back (-)
+                const ny = dy;        // Top (+) to Bottom (-)
+                const nz = dz;        // Side dimension
+                
+                // 1. FRONTAL POLE: rounded front
+                if(nx > 0.5) {
+                    const frontalFactor = (nx - 0.5) / 0.5; // 0 to 1
+                    x += sign * frontalFactor * 1.2; // Push forward
+                    // Round off the front
+                    const roundness = Math.exp(-frontalFactor * frontalFactor * 2);
+                    y *= 0.9 + 0.1 * roundness;
+                    z *= 0.9 + 0.1 * roundness;
+                }
+                
+                // 2. OCCIPITAL POLE: tapered back (visual cortex area)
+                if(nx < -0.6) {
+                    const occFactor = Math.abs(nx + 0.6) / 0.4; // 0 to 1
+                    z *= (1 - occFactor * 0.4); // Narrow at back
+                    y *= (1 - occFactor * 0.2);
+                }
+                
+                // 3. TEMPORAL LOBE: bulge at bottom-lateral
+                if(ny < -0.3 && Math.abs(nz) < 0.7) {
+                    const tempFactor = Math.exp(-Math.pow(ny + 0.5, 2) * 4) * (1 - Math.abs(nz) * 0.5);
+                    x += sign * tempFactor * 2.2;
+                    z += nz * tempFactor * 0.8;
+                }
+                
+                // 4. SUPERIOR PARIETAL: bulge at top-back
+                if(ny > 0.2 && nx < 0) {
+                    const parFactor = ny * Math.abs(nx);
+                    y += parFactor * 0.8;
+                }
+                
+                // === CORTICAL FOLDING ===
+                // Gyri run roughly anterior-posterior (front to back) with curved pattern
+                
+                // Create curved coordinate system for folds
+                // Folds curve around the brain from front to back
+                const foldAngle = Math.atan2(z, x - sign * (rx + gap/2));
+                const foldRadius = Math.sqrt(Math.pow(x - sign * (rx + gap/2), 2) + z*z);
+                
+                // Primary folds: large scale undulations
+                const primaryFold = Math.sin(ny * 4 + nx * 1.5 + foldAngle * 0.5);
+                
+                // Secondary folds: medium detail  
+                const secondaryFold = Math.sin(ny * 8 + nx * 2 + noise.noise(x*0.4, y*0.4, z*0.4)) * 0.5;
+                
+                // Tertiary: fine detail
+                const fine = noise.fbm(x*0.6, y*0.6, z*0.6, 2) * 0.25;
+                
+                // Combine
+                let fold = (primaryFold * 0.55 + secondaryFold * 0.30 + fine * 0.15) * config.foldDepth;
+                
+                // Sharpen: make gyri broader, sulci narrower (real brains have wider gyri)
+                fold = fold > 0 ? Math.pow(fold, 0.7) : -Math.pow(Math.abs(fold), 0.9);
+                fold *= 1.2;
+                
+                // Apply displacement along surface normal
+                const nlen = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                x += (dx/nlen) * fold;
+                y += (dy/nlen) * fold;
+                z += (dz/nlen) * fold;
+                
+                // Color based on depth in fold
+                const isGyrus = fold > 0.3;
+                const isSulcus = fold < -0.3;
+                
+                positions.push(x, y, z);
+                
+                // Activity higher on gyri (surface exposed)
+                activities.push(Math.random() * (isGyrus ? 0.8 : 0.25));
+                
+                // Colors: gyri lighter, sulci slightly darker
+                const baseGray = 0.75;
+                const variation = (Math.random() - 0.5) * 0.08;
+                
+                if(isGyrus) {
+                    // Cortex on gyri - pinkish gray
+                    colors.push(0.82 + variation, 0.78 + variation, 0.80 + variation);
+                } else if(isSulcus) {
+                    // Deeper in sulcus - slightly darker
+                    colors.push(0.68 + variation, 0.64 + variation, 0.66 + variation);
+                } else {
+                    // Intermediate
+                    colors.push(0.75 + variation, 0.71 + variation, 0.73 + variation);
+                }
+            }
+            
+            // === CEREBELLUM: Integrate into back-bottom ===
+            const cbCount = Math.floor(count * 0.08);
+            for(let i = 0; i < cbCount; i++) {
+                if(i % 200 === 0) updateProgress(90 + (i / cbCount) * 8);
+                
+                const isLeft = i < cbCount / 2;
+                const sign = isLeft ? -1 : 1;
+                
+                // Cerebellum sits BEHIND and BELOW the cerebrum
+                // Position: back (negative x for left, positive for right? No - same sign as hemisphere)
+                // Actually cerebellum is behind, so x extends backward from center
+                
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                let dx = Math.sin(phi) * Math.cos(theta);
+                let dy = Math.sin(phi) * Math.sin(theta);
+                let dz = Math.cos(phi);
+                
+                // Small hemispheres, tucked under
+                const cbx = sign * 3.5 + sign * 3 * dx * 0.8; // Behind center
+                const cby = -9 + 2.5 * dy; // Low
+                const cbz = 8 + 2.5 * dz; // Behind
+                
+                // Fine folia pattern
+                const folia = Math.sin((sign * cbx + cby) * 6) * 0.3;
+                const detail = noise.fbm(cbx*0.8, cby*0.8, cbz*0.8, 3) * 0.15;
+                const displacement = (folia + detail) * config.foldDepth * 0.5;
+                
+                const nlen = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                const x = cbx + (dx/nlen) * displacement;
+                const y = cby + (dy/nlen) * displacement;
+                const z = cbz + (dz/nlen) * displacement;
+                
+                positions.push(x, y, z);
+                activities.push(Math.random() * 0.35);
+                
+                const variation = (Math.random() - 0.5) * 0.06;
+                colors.push(0.74 + variation, 0.70 + variation, 0.72 + variation);
+            }
+            
+            // === BRAINSTEM: Small, central, connecting from bottom ===
+            const stemCount = count - hemiCount - cbCount;
+            for(let i = 0; i < stemCount; i++) {
+                const t = Math.random(); // Along stem
+                const angle = Math.random() * Math.PI * 2;
+                
+                // Brainstem exits from bottom-center, goes down and slightly forward
+                const radius = (1-t) * 1.5 + t * 1.0;
+                const x = Math.cos(angle) * radius * 0.6;
+                const y = -12 - t * 5; // Down from bottom
+                const z = Math.sin(angle) * radius * 0.8 - t * 2; // Slight backward angle
+                
+                positions.push(x, y, z);
+                activities.push(Math.random() * 0.2);
+                
+                const variation = (Math.random() - 0.5) * 0.05;
+                colors.push(0.76 + variation, 0.72 + variation, 0.74 + variation);
+            }
+            
+            updateProgress(100);
+            
+            return {
+                positions: new Float32Array(positions),
+                colors: new Float32Array(colors),
+                activities: new Float32Array(activities)
+            };
+        }
+        
+        const brainData = generateBrain();
+        
+        // ===== SHADER =====
+        const vertexShader = `
+            attribute vec3 color;
+            attribute float activity;
+            varying vec3 vColor;
+            varying float vDepth;
+            uniform float uTime;
+            uniform float uNeuralActivity;
+            uniform float uSize;
+            
+            void main() {
+                vColor = color;
+                
+                vec3 pos = position;
+                
+                // Subtle pulse
+                float pulse = sin(uTime * 0.25 + position.y * 0.08) * 0.012;
+                pos += normalize(position) * pulse;
+                
+                // Neural activity flashes
+                float hash = fract(sin(dot(position, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+                float firing = step(1.0 - uNeuralActivity * activity * 0.12, fract(hash + uTime * 0.4 * activity));
+                vColor = mix(vColor, vec3(0.95, 0.95, 0.98), firing * 0.5);
+                
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_Position = projectionMatrix * mvPosition;
+                vDepth = -mvPosition.z;
+                
+                gl_PointSize = uSize * (300.0 / -mvPosition.z) * (1.0 + firing * 0.25);
+            }
+        `;
+        
+        const fragmentShader = `
+            varying vec3 vColor;
+            varying float vDepth;
+            
+            void main() {
+                vec2 coord = gl_PointCoord - vec2(0.5);
+                float dist = length(coord);
+                if(dist > 0.5) discard;
+                
+                float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                alpha = pow(alpha, 1.4);
+                
+                // Fog
+                float fog = smoothstep(20.0, 70.0, vDepth);
+                alpha *= (1.0 - fog * 0.6);
+                
+                gl_FragColor = vec4(vColor, alpha);
+            }
+        `;
+        
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uSize: { value: config.particleSize },
+                uNeuralActivity: { value: config.neuralActivity }
+            },
+            vertexShader,
+            fragmentShader,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(brainData.positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(brainData.colors, 3));
+        geometry.setAttribute('activity', new THREE.BufferAttribute(brainData.activities, 1));
+        
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        
+        // ===== CONTROLS =====
+        let rotX = 0, rotY = 0;
+        let targetRotX = 0, targetRotY = 0;
+        let isDragging = false, lastMouse = { x: 0, y: 0 };
+        let zoom = 55;
+        
+        renderer.domElement.addEventListener('mousedown', e => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        
+        window.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            targetRotY += (e.clientX - lastMouse.x) * 0.007;
+            targetRotX += (e.clientY - lastMouse.y) * 0.007;
+            targetRotX = Math.max(-Math.PI/2.5, Math.min(Math.PI/2.5, targetRotX));
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        
+        window.addEventListener('mouseup', () => isDragging = false);
+        
+        renderer.domElement.addEventListener('wheel', e => {
+            zoom += e.deltaY * 0.03;
+            zoom = Math.max(30, Math.min(90, zoom));
+        });
+        
+        window.toggleRotation = () => {
+            config.autoRotate = !config.autoRotate;
+            document.getElementById('rotateBtn').classList.toggle('active');
+        };
+        
+        document.getElementById('particleCount').addEventListener('change', e => {
+            config.particleCount = parseInt(e.target.value);
+            location.reload();
+        });
+        
+        document.getElementById('foldDepth').addEventListener('input', e => {
+            config.foldDepth = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('activity').addEventListener('input', e => {
+            config.neuralActivity = parseFloat(e.target.value);
+            material.uniforms.uNeuralActivity.value = config.neuralActivity;
+        });
+        
+        // ===== ANIMATE =====
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+            
+            material.uniforms.uTime.value = time;
+            
+            if(config.autoRotate && !isDragging) {
+                targetRotY += config.rotationSpeed * 0.005;
+            }
+            
+            rotX += (targetRotX - rotX) * 0.05;
+            rotY += (targetRotY - rotY) * 0.05;
+            
+            camera.position.x = Math.sin(rotY) * Math.cos(rotX) * zoom;
+            camera.position.y = Math.sin(rotX) * zoom;
+            camera.position.z = Math.cos(rotY) * Math.cos(rotX) * zoom;
+            camera.lookAt(0, -1, 0);
+            
+            renderer.render(scene, camera);
+        }
+        
+        setTimeout(() => {
+            document.getElementById('loading').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'flex';
+            }, 800);
+        }, 500);
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

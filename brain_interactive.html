@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Brain 3D</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; }
+        body { background: #000; }
+        #canvas { width: 100vw; height: 100vh; }
+        
+        .ui {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.7);
+            font-family: system-ui, sans-serif;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 220px;
+            z-index: 10;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00d4ff;
+            cursor: pointer;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        button {
+            flex: 1;
+            background: rgba(0, 212, 255, 0.15);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        button:hover { background: rgba(0, 212, 255, 0.25); }
+        button.active { 
+            background: rgba(0, 212, 255, 0.4); 
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-text {
+            color: white;
+            font-family: system-ui;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+        
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #ff6b9d);
+            width: 0%;
+            transition: width 0.2s;
+        }
+        
+        .info-panel {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(20, 20, 30, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            font-family: system-ui;
+            max-width: 200px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .info-panel.visible { opacity: 1; }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+        
+        .info-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    
+    <div class="loading" id="loading">
+        <div class="loading-text">LOADING NEURAL VISUALIZATION</div>
+        <div class="loading-bar"><div class="loading-progress" id="progress"></div></div>
+    </div>
+    
+    <div class="controls" id="controls" style="display:none;">
+        <div class="control-group">
+            <label>Rotation Speed</label>
+            <input type="range" id="speed" min="-2" max="2" value="0.5" step="0.1">
+        </div>
+        <div class="control-group">
+            <label>Zoom</label>
+            <input type="range" id="zoom" min="20" max="100" value="50" step="1">
+        </div>
+        <div class="btn-row">
+            <button id="playBtn" class="active">Play</button>
+            <button id="reverseBtn">Reverse</button>
+        </div>
+        <div class="btn-row">
+            <button id="wireframeBtn">Wireframe</button>
+            <button id="particlesBtn" class="active">Particles</button>
+        </div>
+    </div>
+    
+    <div class="info-panel" id="infoPanel">
+        <div class="info-title" id="infoTitle">Region</div>
+        <div class="info-desc" id="infoDesc">Description</div>
+    </div>
+    
+    <div class="ui">
+        Drag to rotate • Scroll to zoom • Click regions for info
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        
+        // ===== CONFIGURATION =====
+        const config = {
+            rotationSpeed: 0.5,
+            autoRotate: true,
+            zoom: 50,
+            showWireframe: false,
+            showParticles: true,
+            videoPlaying: true
+        };
+        
+        // ===== SCENE SETUP =====
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.01);
+        
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, config.zoom);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x000000, 1);
+        document.getElementById('canvas').appendChild(renderer.domElement);
+        
+        // ===== VIDEO TEXTURE =====
+        const video = document.createElement('video');
+        video.src = 'brain.mp4';
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
+        
+        // ===== BRAIN MESH =====
+        // Create a curved plane for the video to project onto
+        const brainGroup = new THREE.Group();
+        scene.add(brainGroup);
+        
+        // Main brain display - curved surface that looks 3D
+        const geometry = new THREE.SphereGeometry(15, 64, 64);
+        
+        // Custom shader material for the brain video
+        const brainMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uVideo: { value: videoTexture },
+                uTime: { value: 0 },
+                uWireframe: { value: 0.0 },
+                uGlow: { value: 1.5 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = position;
+                    
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D uVideo;
+                uniform float uTime;
+                uniform float uWireframe;
+                uniform float uGlow;
+                
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                
+                void main() {
+                    // Sample video texture
+                    vec4 videoColor = texture2D(uVideo, vUv);
+                    
+                    // Fresnel effect for 3D depth
+                    vec3 viewDir = normalize(cameraPosition - vPosition);
+                    float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 2.0);
+                    
+                    // Edge glow
+                    vec3 glowColor = vec3(0.0, 0.8, 1.0) * fresnel * uGlow;
+                    
+                    // Combine video with glow
+                    vec3 finalColor = videoColor.rgb + glowColor * videoColor.a;
+                    
+                    // Wireframe overlay
+                    if(uWireframe > 0.5) {
+                        vec2 grid = abs(fract(vUv * 20.0 - 0.5) - 0.5) / fwidth(vUv * 20.0);
+                        float line = min(grid.x, grid.y);
+                        float wire = 1.0 - min(line, 1.0);
+                        finalColor = mix(finalColor, vec3(0.0, 1.0, 1.0), wire * 0.3);
+                    }
+                    
+                    // Alpha based on video brightness (to show only the brain)
+                    float alpha = max(videoColor.a, fresnel * 0.3);
+                    
+                    gl_FragColor = vec4(finalColor, alpha);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+        
+        const brainMesh = new THREE.Mesh(geometry, brainMaterial);
+        brainGroup.add(brainMesh);
+        
+        // ===== PARTICLE SYSTEM (Neural Network) =====
+        const particleCount = 5000;
+        const particleGeo = new THREE.BufferGeometry();
+        const pPositions = new Float32Array(particleCount * 3);
+        const pSizes = new Float32Array(particleCount);
+        
+        for(let i = 0; i < particleCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const r = 12 + Math.random() * 8;
+            
+            pPositions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+            pPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+            pPositions[i*3+2] = r * Math.cos(phi);
+            
+            pSizes[i] = Math.random();
+        }
+        
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+        particleGeo.setAttribute('size', new THREE.BufferAttribute(pSizes, 1));
+        
+        const particleMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uVideo: { value: videoTexture }
+            },
+            vertexShader: `
+                attribute float size;
+                varying float vSize;
+                uniform float uTime;
+                
+                void main() {
+                    vSize = size;
+                    vec3 pos = position;
+                    
+                    // Subtle movement
+                    pos += sin(uTime * 0.5 + position.x * 0.1) * 0.5;
+                    
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = (2.0 + size * 2.0) * (300.0 / -mvPosition.z);
+                }
+            `,
+            fragmentShader: `
+                varying float vSize;
+                
+                void main() {
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if(dist > 0.5) discard;
+                    
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    alpha *= (0.3 + vSize * 0.7);
+                    
+                    gl_FragColor = vec4(0.0, 0.8, 1.0, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        
+        const particles = new THREE.Points(particleGeo, particleMat);
+        brainGroup.add(particles);
+        
+        // ===== CONNECTION LINES =====
+        const lineCount = 300;
+        const lineGeo = new THREE.BufferGeometry();
+        const linePos = new Float32Array(lineCount * 6);
+        
+        for(let i = 0; i < lineCount; i++) {
+            const idx1 = Math.floor(Math.random() * particleCount);
+            const idx2 = Math.floor(Math.random() * particleCount);
+            
+            linePos[i*6] = pPositions[idx1*3];
+            linePos[i*6+1] = pPositions[idx1*3+1];
+            linePos[i*6+2] = pPositions[idx1*3+2];
+            linePos[i*6+3] = pPositions[idx2*3];
+            linePos[i*6+4] = pPositions[idx2*3+1];
+            linePos[i*6+5] = pPositions[idx2*3+2];
+        }
+        
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+        const lineMat = new THREE.LineBasicMaterial({
+            color: 0x00d4ff,
+            transparent: true,
+            opacity: 0.08,
+            blending: THREE.AdditiveBlending
+        });
+        const neuralLines = new THREE.LineSegments(lineGeo, lineMat);
+        brainGroup.add(neuralLines);
+        
+        // ===== INTERACTIVE HOTSPOTS =====
+        const hotspots = [
+            { name: "Frontal Lobe", desc: "Responsible for executive functions, decision making, and personality.", pos: new THREE.Vector3(0, 8, 10) },
+            { name: "Temporal Lobe", desc: "Processes auditory information and memory formation.", pos: new THREE.Vector3(12, -4, 2) },
+            { name: "Parietal Lobe", desc: "Integrates sensory information and spatial awareness.", pos: new THREE.Vector3(-5, 6, -8) },
+            { name: "Occipital Lobe", desc: "Primary visual processing center.", pos: new THREE.Vector3(0, 2, -14) },
+            { name: "Cerebellum", desc: "Coordinates movement, balance, and motor learning.", pos: new THREE.Vector3(0, -10, 4) }
+        ];
+        
+        const hotspotMeshes = [];
+        hotspots.forEach((spot, i) => {
+            const geo = new THREE.SphereGeometry(0.8, 16, 16);
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.6
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.copy(spot.pos);
+            mesh.userData = { index: i, ...spot };
+            brainGroup.add(mesh);
+            hotspotMeshes.push(mesh);
+            
+            // Pulse ring
+            const ringGeo = new THREE.RingGeometry(1, 1.2, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.position.copy(spot.pos);
+            ring.lookAt(new THREE.Vector3(0, 0, 0));
+            mesh.userData.ring = ring;
+            brainGroup.add(ring);
+        });
+        
+        // ===== CONTROLS =====
+        let rotX = 0, rotY = 0;
+        let targetRotX = 0, targetRotY = 0;
+        let isDragging = false, lastMouse = { x: 0, y: 0 };
+        let videoTime = 0;
+        let isReversed = false;
+        
+        renderer.domElement.addEventListener('mousedown', e => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        
+        window.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            targetRotY += (e.clientX - lastMouse.x) * 0.01;
+            targetRotX += (e.clientY - lastMouse.y) * 0.01;
+            targetRotX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotX));
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        
+        window.addEventListener('mouseup', () => isDragging = false);
+        
+        // Raycaster for hotspots
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        renderer.domElement.addEventListener('click', e => {
+            if(Math.abs(e.clientX - lastMouse.x) > 5) return;
+            
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(hotspotMeshes);
+            
+            if(intersects.length > 0) {
+                const data = intersects[0].object.userData;
+                document.getElementById('infoTitle').textContent = data.name;
+                document.getElementById('infoDesc').textContent = data.desc;
+                document.getElementById('infoPanel').classList.add('visible');
+                
+                setTimeout(() => {
+                    document.getElementById('infoPanel').classList.remove('visible');
+                }, 5000);
+            }
+        });
+        
+        // UI Controls
+        document.getElementById('speed').addEventListener('input', e => {
+            config.rotationSpeed = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('zoom').addEventListener('input', e => {
+            config.zoom = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('playBtn').addEventListener('click', function() {
+            config.videoPlaying = !config.videoPlaying;
+            this.classList.toggle('active');
+            if(config.videoPlaying) video.play();
+            else video.pause();
+        });
+        
+        document.getElementById('reverseBtn').addEventListener('click', function() {
+            isReversed = !isReversed;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('wireframeBtn').addEventListener('click', function() {
+            config.showWireframe = !config.showWireframe;
+            this.classList.toggle('active');
+            brainMaterial.uniforms.uWireframe.value = config.showWireframe ? 1.0 : 0.0;
+        });
+        
+        document.getElementById('particlesBtn').addEventListener('click', function() {
+            config.showParticles = !config.showParticles;
+            this.classList.toggle('active');
+            particles.visible = config.showParticles;
+            neuralLines.visible = config.showParticles;
+        });
+        
+        // ===== ANIMATION LOOP =====
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+            
+            // Update shaders
+            brainMaterial.uniforms.uTime.value = time;
+            particleMat.uniforms.uTime.value = time;
+            
+            // Auto rotation from video + user control
+            if(config.videoPlaying) {
+                if(isReversed) {
+                    video.currentTime = Math.max(0, video.currentTime - 0.016 * Math.abs(config.rotationSpeed) * 0.5);
+                } else {
+                    // Normal video playback drives rotation
+                }
+            }
+            
+            // Smooth camera rotation
+            rotX += (targetRotX - rotX) * 0.05;
+            rotY += (targetRotY - rotY) * 0.05;
+            
+            // Apply rotations
+            brainGroup.rotation.x = rotX;
+            brainGroup.rotation.y += config.rotationSpeed * 0.01;
+            brainGroup.rotation.y += (targetRotY - brainGroup.rotation.y) * 0.02;
+            
+            // Camera zoom
+            camera.position.z += (config.zoom - camera.position.z) * 0.1;
+            
+            // Animate hotspots
+            hotspotMeshes.forEach((mesh, i) => {
+                const ring = mesh.userData.ring;
+                const scale = 1 + Math.sin(time * 2 + i) * 0.2;
+                ring.scale.set(scale, scale, scale);
+                ring.material.opacity = 0.2 + Math.sin(time * 2 + i) * 0.1;
+                
+                // Keep rings facing camera
+                ring.lookAt(camera.position);
+            });
+            
+            // Rotate particles slowly
+            particles.rotation.y += 0.001;
+            neuralLines.rotation.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+        
+        // ===== LOADING =====
+        video.addEventListener('loadeddata', () => {
+            document.getElementById('progress').style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loading').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('controls').style.display = 'flex';
+                }, 500);
+                video.play();
+                animate();
+            }, 500);
+        });
+        
+        video.addEventListener('progress', () => {
+            if(video.buffered.length > 0) {
+                const pct = (video.buffered.end(0) / video.duration) * 100;
+                document.getElementById('progress').style.width = pct + '%';
+            }
+        });
+        
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

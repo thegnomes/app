@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphFlow Particles - 3D Morphing Particle System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .ui-overlay {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.6;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            pointer-events: auto;
+            flex-wrap: wrap;
+        }
+        
+        .shape-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 24px;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .shape-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .shape-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #fff;
+        }
+        
+        .indicators {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .dot.active {
+            background: #fff;
+            transform: scale(1.5);
+        }
+        
+        .hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+            pointer-events: none;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="ui-overlay">
+        <div class="header">
+            <h1>MorphFlow Particles</h1>
+            <p>Premium 3D Particle System</p>
+        </div>
+        
+        <div>
+            <div class="controls">
+                <button class="shape-btn active" data-shape="0">Sphere</button>
+                <button class="shape-btn" data-shape="1">Cube</button>
+                <button class="shape-btn" data-shape="2">Pyramid</button>
+                <button class="shape-btn" data-shape="3">Torus</button>
+                <button class="shape-btn" data-shape="4">Galaxy</button>
+                <button class="shape-btn" data-shape="5">Wave</button>
+            </div>
+            <div class="indicators">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="hint">Click anywhere to morph • Drag to rotate</div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Post Processing -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Simplex Noise -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            particleCount: 4000,
+            particleSize: 0.15,
+            bloomStrength: 1.5,
+            bloomRadius: 0.4,
+            bloomThreshold: 0,
+            morphSpeed: 0.03,
+            swirlStrength: 0.02,
+            noiseSpeed: 0.0005,
+            colors: [
+                new THREE.Color('#4fc3f7'), // Cyan
+                new THREE.Color('#7c4dff'), // Purple
+                new THREE.Color('#ff4081'), // Pink
+                new THREE.Color('#ffd740'), // Amber
+                new THREE.Color('#69f0ae'), // Green
+                new THREE.Color('#448aff')  // Blue
+            ]
+        };
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Post-processing
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            CONFIG.bloomStrength,
+            CONFIG.bloomRadius,
+            CONFIG.bloomThreshold
+        );
+
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+        controls.enableZoom = true;
+
+        // Starfield background
+        function createStarfield() {
+            const geometry = new THREE.BufferGeometry();
+            const count = 2000;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 200;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                
+                const color = new THREE.Color();
+                color.setHSL(Math.random(), 0.2, 0.8);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            return new THREE.Points(geometry, material);
+        }
+
+        const starfield = createStarfield();
+        scene.add(starfield);
+
+        // Particle system
+        const simplex = new SimplexNoise();
+        let currentShape = 0;
+        let targetShape = 0;
+        let morphProgress = 0;
+        let isMorphing = false;
+
+        // Create target positions for each shape
+        function generateShapePositions(type) {
+            const positions = new Float32Array(CONFIG.particleCount * 3);
+            const colors = new Float32Array(CONFIG.particleCount * 3);
+            
+            for (let i = 0; i < CONFIG.particleCount; i++) {
+                let x, y, z;
+                const t = i / CONFIG.particleCount;
+                
+                switch(type) {
+                    case 0: // Sphere
+                        const phi = Math.acos(-1 + (2 * i) / CONFIG.particleCount);
+                        const theta = Math.sqrt(CONFIG.particleCount * Math.PI) * phi;
+                        x = 15 * Math.cos(theta) * Math.sin(phi);
+                        y = 15 * Math.sin(theta) * Math.sin(phi);
+                        z = 15 * Math.cos(phi);
+                        break;
+                        
+                    case 1: // Cube
+                        const side = Math.floor(Math.random() * 6);
+                        const u = Math.random() * 20 - 10;
+                        const v = Math.random() * 20 - 10;
+                        switch(side) {
+                            case 0: x = 10; y = u; z = v; break;
+                            case 1: x = -10; y = u; z = v; break;
+                            case 2: x = u; y = 10; z = v; break;
+                            case 3: x = u; y = -10; z = v; break;
+                            case 4: x = u; y = v; z = 10; break;
+                            default: x = u; y = v; z = -10; break;
+                        }
+                        break;
+                        
+                    case 2: // Pyramid
+                        const pyHeight = 15;
+                        const pyBase = 12;
+                        const pyLayer = Math.random() * pyHeight;
+                        const pyScale = 1 - (pyLayer / pyHeight);
+                        const pyAngle = Math.random() * Math.PI * 2;
+                        const pyRadius = Math.random() * pyBase * pyScale;
+                        x = pyRadius * Math.cos(pyAngle);
+                        z = pyRadius * Math.sin(pyAngle);
+                        y = pyLayer - pyHeight / 2;
+                        break;
+                        
+                    case 3: // Torus
+                        const torusRadius = 10;
+                        const tubeRadius = 4;
+                        const torusU = Math.random() * Math.PI * 2;
+                        const torusV = Math.random() * Math.PI * 2;
+                        x = (torusRadius + tubeRadius * Math.cos(torusV)) * Math.cos(torusU);
+                        y = (torusRadius + tubeRadius * Math.cos(torusV)) * Math.sin(torusU);
+                        z = tubeRadius * Math.sin(torusV);
+                        break;
+                        
+                    case 4: // Galaxy
+                        const galArm = Math.floor(Math.random() * 3);
+                        const galAngle = (galArm * Math.PI * 2 / 3) + Math.random() * 2;
+                        const galRadius = Math.random() * 15;
+                        const galSpin = galRadius * 0.5;
+                        x = galRadius * Math.cos(galAngle + galSpin);
+                        z = galRadius * Math.sin(galAngle + galSpin);
+                        y = (Math.random() - 0.5) * 2;
+                        break;
+                        
+                    case 5: // Wave
+                        const waveX = (Math.random() - 0.5) * 30;
+                        const waveZ = (Math.random() - 0.5) * 30;
+                        x = waveX;
+                        z = waveZ;
+                        y = 3 * Math.sin(waveX * 0.3) * Math.cos(waveZ * 0.3) + 
+                            2 * Math.sin(waveX * 0.5 + waveZ * 0.2);
+                        break;
+                }
+                
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+                
+                // Color based on shape and position
+                const colorIndex = type % CONFIG.colors.length;
+                const nextColorIndex = (type + 1) % CONFIG.colors.length;
+                const mixFactor = Math.random();
+                const color = CONFIG.colors[colorIndex].clone().lerp(CONFIG.colors[nextColorIndex], mixFactor);
+                
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+            
+            return { positions, colors };
+        }
+
+        // Initialize geometry with all shape targets
+        const geometry = new THREE.BufferGeometry();
+        const shapeTargets = [];
+        
+        for (let i = 0; i < 6; i++) {
+            shapeTargets.push(generateShapePositions(i));
+        }
+        
+        const currentPositions = new Float32Array(shapeTargets[0].positions);
+        const currentColors = new Float32Array(shapeTargets[0].colors);
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(currentColors, 3));
+        
+        // Shader material for glowing particles
+        const particleMaterial = new THREE.PointsMaterial({
+            size: CONFIG.particleSize,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.9
+        });
+
+        const particles = new THREE.Points(geometry, particleMaterial);
+        scene.add(particles);
+
+        // Animation variables
+        let time = 0;
+        const tempVec = new THREE.Vector3();
+        const noiseVec = new THREE.Vector3();
+
+        // Easing function for smooth morph
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        // Morph function
+        function morphToShape(newShape) {
+            if (newShape === currentShape || isMorphing) return;
+            targetShape = newShape;
+            isMorphing = true;
+            morphProgress = 0;
+            
+            // Update UI
+            document.querySelectorAll('.shape-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === newShape);
+            });
+            document.querySelectorAll('.dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === newShape);
+            });
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // Handle morphing
+            if (isMorphing) {
+                morphProgress += CONFIG.morphSpeed;
+                
+                if (morphProgress >= 1) {
+                    morphProgress = 1;
+                    currentShape = targetShape;
+                    isMorphing = false;
+                }
+                
+                const eased = easeInOutCubic(morphProgress);
+                const startPos = shapeTargets[currentShape].positions;
+                const endPos = shapeTargets[targetShape].positions;
+                const startCol = shapeTargets[currentShape].colors;
+                const endCol = shapeTargets[targetShape].colors;
+                
+                const positions = geometry.attributes.position.array;
+                const colors = geometry.attributes.color.array;
+                
+                for (let i = 0; i < CONFIG.particleCount; i++) {
+                    const idx = i * 3;
+                    
+                    // Interpolate position
+                    positions[idx] = startPos[idx] + (endPos[idx] - startPos[idx]) * eased;
+                    positions[idx + 1] = startPos[idx + 1] + (endPos[idx + 1] - startPos[idx + 1]) * eased;
+                    positions[idx + 2] = startPos[idx + 2] + (endPos[idx + 2] - startPos[idx + 2]) * eased;
+                    
+                    // Interpolate color
+                    colors[idx] = startCol[idx] + (endCol[idx] - startCol[idx]) * eased;
+                    colors[idx + 1] = startCol[idx + 1] + (endCol[idx + 1] - startCol[idx + 1]) * eased;
+                    colors[idx + 2] = startCol[idx + 2] + (endCol[idx + 2] - startCol[idx + 2]) * eased;
+                }
+                
+                geometry.attributes.position.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
+            }
+            
+            // Apply 4D noise swirl to particles
+            const positions = geometry.attributes.position.array;
+            for (let i = 0; i < CONFIG.particleCount; i++) {
+                const idx = i * 3;
+                
+                tempVec.set(positions[idx], positions[idx + 1], positions[idx + 2]);
+                
+                // 4D noise (3D position + time)
+                const noise1 = simplex.noise4D(tempVec.x * 0.02, tempVec.y * 0.02, tempVec.z * 0.02, time * 0.5);
+                const noise2 = simplex.noise4D(tempVec.x * 0.02 + 100, tempVec.y * 0.02, tempVec.z * 0.02, time * 0.5);
+                const noise3 = simplex.noise4D(tempVec.x * 0.02, tempVec.y * 0.02 + 100, tempVec.z * 0.02, time * 0.5);
+                
+                // Swirl motion
+                tempVec.x += noise1 * CONFIG.swirlStrength;
+                tempVec.y += noise2 * CONFIG.swirlStrength;
+                tempVec.z += noise3 * CONFIG.swirlStrength;
+                
+                // Gentle rotation
+                const rotSpeed = 0.001;
+                const cos = Math.cos(rotSpeed);
+                const sin = Math.sin(rotSpeed);
+                const x = tempVec.x;
+                const z = tempVec.z;
+                tempVec.x = x * cos - z * sin;
+                tempVec.z = x * sin + z * cos;
+                
+                // Only apply noise if not currently morphing (to avoid conflict)
+                if (!isMorphing) {
+                    positions[idx] = tempVec.x;
+                    positions[idx + 1] = tempVec.y;
+                    positions[idx + 2] = tempVec.z;
+                }
+            }
+            
+            if (!isMorphing) {
+                geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // Rotate starfield slowly
+            starfield.rotation.y += 0.0002;
+            starfield.rotation.x += 0.0001;
+            
+            controls.update();
+            composer.render();
+        }
+
+        // Event listeners
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Click to morph
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.shape-btn')) return;
+            
+            const nextShape = (currentShape + 1) % 6;
+            morphToShape(nextShape);
+        });
+
+        // Button controls
+        document.querySelectorAll('.shape-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const shape = parseInt(btn.dataset.shape);
+                morphToShape(shape);
+            });
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
