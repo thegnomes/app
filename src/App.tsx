@@ -24,11 +24,16 @@ function App() {
   const [state, setState] = useState<AppState>(0);
   const [config, setConfig] = useState<ParticleConfig>(defaultConfig);
   
+  // Original state transition refs
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inState2Ref = useRef(false);
+  
   // Camera pan state
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const cameraOffsetRef = useRef({ x: 0, y: 0 });
   const targetOffsetRef = useRef({ x: 0, y: 0 });
+  const panEnabledRef = useRef(true);
 
   // Expose camera pan controls to ParticleCanvas via ref
   const cameraPanRef = useRef({
@@ -44,12 +49,65 @@ function App() {
     cameraPanRef.current.isDragging = isDraggingRef.current;
   }, []);
 
-  // Mouse event handlers for camera pan
+  // Original state transition logic (hold to charge)
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
+      if ('button' in e && e.button !== 0) return;
+      if ('touches' in e) e.preventDefault();
+      
+      // Don't trigger state changes if clicking on control panel
+      if ((e.target as HTMLElement).closest('.fixed')) return;
+      
+      // State 0 is handled by VideoBackground click
+      if (state === 1) {
+        // Disable camera pan during state transition hold
+        panEnabledRef.current = false;
+        setState(2);
+        inState2Ref.current = true;
+        holdTimerRef.current = setTimeout(() => {
+          inState2Ref.current = false;
+          setState(3);
+        }, 5000);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (inState2Ref.current) {
+        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+        inState2Ref.current = false;
+        setState(4);
+      }
+      // Re-enable camera pan
+      panEnabledRef.current = true;
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchstart', handleMouseDown, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchstart', handleMouseDown);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [state]);
+
+  useEffect(() => {
+    if (state === 4) {
+      const t = setTimeout(() => setState(1), 2500);
+      return () => clearTimeout(t);
+    }
+  }, [state]);
+
+  // Mouse event handlers for camera pan (only when enabled)
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
-      // Don't pan if clicking on control panel
+      // Don't pan if clicking on control panel or if pan is disabled
       if ((e.target as HTMLElement).closest('.fixed')) return;
+      if (!panEnabledRef.current) return;
       
       isDraggingRef.current = true;
       dragStartRef.current = { x: e.clientX, y: e.clientY };
@@ -57,7 +115,7 @@ function App() {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current) return;
+      if (!isDraggingRef.current || !panEnabledRef.current) return;
       
       const dx = (e.clientX - dragStartRef.current.x) * 0.05;
       const dy = (e.clientY - dragStartRef.current.y) * 0.05;
