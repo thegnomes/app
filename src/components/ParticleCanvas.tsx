@@ -1,11 +1,18 @@
-
+import type { MutableRefObject } from 'react';
 import type { AppState, ParticleConfig } from '@/types';
 import { useParticleScene } from '@/hooks/particles/useParticleScene';
 import { useParticleAnimation } from '@/hooks/particles/useParticleAnimation';
 
+interface CameraPanRef {
+  isDragging: boolean;
+  offset: { x: number; y: number };
+  targetOffset: { x: number; y: number };
+}
+
 interface ParticleCanvasProps {
   state: AppState;
   config: ParticleConfig;
+  cameraPanRef: MutableRefObject<CameraPanRef>;
 }
 
 /**
@@ -21,15 +28,15 @@ interface ParticleCanvasProps {
  * The component is fully modular, using custom hooks and separated
  * utility functions for maintainability.
  */
-export function ParticleCanvas({ state, config }: ParticleCanvasProps) {
+export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasProps) {
   // Initialize scene and get refs/data
   const { refs, data, containerRef } = useParticleScene(config);
 
   // Run animation loop
-  useParticleAnimation({ state, config, refs, data });
+  useParticleAnimation({ state, config, refs, data, cameraPanRef });
 
-  // Update cursor style based on state
-  const cursorStyle = state === 1 ? 'pointer' : 'default';
+  // Update cursor style based on state and drag
+  const cursorStyle = cameraPanRef.current?.isDragging ? 'grabbing' : state === 1 ? 'grab' : 'default';
 
   return (
     <div

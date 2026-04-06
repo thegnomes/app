@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
@@ -32,17 +32,24 @@ import {
 } from '@/lib/particles/animationStates';
 import { createFlashMesh, createNovaMesh } from '@/lib/particles/scene';
 
+interface CameraPanRef {
+  isDragging: boolean;
+  offset: { x: number; y: number };
+  targetOffset: { x: number; y: number };
+}
+
 interface UseParticleAnimationProps {
   state: AppState;
   config: ParticleConfig;
   refs: SceneRefs;
   data: AnimationData;
+  cameraPanRef: MutableRefObject<CameraPanRef>;
 }
 
 /**
  * Hook to manage particle animation loop
  */
-export function useParticleAnimation({ state, config, refs, data }: UseParticleAnimationProps) {
+export function useParticleAnimation({ state, config, refs, data, cameraPanRef }: UseParticleAnimationProps) {
   // Main animation loop
   useEffect(() => {
     if (!refs.scene.current || !refs.camera.current || !refs.renderer.current) return;
@@ -386,12 +393,21 @@ export function useParticleAnimation({ state, config, refs, data }: UseParticleA
         }
       }
 
-      // Camera movement with mouse drift
+      // Camera movement with mouse drift and pan
       if (refs.camera.current) {
         const targetX = data.mousePosition.current.x * 8;
         const targetY = data.mousePosition.current.y * 8;
         data.cameraDrift.current.x += (targetX - data.cameraDrift.current.x) * 0.05;
         data.cameraDrift.current.y += (targetY - data.cameraDrift.current.y) * 0.05;
+
+        // Get pan offset from cameraPanRef with smooth interpolation
+        const panOffset = cameraPanRef.current?.targetOffset || { x: 0, y: 0 };
+        const currentPanX = refs.camera.current.userData.panX || 0;
+        const currentPanY = refs.camera.current.userData.panY || 0;
+        const smoothPanX = currentPanX + (panOffset.x - currentPanX) * 0.1;
+        const smoothPanY = currentPanY + (panOffset.y - currentPanY) * 0.1;
+        refs.camera.current.userData.panX = smoothPanX;
+        refs.camera.current.userData.panY = smoothPanY;
 
         // Calculate camera Z position for zoom effect
         // State 0: Brain - camera at normal distance
@@ -410,10 +426,12 @@ export function useParticleAnimation({ state, config, refs, data }: UseParticleA
 
         refs.camera.current.position.x =
           Math.sin(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +
-          data.cameraDrift.current.x;
+          data.cameraDrift.current.x +
+          smoothPanX;
         refs.camera.current.position.y =
           Math.cos(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +
-          data.cameraDrift.current.y;
+          data.cameraDrift.current.y +
+          smoothPanY;
         refs.camera.current.lookAt(0, 0, 0);
       }
 
@@ -427,5 +445,5 @@ export function useParticleAnimation({ state, config, refs, data }: UseParticleA
       cancelAnimationFrame(data.animationId.current);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [state, config.speed, refs, data]);
+  }, [state, config.speed, refs, data, cameraPanRef]);
 }
