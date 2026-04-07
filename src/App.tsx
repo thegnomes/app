@@ -3,7 +3,6 @@ import { ParticleCanvas } from './components/ParticleCanvas';
 import { ControlPanel } from './components/ControlPanel';
 import { StateText } from './components/StateText';
 import { Footer } from './components/Footer';
-import { VideoBackground } from './components/VideoBackground';
 import './App.css';
 
 export type AppState = 0 | 1 | 2 | 3 | 4;
@@ -23,12 +22,13 @@ const defaultConfig: ParticleConfig = {
 function App() {
   const [state, setState] = useState<AppState>(0);
   const [config, setConfig] = useState<ParticleConfig>(defaultConfig);
+  const [hasClickedBrain, setHasClickedBrain] = useState(false);
   
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inState2Ref = useRef(false);
   
-  // Camera pan state - consolidated into a single ref to avoid closure issues
+  // Camera pan state
   const panStateRef = useRef({
     isDragging: false,
     dragStart: { x: 0, y: 0 },
@@ -54,9 +54,15 @@ function App() {
       
       const panState = panStateRef.current;
       
+      // State 0: Click brain to start zoom to starfield
+      if (state === 0 && !hasClickedBrain) {
+        setHasClickedBrain(true);
+        return;
+      }
+      
       // State 1: Start charging (hold to charge shell)
       if (state === 1 && panState.enabled) {
-        panState.enabled = false; // Disable pan during state transition
+        panState.enabled = false;
         setState(2);
         inState2Ref.current = true;
         holdTimerRef.current = setTimeout(() => {
@@ -85,7 +91,6 @@ function App() {
         y: panState.cameraOffset.y - dy
       };
       
-      // Clamp values
       panState.targetOffset.x = Math.max(-50, Math.min(50, panState.targetOffset.x));
       panState.targetOffset.y = Math.max(-50, Math.min(50, panState.targetOffset.y));
       
@@ -95,21 +100,19 @@ function App() {
     const handleMouseUp = () => {
       const panState = panStateRef.current;
       
-      // Handle state transition release
       if (inState2Ref.current) {
         if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
         inState2Ref.current = false;
         setState(4);
       }
       
-      // Handle camera pan end
       if (panState.isDragging) {
         panState.cameraOffset = { ...panState.targetOffset };
         cameraPanRef.current.offset = panState.cameraOffset;
       }
       
       panState.isDragging = false;
-      panState.enabled = true; // Re-enable pan
+      panState.enabled = true;
       cameraPanRef.current.isDragging = false;
     };
 
@@ -124,7 +127,7 @@ function App() {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
     };
-  }, [state]);
+  }, [state, hasClickedBrain]);
 
   // Touch handlers
   useEffect(() => {
@@ -133,8 +136,12 @@ function App() {
       
       if ((e.target as HTMLElement).closest('.fixed')) return;
       
-      const touch = e.touches[0];
       const panState = panStateRef.current;
+      
+      if (state === 0 && !hasClickedBrain) {
+        setHasClickedBrain(true);
+        return;
+      }
       
       if (state === 1 && panState.enabled) {
         panState.enabled = false;
@@ -166,7 +173,7 @@ function App() {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [state]);
+  }, [state, hasClickedBrain]);
 
   // Auto-return from state 4 to state 1
   useEffect(() => {
@@ -176,14 +183,14 @@ function App() {
     }
   }, [state]);
 
-  const handleVideoTransition = useCallback(() => {
-    setState(1);
-  }, []);
-
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
-      <VideoBackground isActive={state === 0} onTransition={handleVideoTransition} />
-      <ParticleCanvas state={state} config={config} cameraPanRef={cameraPanRef} />
+      <ParticleCanvas 
+        state={state} 
+        config={config} 
+        cameraPanRef={cameraPanRef}
+        zoomTriggered={hasClickedBrain}
+      />
       <StateText state={state} />
       <ControlPanel state={state} setState={setState} config={config} setConfig={setConfig} />
       <Footer />

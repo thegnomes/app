@@ -44,12 +44,18 @@ interface UseParticleAnimationProps {
   refs: SceneRefs;
   data: AnimationData;
   cameraPanRef: MutableRefObject<CameraPanRef>;
+  zoomTriggered?: boolean;
+}
+
+// Easing function for smoother zoom
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 /**
  * Hook to manage particle animation loop
  */
-export function useParticleAnimation({ state, config, refs, data, cameraPanRef }: UseParticleAnimationProps) {
+export function useParticleAnimation({ state, config, refs, data, cameraPanRef, zoomTriggered }: UseParticleAnimationProps) {
   // Main animation loop
   useEffect(() => {
     if (!refs.scene.current || !refs.camera.current || !refs.renderer.current) return;
@@ -125,10 +131,16 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.6, 0.05);
       }
 
-      // Trigger nova effect on every state change
-      if (refs.systemGroup.current && !refs.novaMesh.current) {
+      // Trigger nova effect on every state change - create 4 rings at 45 degree angles
+      if (refs.systemGroup.current && refs.novaMeshes.current.length === 0) {
         const novaColor = STATE_PRIMARY_COLORS[state].clone();
-        refs.novaMesh.current = createNovaMesh(refs.systemGroup.current, novaColor, 0.5);
+        // Create 4 nova rings at 0, 45, 90, 135 degree rotations
+        for (let i = 0; i < 4; i++) {
+          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5);
+          // Rotate each nova ring by i * 45 degrees around Z axis
+          nova.rotation.z = (i * Math.PI) / 4;
+          refs.novaMeshes.current.push(nova);
+        }
         refs.novaState.current = { active: true, startTime: performance.now() };
       }
     };
@@ -236,7 +248,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.currentPrimaryColor.current,
             data.currentSecondaryColor.current
           );
-          if (refs.coreGroup.current) refs.coreGroup.current.visible = false;
+          // Show core group in State 1 for the central particle glow
+          if (refs.coreGroup.current) refs.coreGroup.current.visible = true;
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = false;
@@ -364,31 +377,34 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.systemGroup.current.rotation.x = Math.sin(data.time.current * 0.1) * 0.02;
       }
 
-      // Animate nova effect
-      if (refs.novaMesh.current && refs.novaState.current.active) {
+      // Animate nova effect (multiple rings)
+      if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
         const novaElapsed = performance.now() - refs.novaState.current.startTime;
-        const novaDuration = 1200; // ms - longer duration for more impact
+        const novaDuration = 1500; // Slightly longer for softer effect
         const progress = Math.min(novaElapsed / novaDuration, 1);
 
-        // Expand and fade - much larger scale to fill viewport
-        // Camera at Z=130, FOV=75, so viewport height ~200 at center
-        // Scale needs to reach ~150-200 to fill the screen
+        // Expand and fade
         const startScale = 0.5;
-        const maxScale = 180; // Large enough to fill the entire viewport
+        const maxScale = 150; // Slightly smaller for softer look
         const scale = startScale + progress * maxScale;
-        refs.novaMesh.current.scale.set(scale, scale, scale);
 
-        // Fade out with ease - stay bright longer at the start
-        const fadeProgress = Math.max(0, (progress - 0.3) / 0.7); // Start fading after 30%
-        const opacity = 0.9 * (1 - fadeProgress);
-        (refs.novaMesh.current.material as THREE.MeshBasicMaterial).opacity = opacity;
+        // Softer fade - start fading earlier, lower max opacity
+        const fadeProgress = Math.max(0, (progress - 0.2) / 0.8);
+        const opacity = 0.5 * (1 - fadeProgress); // Lower opacity (0.5 instead of 0.9)
+
+        refs.novaMeshes.current.forEach((nova) => {
+          nova.scale.set(scale, scale, scale);
+          (nova.material as THREE.MeshBasicMaterial).opacity = opacity;
+        });
 
         if (progress >= 1) {
-          // Remove nova when done
-          refs.novaMesh.current.geometry.dispose();
-          (refs.novaMesh.current.material as THREE.Material).dispose();
-          refs.systemGroup.current?.remove(refs.novaMesh.current);
-          refs.novaMesh.current = null;
+          // Remove all novas when done
+          refs.novaMeshes.current.forEach((nova) => {
+            nova.geometry.dispose();
+            (nova.material as THREE.Material).dispose();
+            refs.systemGroup.current?.remove(nova);
+          });
+          refs.novaMeshes.current = [];
           refs.novaState.current.active = false;
         }
       }
@@ -410,19 +426,29 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.camera.current.userData.panY = smoothPanY;
 
         // Calculate camera Z position for zoom effect
-        // State 0: Brain - camera at normal distance
-        // State 1: Zoom into brain to become star field
+        // State 0: Brain - camera at normal distance until clicked
+        // State 1: Zoom into brain to become star field with eased ramp
         let targetZ = CAMERA_Z;
+        
         if (currentState === 0) {
-          targetZ = CAMERA_Z; // Standard view of brain
+          if (zoomTriggered) {
+            // When clicked, smoothly zoom in with ease-in-out curve
+            // Use a longer duration for slower, more dramatic zoom (4 seconds)
+            const zoomElapsed = performance.now() - data.stateStart.current;
+            const zoomDuration = 4000; // 4 seconds for slower zoom
+            const rawProgress = Math.min(zoomElapsed / zoomDuration, 1);
+            const easedProgress = easeInOutCubic(rawProgress);
+            targetZ = CAMERA_Z - easedProgress * (CAMERA_Z - 15); // Zoom closer to Z=15
+          } else {
+            targetZ = CAMERA_Z; // Standard view of brain
+          }
         } else if (currentState === 1) {
-          // Zoom in during State 1 transition
-          const zoomProgress = Math.min(stateElapsed / STATE1_DURATION, 1);
-          targetZ = CAMERA_Z - zoomProgress * (CAMERA_Z - 20); // Zoom to Z=20
+          // Already in starfield state - stay zoomed in
+          targetZ = 15;
         }
         
         // Smooth camera Z transition
-        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * 0.03;
+        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * 0.02;
 
         refs.camera.current.position.x =
           Math.sin(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +
@@ -445,5 +471,5 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       cancelAnimationFrame(data.animationId.current);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [state, config.speed, refs, data, cameraPanRef]);
+  }, [state, config.speed, refs, data, cameraPanRef, zoomTriggered]);
 }

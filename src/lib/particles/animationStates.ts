@@ -124,16 +124,16 @@ export function animateState1(
     const i3 = i * 3;
 
     if (i === 0) {
-      // Core particle fades out
+      // Core particle - bright center of starfield
       positions[i3] = 0;
       positions[i3 + 1] = 0;
       positions[i3 + 2] = 0;
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      const fade = Math.min(1, stateElapsed / 500);
-      sizes[i] = 2.5 * (1 - fade);
-      alphas[i] = 1 - fade;
+      // Keep core visible with pulsing effect
+      sizes[i] = 3.0 + Math.sin(time * 3) * 0.5;
+      alphas[i] = 0.9;
       continue;
     }
 
@@ -176,20 +176,20 @@ export function animateState1(
       positions[i3 + 2] = maxExpandZ + (tz - maxExpandZ) * disperseEased;
     }
 
-    // Twinkle effect
+    // Twinkle effect - brighter for more visible starfield
     const twinkle = Math.sin(time * (1.0 + rnd * 2.0) + rnd * 6.283);
-    const glimmerIntensity = (Math.max(0, twinkle) * 0.3 + 0.1) * eased;
+    const glimmerIntensity = (Math.max(0, twinkle) * 0.4 + 0.2) * eased;
     
-    // Manual color interpolation (no object allocation)
-    const brightness = 0.1 + glimmerIntensity * 0.6;
+    // Manual color interpolation (no object allocation) - increased brightness
+    const brightness = 0.3 + glimmerIntensity * 0.8;
     colors[i3] = (BRAIN_COLOR_R + STAR1_DIFF_R * eased) * brightness;
     colors[i3 + 1] = (BRAIN_COLOR_G + STAR1_DIFF_G * eased) * brightness;
     colors[i3 + 2] = (BRAIN_COLOR_B + STAR1_DIFF_B * eased) * brightness;
 
-    // Size and alpha
-    const baseSize = 0.3 + rnd * 0.2 + (0.5 + rnd * 0.4) * eased;
+    // Size and alpha - brighter and more visible
+    const baseSize = 0.5 + rnd * 0.3 + (0.7 + rnd * 0.5) * eased;
     sizes[i] = (baseSize + glimmerIntensity * 0.8) * eased;
-    alphas[i] = (0.2 + rnd * 0.2) * eased + glimmerIntensity * 0.5;
+    alphas[i] = (0.4 + rnd * 0.3) * eased + glimmerIntensity * 0.5;
   }
 }
 

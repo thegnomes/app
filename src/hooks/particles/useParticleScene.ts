@@ -28,7 +28,7 @@ export interface SceneRefs {
   trail: React.MutableRefObject<THREE.LineSegments | null>;
   flashMesh: React.MutableRefObject<THREE.Mesh | null>;
   systemGroup: React.MutableRefObject<THREE.Group | null>;
-  novaMesh: React.MutableRefObject<THREE.Mesh | null>;
+  novaMeshes: React.MutableRefObject<THREE.Mesh[]>;
   novaState: React.MutableRefObject<{ active: boolean; startTime: number }>;
   neuralConnections: React.MutableRefObject<THREE.LineSegments | null>;
 }
@@ -69,7 +69,7 @@ export function useParticleScene(config: ParticleConfig) {
   const trailRef = useRef<THREE.LineSegments | null>(null);
   const flashMeshRef = useRef<THREE.Mesh | null>(null);
   const systemGroupRef = useRef<THREE.Group | null>(null);
-  const novaMeshRef = useRef<THREE.Mesh | null>(null);
+  const novaMeshesRef = useRef<THREE.Mesh[]>([]);
   const novaStateRef = useRef({ active: false, startTime: 0 });
   const neuralConnectionsRef = useRef<THREE.LineSegments | null>(null);
 
@@ -191,7 +191,7 @@ export function useParticleScene(config: ParticleConfig) {
     trail: trailRef,
     flashMesh: flashMeshRef,
     systemGroup: systemGroupRef,
-    novaMesh: novaMeshRef,
+    novaMeshes: novaMeshesRef,
     novaState: novaStateRef,
     neuralConnections: neuralConnectionsRef,
   };

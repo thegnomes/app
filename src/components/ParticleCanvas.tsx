@@ -13,13 +13,14 @@ interface ParticleCanvasProps {
   state: AppState;
   config: ParticleConfig;
   cameraPanRef: MutableRefObject<CameraPanRef>;
+  zoomTriggered?: boolean;
 }
 
 /**
  * ParticleCanvas Component
  * 
  * Renders a WebGL particle system with 5 states:
- * - State 0: Singularity (single core particle)
+ * - State 0: Neural Brain (3D particle brain)
  * - State 1: Star Field (particles spread to random positions)
  * - State 2: Charging Shell (migrating particles form a rotating shell)
  * - State 3: Solar System (shell stabilizes, planets appear and orbit)
@@ -28,15 +29,15 @@ interface ParticleCanvasProps {
  * The component is fully modular, using custom hooks and separated
  * utility functions for maintainability.
  */
-export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasProps) {
+export function ParticleCanvas({ state, config, cameraPanRef, zoomTriggered }: ParticleCanvasProps) {
   // Initialize scene and get refs/data
   const { refs, data, containerRef } = useParticleScene(config);
 
   // Run animation loop
-  useParticleAnimation({ state, config, refs, data, cameraPanRef });
+  useParticleAnimation({ state, config, refs, data, cameraPanRef, zoomTriggered });
 
   // Update cursor style based on state and drag
-  const cursorStyle = cameraPanRef.current?.isDragging ? 'grabbing' : state === 1 ? 'grab' : 'default';
+  const cursorStyle = cameraPanRef.current?.isDragging ? 'grabbing' : state === 0 ? 'pointer' : state === 1 ? 'grab' : 'default';
 
   return (
     <div
