@@ -46,7 +46,7 @@ export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasPr
         background: state === 0 ? 'black' : 'radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%)',
         cursor: cursorStyle,
         opacity: state === 0 ? 0 : 1, // Hide in State 0, show in other states
-        transition: 'opacity 0.5s ease',
+        // No transition - instant visibility change
         pointerEvents: state === 0 ? 'none' : 'auto',
       }}
     />

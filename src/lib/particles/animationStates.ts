@@ -356,15 +356,32 @@ export function animateState2And3(
       sizes[i] = 0.8 + easedTravel * 1.6;
       alphas[i] = 0.3 + easedTravel * 0.7;
     } else {
-      // Stabilized phase: orbit on shell with pulse
+      // Stabilized phase: orbit on shell
       const activeLife = life - TRAVEL_DURATION;
-      const stabilizeT = Math.min(activeLife / STABILIZE_DURATION, 1);
-      const easedStabilize = easeOutCubic(stabilizeT);
+      
+      // State 2: Keep volatile with constant chaos
+      // State 3: Gradually stabilize
+      const isState3 = state === 3;
+      const stabilizeT = isState3 ? Math.min(activeLife / STABILIZE_DURATION, 1) : 0;
+      const easedStabilize = isState3 ? easeOutCubic(stabilizeT) : 0;
 
       const baseR = entryR + (targetR - entryR) * easedStabilize;
-      const pulseAmp = (1 - easedStabilize) * (12 + random[i] * 10);
-      const pulse = Math.sin(activeLife * 0.005 + random[i] * 10) * pulseAmp;
-      const r = Math.max(0, baseR + pulse);
+      
+      // State 2: Large chaotic pulse that never settles
+      // State 3: Reducing pulse as it stabilizes
+      const pulseAmp = isState3 
+        ? (1 - easedStabilize) * (12 + random[i] * 10)
+        : (15 + random[i] * 12); // Constant large amplitude in State 2
+      
+      // State 2: Faster, more chaotic movement with multiple frequencies
+      // State 3: Slower, settling movement
+      const pulseFreq = isState3 ? 0.005 : 0.015;
+      const pulse = Math.sin(activeLife * pulseFreq + random[i] * 10) * pulseAmp;
+      
+      // State 2: Add extra noise/chaos
+      const chaosOffset = isState3 ? 0 : Math.sin(activeLife * 0.008 + i) * (3 + random[i] * 4);
+      
+      const r = Math.max(0, baseR + pulse + chaosOffset);
 
       let tx = directions[i3] * r;
       const ty = directions[i3 + 1] * r;
@@ -380,12 +397,26 @@ export function animateState2And3(
       positions[i3 + 2] = tz;
 
       const rnd = random[i];
-      const brightness = 0.5 + easedStabilize * 0.8;
+      
+      // State 2: Brighter, more energetic colors
+      // State 3: Stabilizing brightness
+      const brightness = isState3 
+        ? 0.5 + easedStabilize * 0.8
+        : 0.7 + Math.sin(activeLife * 0.01 + rnd * 5) * 0.3; // Pulsing brightness in State 2
+        
       colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
       colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
       colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
-      sizes[i] = 0.6 + easedStabilize * 1.4 + (1 - easedStabilize) * 0.8;
-      alphas[i] = 0.2 + easedStabilize * 0.8;
+      
+      // State 2: Pulsing sizes
+      // State 3: Settling sizes
+      sizes[i] = isState3
+        ? 0.6 + easedStabilize * 1.4 + (1 - easedStabilize) * 0.8
+        : 0.8 + Math.sin(activeLife * 0.012 + rnd * 8) * 0.6 + rnd * 0.5;
+        
+      alphas[i] = isState3
+        ? 0.2 + easedStabilize * 0.8
+        : 0.5 + Math.sin(activeLife * 0.008 + rnd * 3) * 0.2;
     }
   }
 }

@@ -140,9 +140,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         // Create 4 new nova rings at 0, 45, 90, 135 degree rotations
         const novaColor = STATE_PRIMARY_COLORS[state].clone();
         for (let i = 0; i < 4; i++) {
-          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5);
-          // Rotate each nova ring by i * 45 degrees around Z axis
-          nova.rotation.z = (i * Math.PI) / 4;
+          // Pass rotation to createNovaMesh
+          const rotationZ = (i * Math.PI) / 4;
+          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5, rotationZ);
           refs.novaMeshes.current.push(nova);
         }
         refs.novaState.current = { active: true, startTime: performance.now() };
@@ -384,21 +384,22 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Animate nova effect (multiple rings)
       if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
         const novaElapsed = performance.now() - refs.novaState.current.startTime;
-        const novaDuration = 1500; // Slightly longer for softer effect
+        const novaDuration = 1800; // Longer for softer effect
         const progress = Math.min(novaElapsed / novaDuration, 1);
 
         // Expand and fade
         const startScale = 0.5;
-        const maxScale = 150; // Slightly smaller for softer look
+        const maxScale = 120; // Smaller for softer look
         const scale = startScale + progress * maxScale;
 
-        // Softer fade - start fading earlier, lower max opacity
-        const fadeProgress = Math.max(0, (progress - 0.2) / 0.8);
-        const opacity = 0.5 * (1 - fadeProgress); // Lower opacity (0.5 instead of 0.9)
+        // Softer fade - start fading earlier
+        // Material starts at 0.35 opacity, we modulate it down from there
+        const fadeProgress = Math.max(0, (progress - 0.15) / 0.85);
+        const opacity = 0.35 * (1 - fadeProgress * fadeProgress); // Quadratic fade for softness
 
         refs.novaMeshes.current.forEach((nova) => {
           nova.scale.set(scale, scale, scale);
-          (nova.material as THREE.MeshBasicMaterial).opacity = opacity;
+          (nova.material as THREE.MeshBasicMaterial).opacity = Math.max(0, opacity);
         });
 
         if (progress >= 1) {

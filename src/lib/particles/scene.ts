@@ -405,20 +405,23 @@ export function createFlashMesh(
 export function createNovaMesh(
   parent: THREE.Object3D,
   color: THREE.Color,
-  initialScale: number = 0.5
+  initialScale: number = 0.5,
+  rotationZ: number = 0
 ): THREE.Mesh {
-  // Ring geometry for shockwave effect - thicker ring for more visibility
-  const geometry = new THREE.RingGeometry(0.85, 1, 128);
+  // Ring geometry - thinner for softer look
+  const geometry = new THREE.RingGeometry(0.92, 1, 128);
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: 0.9,
+    opacity: 0.35, // Lower opacity for softer look
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.scale.set(initialScale, initialScale, initialScale);
+  // Apply rotation around Z axis
+  mesh.rotation.z = rotationZ;
   mesh.lookAt(0, 0, 1);
   parent.add(mesh);
 
