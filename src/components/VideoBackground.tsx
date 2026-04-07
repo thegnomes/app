@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -7,15 +7,7 @@ interface VideoBackgroundProps {
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
-  const idleVideoRef = useRef<HTMLVideoElement>(null);
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
-
-  // Slow down the idle video playback speed
-  useEffect(() => {
-    if (idleVideoRef.current) {
-      idleVideoRef.current.playbackRate = 0.5; // Slow down to 50% speed
-    }
-  }, [isActive]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
@@ -24,11 +16,12 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       if (zoomVideoRef.current) {
         zoomVideoRef.current.play();
       }
-      // Transition to starfield after zoom video starts
-      setTimeout(() => {
-        onTransition();
-      }, 1500);
     }
+  };
+
+  const handleZoomEnded = () => {
+    // Transition to starfield when zoom video finishes
+    onTransition();
   };
 
   if (!isActive) return null;
@@ -38,15 +31,11 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       onClick={handleClick}
       className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
     >
-      {/* Idle brain video - slow rotation */}
+      {/* Idle brain GIF - slow rotation (using CSS animation for slower speed) */}
       {!isZooming && (
-        <video
-          ref={idleVideoRef}
-          src="/brain.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
+        <img
+          src="/Brain_7.gif"
+          alt="Brain"
           className="w-full h-full object-contain"
           style={{
             width: 'min(45vh, 450px)',
@@ -55,7 +44,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         />
       )}
 
-      {/* Zoom transition video */}
+      {/* Zoom transition video - plays to completion */}
       <video
         ref={zoomVideoRef}
         src="/brain_zoom.mp4"
@@ -65,9 +54,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
           absolute inset-0 w-full h-full object-contain transition-opacity duration-500
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
-        onEnded={() => {
-          onTransition();
-        }}
+        onEnded={handleZoomEnded}
       />
       
       {/* Click hint */}
