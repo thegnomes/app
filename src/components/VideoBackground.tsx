@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -7,14 +7,27 @@ interface VideoBackgroundProps {
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
+  const idleVideoRef = useRef<HTMLVideoElement>(null);
+  const zoomVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Slow down the idle video playback speed
+  useEffect(() => {
+    if (idleVideoRef.current) {
+      idleVideoRef.current.playbackRate = 0.5; // Slow down to 50% speed
+    }
+  }, [isActive]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
-      // Start transition to starfield halfway through zoom for smoother effect
+      // Play the zoom video
+      if (zoomVideoRef.current) {
+        zoomVideoRef.current.play();
+      }
+      // Transition to starfield after zoom video starts
       setTimeout(() => {
         onTransition();
-      }, 1200); // Start revealing starfield earlier
+      }, 1500);
     }
   };
 
@@ -25,31 +38,44 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       onClick={handleClick}
       className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
     >
-      {/* GIF container - centered and sized */}
-      <div
-        className={`
-          relative transition-all duration-[2000ms] ease-out
-          ${isZooming ? 'scale-[6] opacity-0' : 'scale-100 opacity-100'}
-        `}
-        style={{
-          width: 'min(45vh, 450px)',
-          height: 'min(45vh, 450px)',
-        }}
-      >
-        <img
-          src="/brain.gif"
-          alt="Brain"
-          className="w-full h-full object-contain rounded-full"
+      {/* Idle brain video - slow rotation */}
+      {!isZooming && (
+        <video
+          ref={idleVideoRef}
+          src="/brain.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-contain"
           style={{
-            filter: 'drop-shadow(0 0 40px rgba(0, 212, 255, 0.4))',
+            width: 'min(45vh, 450px)',
+            height: 'min(45vh, 450px)',
           }}
         />
-      </div>
+      )}
+
+      {/* Zoom transition video */}
+      <video
+        ref={zoomVideoRef}
+        src="/brain_zoom.mp4"
+        muted
+        playsInline
+        className={`
+          absolute inset-0 w-full h-full object-contain transition-opacity duration-500
+          ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+        `}
+        onEnded={() => {
+          onTransition();
+        }}
+      />
       
       {/* Click hint */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-sm tracking-widest uppercase animate-pulse pointer-events-none">
-        Click to enter
-      </div>
+      {!isZooming && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-sm tracking-widest uppercase animate-pulse pointer-events-none">
+          Click to enter
+        </div>
+      )}
     </div>
   );
 }
