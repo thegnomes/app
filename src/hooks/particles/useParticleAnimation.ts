@@ -126,9 +126,19 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Trigger nova effect on every state change - create 4 rings at 45 degree angles
-      if (refs.systemGroup.current && refs.novaMeshes.current.length === 0) {
+      if (refs.systemGroup.current) {
+        // Clean up any existing novas first
+        if (refs.novaMeshes.current.length > 0) {
+          refs.novaMeshes.current.forEach((nova) => {
+            nova.geometry.dispose();
+            (nova.material as THREE.Material).dispose();
+            refs.systemGroup.current?.remove(nova);
+          });
+          refs.novaMeshes.current = [];
+        }
+        
+        // Create 4 new nova rings at 0, 45, 90, 135 degree rotations
         const novaColor = STATE_PRIMARY_COLORS[state].clone();
-        // Create 4 nova rings at 0, 45, 90, 135 degree rotations
         for (let i = 0; i < 4; i++) {
           const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5);
           // Rotate each nova ring by i * 45 degrees around Z axis

@@ -23,7 +23,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   return (
     <div
       onClick={handleClick}
-      className="fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
+      className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
     >
       {/* GIF container - centered and sized */}
       <div

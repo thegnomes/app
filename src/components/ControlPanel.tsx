@@ -135,7 +135,7 @@ export function ControlPanel({ state, setState, config, setConfig }: ControlPane
 
   if (isCollapsed) {
     return (
-      <div className="fixed right-4 top-4 z-20">
+      <div className="control-panel fixed right-4 top-4 z-20">
         <button
           onClick={() => setIsCollapsed(false)}
           className="flex items-center justify-center w-10 h-10 bg-[#1a1625]/95 backdrop-blur-xl border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
@@ -148,7 +148,7 @@ export function ControlPanel({ state, setState, config, setConfig }: ControlPane
   }
 
   return (
-    <div className="fixed right-0 top-0 h-full w-64 bg-[#1a1625]/95 backdrop-blur-xl border-l border-white/10 z-20 flex flex-col">
+    <div className="control-panel fixed right-0 top-0 h-full w-64 bg-[#1a1625]/95 backdrop-blur-xl border-l border-white/10 z-20 flex flex-col">
       {/* Header with collapse button */}
       <div className="p-3 border-b border-white/10 flex items-center justify-between">
         <div>
