@@ -3,6 +3,7 @@ import { ParticleCanvas } from './components/ParticleCanvas';
 import { ControlPanel } from './components/ControlPanel';
 import { StateText } from './components/StateText';
 import { Footer } from './components/Footer';
+import { VideoBackground } from './components/VideoBackground';
 import './App.css';
 
 export type AppState = 0 | 1 | 2 | 3 | 4;
@@ -22,7 +23,6 @@ const defaultConfig: ParticleConfig = {
 function App() {
   const [state, setState] = useState<AppState>(0);
   const [config, setConfig] = useState<ParticleConfig>(defaultConfig);
-  const [hasClickedBrain, setHasClickedBrain] = useState(false);
   
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,21 +44,21 @@ function App() {
     targetOffset: { x: 0, y: 0 },
   });
 
+  // Handle transition from State 0 (video brain) to State 1 (starfield)
+  const handleVideoTransition = useCallback(() => {
+    setState(1);
+  }, []);
+
   // Single unified mouse handler
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       
-      // Don't handle if clicking on control panel
+      // Don't handle if clicking on control panel or video background
       if ((e.target as HTMLElement).closest('.fixed')) return;
+      if ((e.target as HTMLElement).closest('.z-10')) return; // VideoBackground has z-10
       
       const panState = panStateRef.current;
-      
-      // State 0: Click brain to start zoom to starfield
-      if (state === 0 && !hasClickedBrain) {
-        setHasClickedBrain(true);
-        return;
-      }
       
       // State 1: Start charging (hold to charge shell)
       if (state === 1 && panState.enabled) {
@@ -127,7 +127,7 @@ function App() {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseleave', handleMouseUp);
     };
-  }, [state, hasClickedBrain]);
+  }, [state]);
 
   // Touch handlers
   useEffect(() => {
@@ -135,13 +135,9 @@ function App() {
       e.preventDefault();
       
       if ((e.target as HTMLElement).closest('.fixed')) return;
+      if ((e.target as HTMLElement).closest('.z-10')) return;
       
       const panState = panStateRef.current;
-      
-      if (state === 0 && !hasClickedBrain) {
-        setHasClickedBrain(true);
-        return;
-      }
       
       if (state === 1 && panState.enabled) {
         panState.enabled = false;
@@ -173,7 +169,7 @@ function App() {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [state, hasClickedBrain]);
+  }, [state]);
 
   // Auto-return from state 4 to state 1
   useEffect(() => {
@@ -185,11 +181,11 @@ function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
+      <VideoBackground isActive={state === 0} onTransition={handleVideoTransition} />
       <ParticleCanvas 
         state={state} 
         config={config} 
         cameraPanRef={cameraPanRef}
-        zoomTriggered={hasClickedBrain}
       />
       <StateText state={state} />
       <ControlPanel state={state} setState={setState} config={config} setConfig={setConfig} />

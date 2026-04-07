@@ -44,18 +44,12 @@ interface UseParticleAnimationProps {
   refs: SceneRefs;
   data: AnimationData;
   cameraPanRef: MutableRefObject<CameraPanRef>;
-  zoomTriggered?: boolean;
-}
-
-// Easing function for smoother zoom
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 /**
  * Hook to manage particle animation loop
  */
-export function useParticleAnimation({ state, config, refs, data, cameraPanRef, zoomTriggered }: UseParticleAnimationProps) {
+export function useParticleAnimation({ state, config, refs, data, cameraPanRef }: UseParticleAnimationProps) {
   // Main animation loop
   useEffect(() => {
     if (!refs.scene.current || !refs.camera.current || !refs.renderer.current) return;
@@ -425,30 +419,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef, 
         refs.camera.current.userData.panX = smoothPanX;
         refs.camera.current.userData.panY = smoothPanY;
 
-        // Calculate camera Z position for zoom effect
-        // State 0: Brain - camera at normal distance until clicked
-        // State 1: Zoom into brain to become star field with eased ramp
-        let targetZ = CAMERA_Z;
-        
-        if (currentState === 0) {
-          if (zoomTriggered) {
-            // When clicked, smoothly zoom in with ease-in-out curve
-            // Use a longer duration for slower, more dramatic zoom (4 seconds)
-            const zoomElapsed = performance.now() - data.stateStart.current;
-            const zoomDuration = 4000; // 4 seconds for slower zoom
-            const rawProgress = Math.min(zoomElapsed / zoomDuration, 1);
-            const easedProgress = easeInOutCubic(rawProgress);
-            targetZ = CAMERA_Z - easedProgress * (CAMERA_Z - 15); // Zoom closer to Z=15
-          } else {
-            targetZ = CAMERA_Z; // Standard view of brain
-          }
-        } else if (currentState === 1) {
-          // Already in starfield state - stay zoomed in
-          targetZ = 15;
-        }
+        // Camera Z position - no zoom needed since video handles State 0
+        // Just use standard position for all states
+        const targetZ = CAMERA_Z;
         
         // Smooth camera Z transition
-        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * 0.02;
+        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * 0.03;
 
         refs.camera.current.position.x =
           Math.sin(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +
@@ -471,5 +447,5 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef, 
       cancelAnimationFrame(data.animationId.current);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [state, config.speed, refs, data, cameraPanRef, zoomTriggered]);
+  }, [state, config.speed, refs, data, cameraPanRef]);
 }

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -6,20 +6,7 @@ interface VideoBackgroundProps {
 }
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [isZooming, setIsZooming] = useState(false);
-
-  useEffect(() => {
-    if (videoRef.current && isActive) {
-      videoRef.current.play();
-    }
-  }, [isActive]);
-
-  useEffect(() => {
-    if (!isActive) {
-      setIsZooming(false);
-    }
-  }, [isActive]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
@@ -27,7 +14,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       // Wait for zoom animation to complete before transitioning
       setTimeout(() => {
         onTransition();
-      }, 1500);
+      }, 2000);
     }
   };
 
@@ -38,28 +25,24 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       onClick={handleClick}
       className="fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
     >
-      {/* Video container - centered and sized */}
+      {/* GIF container - centered and sized */}
       <div
         className={`
-          relative transition-all duration-[1500ms] ease-out
-          ${isZooming ? 'scale-[4] opacity-0' : 'scale-100 opacity-100'}
+          relative transition-all duration-[2000ms] ease-out
+          ${isZooming ? 'scale-[6] opacity-0' : 'scale-100 opacity-100'}
         `}
         style={{
-          width: 'min(50vh, 500px)',
-          height: 'min(50vh, 500px)',
+          width: 'min(45vh, 450px)',
+          height: 'min(45vh, 450px)',
         }}
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
+        <img
+          src="/brain.gif"
+          alt="Brain"
           className="w-full h-full object-contain rounded-full"
           style={{
-            filter: 'drop-shadow(0 0 30px rgba(0, 212, 255, 0.3))',
+            filter: 'drop-shadow(0 0 40px rgba(0, 212, 255, 0.4))',
           }}
-          src="/brain.mp4"
         />
       </div>
       
