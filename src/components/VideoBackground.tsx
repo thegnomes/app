@@ -11,10 +11,10 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
-      // Wait for zoom animation to complete before transitioning
+      // Start transition to starfield halfway through zoom for smoother effect
       setTimeout(() => {
         onTransition();
-      }, 2000);
+      }, 1200); // Start revealing starfield earlier
     }
   };
 

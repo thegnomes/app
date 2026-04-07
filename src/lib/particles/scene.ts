@@ -420,11 +420,17 @@ export function createNovaMesh(
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.scale.set(initialScale, initialScale, initialScale);
-  // Apply rotation around Z axis
-  mesh.rotation.z = rotationZ;
-  mesh.lookAt(0, 0, 1);
-  parent.add(mesh);
+  // Create a container for the ring to handle rotation properly
+  const container = new THREE.Group();
+  container.add(mesh);
+  // Apply Z rotation to the container
+  container.rotation.z = rotationZ;
+  // Look at camera direction
+  container.lookAt(0, 0, 1);
+  parent.add(container);
 
+  // Return the mesh but we need to track the container for cleanup
+  (mesh as THREE.Mesh & { container?: THREE.Group }).container = container;
   return mesh;
 }
 

@@ -349,12 +349,12 @@ export function animateState2And3(
       positions[i3 + 2] = hz + (tz - hz) * easedTravel;
 
       const rnd = random[i];
-      const brightness = 0.7 + easedTravel * 0.6;
+      const brightness = 0.9 + easedTravel * 0.8; // Increased brightness
       colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
       colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
       colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
-      sizes[i] = 0.8 + easedTravel * 1.6;
-      alphas[i] = 0.3 + easedTravel * 0.7;
+      sizes[i] = 1.0 + easedTravel * 2.0; // Larger sizes
+      alphas[i] = 0.6 + easedTravel * 0.3; // Higher alpha
     } else {
       // Stabilized phase: orbit on shell
       const activeLife = life - TRAVEL_DURATION;
@@ -398,25 +398,25 @@ export function animateState2And3(
 
       const rnd = random[i];
       
-      // State 2: Brighter, more energetic colors
+      // State 2: Much brighter, more energetic colors
       // State 3: Stabilizing brightness
       const brightness = isState3 
         ? 0.5 + easedStabilize * 0.8
-        : 0.7 + Math.sin(activeLife * 0.01 + rnd * 5) * 0.3; // Pulsing brightness in State 2
+        : 1.0 + Math.sin(activeLife * 0.01 + rnd * 5) * 0.4; // Much brighter in State 2 (0.6-1.4 range)
         
       colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
       colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
       colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
       
-      // State 2: Pulsing sizes
+      // State 2: Pulsing sizes - larger
       // State 3: Settling sizes
       sizes[i] = isState3
         ? 0.6 + easedStabilize * 1.4 + (1 - easedStabilize) * 0.8
-        : 0.8 + Math.sin(activeLife * 0.012 + rnd * 8) * 0.6 + rnd * 0.5;
+        : 1.2 + Math.sin(activeLife * 0.012 + rnd * 8) * 0.8 + rnd * 0.6; // Larger in State 2
         
       alphas[i] = isState3
         ? 0.2 + easedStabilize * 0.8
-        : 0.5 + Math.sin(activeLife * 0.008 + rnd * 3) * 0.2;
+        : 0.75 + Math.sin(activeLife * 0.008 + rnd * 3) * 0.15; // Much higher alpha in State 2 (0.6-0.9)
     }
   }
 }

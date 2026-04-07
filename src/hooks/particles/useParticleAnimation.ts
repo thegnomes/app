@@ -127,12 +127,17 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // Trigger nova effect on every state change - create 4 rings at 45 degree angles
       if (refs.systemGroup.current) {
-        // Clean up any existing novas first
+        // Clean up any existing novas first (including their containers)
         if (refs.novaMeshes.current.length > 0) {
           refs.novaMeshes.current.forEach((nova) => {
+            const container = (nova as THREE.Mesh & { container?: THREE.Group }).container;
             nova.geometry.dispose();
             (nova.material as THREE.Material).dispose();
-            refs.systemGroup.current?.remove(nova);
+            if (container) {
+              refs.systemGroup.current?.remove(container);
+            } else {
+              refs.systemGroup.current?.remove(nova);
+            }
           });
           refs.novaMeshes.current = [];
         }
@@ -403,11 +408,16 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         });
 
         if (progress >= 1) {
-          // Remove all novas when done
+          // Remove all novas when done (including their containers)
           refs.novaMeshes.current.forEach((nova) => {
+            const container = (nova as THREE.Mesh & { container?: THREE.Group }).container;
             nova.geometry.dispose();
             (nova.material as THREE.Material).dispose();
-            refs.systemGroup.current?.remove(nova);
+            if (container) {
+              refs.systemGroup.current?.remove(container);
+            } else {
+              refs.systemGroup.current?.remove(nova);
+            }
           });
           refs.novaMeshes.current = [];
           refs.novaState.current.active = false;
