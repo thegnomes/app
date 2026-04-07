@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -7,6 +7,7 @@ interface VideoBackgroundProps {
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
 
   const handleClick = () => {
@@ -20,7 +21,9 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   };
 
   const handleZoomEnded = () => {
-    // Transition to starfield when zoom video finishes
+    // Start fading out the video while starfield fades in
+    setIsFadingOut(true);
+    // Trigger transition to starfield (starts fading in)
     onTransition();
   };
 
@@ -30,8 +33,13 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
     <div
       onClick={handleClick}
       className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
+      style={{
+        opacity: isFadingOut ? 0 : 1,
+        transition: isFadingOut ? 'opacity 1.5s ease-out' : 'none',
+        pointerEvents: isFadingOut ? 'none' : 'auto',
+      }}
     >
-      {/* Idle brain GIF - slow rotation (using CSS animation for slower speed) */}
+      {/* Idle brain GIF - slow rotation */}
       {!isZooming && (
         <img
           src="/Brain_7.gif"
@@ -44,16 +52,19 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         />
       )}
 
-      {/* Zoom transition video - plays to completion */}
+      {/* Zoom transition video - plays to completion, then crossfades */}
       <video
         ref={zoomVideoRef}
         src="/brain_zoom.mp4"
         muted
         playsInline
         className={`
-          absolute inset-0 w-full h-full object-contain transition-opacity duration-500
+          absolute inset-0 w-full h-full object-contain
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
+        style={{
+          transition: 'opacity 0.5s ease-out',
+        }}
         onEnded={handleZoomEnded}
       />
       
