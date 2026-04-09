@@ -5,9 +5,8 @@ interface VideoBackgroundProps {
   onTransition: () => void;
 }
 
-// Let the zoom video play - trigger starfield earlier to overlay with zoom
-// Video is ~1480ms, transition at 500ms so starfield appears during zoom
-const TRANSITION_TIME = 0.5; // Trigger starfield at 500ms, video continues playing
+// Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
+const TRANSITION_TIME = 0;
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
@@ -26,6 +25,8 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
     if (!isZooming && isActive) {
       setIsZooming(true);
       hasTransitionedRef.current = false;
+      onTransition();
+      hasTransitionedRef.current = true;
       // Play the zoom video
       if (zoomVideoRef.current) {
         zoomVideoRef.current.play();

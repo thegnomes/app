@@ -322,14 +322,18 @@ export function animateState2And3(
         // Substate 2: Spike/thorn bounce effect with smooth ramp in and decay out
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
-        
-        // Blend smoothly from current draw-in position to fibonacci anchor
-        // during early substate 2 to remove visual jump at the handoff.
         const preFx = startX + (fibX - startX) * drawInEased;
         const preFy = startY + (fibY - startY) * drawInEased;
         const preFz = startZ + (fibZ - startZ) * drawInEased;
-        const settleToAnchor = Math.min(1, s2Progress / 0.2);
 
+        // Bounce starts per-particle when this particle arrives at shell circumference,
+        // not at one global timestamp for all particles.
+        const hasReachedShell = drawInProgress >= 1;
+        const arrivalElapsed = Math.max(0, drawInElapsed - drawInDuration);
+        const localBounceProgress = Math.min(1, arrivalElapsed / STATE2_STABILIZE_DURATION);
+
+        // Before arrival, continue settling towards circumference.
+        const settleToAnchor = hasReachedShell ? 1 : Math.min(1, s2Progress / 0.2);
         const anchorX = preFx + (fibX - preFx) * settleToAnchor;
         const anchorY = preFy + (fibY - preFy) * settleToAnchor;
         const anchorZ = preFz + (fibZ - preFz) * settleToAnchor;
@@ -355,19 +359,21 @@ export function animateState2And3(
         const fullBounceAmp = SHELL_RADIUS * baseAmp;
         
         // Smooth envelope: ramp up over 30%, hold, then decay over 40%
-        let amplitudeFactor: number;
-        if (s2Progress < 0.3) {
-          // Ramp up: 0 to 1 over first 30% (smooth start from s1)
-          amplitudeFactor = easeOutCubic(s2Progress / 0.3);
-        } else if (s2Progress < 0.6) {
-          // Full amplitude: hold at 1 from 30% to 60%
-          amplitudeFactor = 1;
-        } else {
-          // Decay: 1 to 0 from 60% to 100% (smooth transition to s3)
-          const decayProgress = (s2Progress - 0.6) / 0.4;
-          amplitudeFactor = 1 - easeOutCubic(decayProgress);
-          
-          // Color interpolation starts exactly when bounce decay starts (at 60%)
+        let amplitudeFactor = 0;
+        if (hasReachedShell) {
+          if (localBounceProgress < 0.3) {
+            // Ramp up from circumference after this particle arrives.
+            amplitudeFactor = easeOutCubic(localBounceProgress / 0.3);
+          } else if (localBounceProgress < 0.6) {
+            amplitudeFactor = 1;
+          } else {
+            const decayProgress = (localBounceProgress - 0.6) / 0.4;
+            amplitudeFactor = 1 - easeOutCubic(decayProgress);
+          }
+        }
+
+        // Color interpolation starts exactly when bounce decay starts (global look preserved).
+        if (s2Progress >= 0.6) {
           colorT = Math.min(
             1,
             Math.max(0, (stateElapsed - colorInterpolationStart) / colorInterpolationDuration)
@@ -376,8 +382,9 @@ export function animateState2And3(
         
         const bounceAmp = fullBounceAmp * amplitudeFactor;
         
-        // Apply radial bounce
-        const bounceOffset = spikeWave * bounceAmp;
+        // Circumference-outward bounce only (never inward toward core).
+        const outwardPulse = Math.max(0, spikeWave);
+        const bounceOffset = outwardPulse * bounceAmp;
         const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
         const scale = 1 + (bounceOffset / r);
         
