@@ -62,6 +62,43 @@ export function generateSpherePositions(
 }
 
 /**
+ * Generate Fibonacci sphere positions (same as generateSpherePositions but for clarity)
+ * This creates a uniform distribution of points on a sphere surface
+ * @param count - Number of particles (includes particle 0 which will be at origin)
+ * @param out - Output Float32Array (length = count * 3)
+ * @param radius - Sphere radius
+ */
+export function generateFibonacciPositions(
+  count: number,
+  out: Float32Array,
+  radius: number = SHELL_RADIUS
+): void {
+  const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
+  
+  // Particle 0 (core) stays at origin
+  out[0] = 0;
+  out[1] = 0;
+  out[2] = 0;
+  
+  // Generate Fibonacci sphere positions for particles 1 to count-1
+  // These will be the shell particles forming the sphere
+  const shellCount = count - 1;
+  
+  for (let i = 1; i < count; i++) {
+    const i3 = i * 3;
+    // Use (i-1) for 0-indexed shell particles
+    const particleIndex = i - 1;
+    const y = 1 - (particleIndex / (shellCount - 1)) * 2; // Range: 1 to -1
+    const rAtY = Math.sqrt(1 - y * y);
+    const theta = phi * particleIndex;
+    
+    out[i3] = Math.cos(theta) * rAtY * radius;
+    out[i3 + 1] = y * radius;
+    out[i3 + 2] = Math.sin(theta) * rAtY * radius;
+  }
+}
+
+/**
  * Generate direction vectors from sphere positions
  * @param spherePositions - Source sphere positions
  * @param out - Output Float32Array for directions

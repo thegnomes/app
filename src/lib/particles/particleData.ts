@@ -8,6 +8,7 @@ import {
   shuffleIndices,
   calculateState2Radius,
   generateBrainPositions,
+  generateFibonacciPositions,
 } from './geometry';
 
 /**
@@ -31,6 +32,7 @@ export function initializeParticleData(): {
     migratorIndexMap: new Int32Array(TOTAL_MAIN),
     state2Radius: new Float32Array(TOTAL_MAIN),
     brainPositions: new Float32Array(TOTAL_MAIN * 3),
+    fibonacciPositions: new Float32Array(TOTAL_MAIN * 3),
   };
 
   // Buffer attributes (directly used by GPU)
@@ -48,6 +50,8 @@ export function initializeParticleData(): {
   generateSpherePositions(TOTAL_MAIN, data.spherePositions, SHELL_RADIUS);
   generateDirections(data.spherePositions, data.directions);
   generateBrainPositions(TOTAL_MAIN, data.brainPositions, 1.2);
+  // Generate Fibonacci positions for all particles (particle 0 is core, will be at origin)
+  generateFibonacciPositions(TOTAL_MAIN, data.fibonacciPositions, SHELL_RADIUS);
 
   // Initialize random values and calculate state 2 radii
   for (let i = 0; i < TOTAL_MAIN; i++) {

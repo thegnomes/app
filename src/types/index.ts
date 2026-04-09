@@ -43,6 +43,7 @@ export interface ParticleData {
   migratorIndexMap: Int32Array;
   state2Radius: Float32Array;
   brainPositions: Float32Array;
+  fibonacciPositions: Float32Array; // Target positions on Fibonacci sphere
 }
 
 /** State labels for UI display */

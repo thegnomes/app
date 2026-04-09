@@ -233,8 +233,7 @@ export function animateState2And3(
     migrator,
     migratorDelay,
     nonMigratorDelay,
-    directions,
-    state2Radius,
+    fibonacciPositions,
   } = data;
 
   // Core particle hidden in state 3
@@ -254,19 +253,11 @@ export function animateState2And3(
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);
     const sinA = Math.sin(shellAngle);
-    const entryR = 6 + random[i] * 22;
     
-    // Fibonacci sphere formation - golden angle distribution
-    // Use (i-1) for 1-indexed loop to get proper distribution starting from particle 1
-    const particleIndex = i - 1;
-    const particleCount = TOTAL_MAIN - 1;
-    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
-    const yFib = 1 - (particleIndex / (particleCount - 1)) * 2; // Range: 1 to -1
-    const rAtY = Math.sqrt(1 - yFib * yFib);
-    const theta = phi * particleIndex;
-    const fibX = Math.cos(theta) * rAtY;
-    const fibY = yFib;
-    const fibZ = Math.sin(theta) * rAtY;
+    // Fibonacci sphere target position (pre-calculated)
+    const fibTargetX = fibonacciPositions[i3];
+    const fibTargetY = fibonacciPositions[i3 + 1];
+    const fibTargetZ = fibonacciPositions[i3 + 2];
 
     if (state === 2) {
       // STATE 2: CHARGING SHELL with 3 substates (0-8000ms)
@@ -281,108 +272,100 @@ export function animateState2And3(
       const startY = snapshotPositions[i3 + 1];
       const startZ = snapshotPositions[i3 + 2];
       
-      // Target base radius
-      const baseTargetR = state2Radius[i];
-      
       // CONTINUOUS TIMELINE for seamless transitions
-      // 0-3000ms: Substate 1 - Chaotic bounce
-      // 3000-5000ms: Substate 2 - Bounce decay to stable
-      // 5000-8000ms: Substate 3 - Compression + Color + Fibonacci
+      // 0-3000ms: Substate 1 - Bounce based on distance from Fibonacci target
+      // 3000-5000ms: Substate 2 - Bounce decay, already in Fibonacci formation
+      // 5000-8000ms: Substate 3 - Compression + Color shift
       
       let bounceAmp = 0;
       let colorT = 0;
       let compressionFactor = 1;
-      let fibWeight = 0;
       
-      // Calculate continuous bounce amplitude
-      if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: High bounce that decreases toward transition
-        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
-        // Decay toward end of substate 1 to prepare for smooth transition
-        const endOfS1Decay = 1 - (s1Progress * s1Progress * 0.5); // Parabolic decay
-        bounceAmp = baseTargetR * (0.35 + random[i] * 0.25) * endOfS1Decay;
-      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Smooth decay from s1 end to zero - NO random factor for clean sphere
-        const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
-        const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
-        // Start from s1's ending amplitude and decay to exactly 0
-        // Use fixed amplitude (no random) so all particles end at their target radius
-        const s1EndAmp = 0.45; // Normalized amplitude at end of s1
-        bounceAmp = baseTargetR * s1EndAmp * (1 - easeOutCubic(s2Progress));
-        
-        // Start blending to Fibonacci during substate 2
-        // This ensures we reach a clean Fibonacci sphere by the end of substate 2
-        fibWeight = easeOutCubic(s2Progress);
-      } else {
-        // Substate 3: Stable Fibonacci sphere with color shift
-        bounceAmp = 0;
-        fibWeight = 1; // Fully Fibonacci by substate 3
-        
+      // Calculate target position with compression applied
+      // Substate 3 applies 20% compression (radius * 0.8)
+      if (stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
+        // Substate 3: Apply compression
         const s3Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION;
-        const s3Progress = s3Elapsed / STATE2_COLOR_SHIFT_DURATION;
-        const s3Eased = easeOutCubic(Math.min(1, s3Progress));
-        
-        // Color shift
-        const colorSpeed = 0.6 + rnd * 0.4;
-        colorT = Math.min(1, s3Progress * colorSpeed);
+        const s3Progress = Math.min(1, s3Elapsed / STATE2_COLOR_SHIFT_DURATION);
+        const s3Eased = easeOutCubic(s3Progress);
         
         // Compression: 100% -> 80%
         compressionFactor = 1 - (s3Eased * 0.2);
-      }
-      
-      // Apply compression to target radius
-      // For Fibonacci sphere (substate 3), use uniform SHELL_RADIUS for clean surface
-      // For chaotic phases (substate 1-2), use varied state2Radius for depth
-      const targetR = (fibWeight > 0.9 ? SHELL_RADIUS : baseTargetR) * compressionFactor;
-      
-      // Calculate base position (directional for s1-s2, fibonacci blend for s3)
-      const dirX = directions[i3];
-      const dirY = directions[i3 + 1];
-      const dirZ = directions[i3 + 2];
-      
-      // Normalize fibonacci position to match radius
-      const fibLen = Math.sqrt(fibX * fibX + fibY * fibY + fibZ * fibZ) || 1;
-      const fibNormX = (fibX / fibLen);
-      const fibNormY = (fibY / fibLen);
-      const fibNormZ = (fibZ / fibLen);
-      
-      // Blend between directional and fibonacci
-      let baseX = (dirX * (1 - fibWeight) + fibNormX * fibWeight) * targetR;
-      let baseY = (dirY * (1 - fibWeight) + fibNormY * fibWeight) * targetR;
-      let baseZ = (dirZ * (1 - fibWeight) + fibNormZ * fibWeight) * targetR;
-      
-      // Apply rotation
-      const rx = baseX * cosA - baseZ * sinA;
-      const rz = baseX * sinA + baseZ * cosA;
-      baseX = rx;
-      baseZ = rz;
-      
-      // Interpolate from starfield to target position
-      const shellX = startX + (baseX - startX) * drawInEased;
-      const shellY = startY + (baseY - startY) * drawInEased;
-      const shellZ = startZ + (baseZ - startZ) * drawInEased;
-      
-      // Apply bouncing (radial offset)
-      if (bounceAmp > 0.01 && drawInProgress > 0.2) {
-        const bounceFreq = 8 + random[i] * 6;
-        const bouncePhase = time * bounceFreq + random[i] * 50;
-        // Multi-wave bounce for more chaotic feel in s1
-        const bounceOffset = Math.sin(bouncePhase) * bounceAmp + 
-                            Math.sin(bouncePhase * 1.3) * bounceAmp * 0.3;
         
-        // Apply bounce as position offset in the radial direction
-        const r = Math.sqrt(shellX * shellX + shellY * shellY + shellZ * shellZ) || 1;
-        const scale = 1 + (bounceOffset / r);
-        positions[i3] = shellX * scale;
-        positions[i3 + 1] = shellY * scale;
-        positions[i3 + 2] = shellZ * scale;
-      } else {
-        positions[i3] = shellX;
-        positions[i3 + 1] = shellY;
-        positions[i3 + 2] = shellZ;
+        // Color shift progress (only in substate 3)
+        const colorSpeed = 0.6 + rnd * 0.4;
+        colorT = Math.min(1, s3Progress * colorSpeed);
       }
       
-      // Color interpolation (blue -> orange)
+      // Target Fibonacci position with compression
+      const targetX = fibTargetX * compressionFactor;
+      const targetY = fibTargetY * compressionFactor;
+      const targetZ = fibTargetZ * compressionFactor;
+      
+      // Calculate base position (interpolated from starfield to Fibonacci target)
+      const baseX = startX + (targetX - startX) * drawInEased;
+      const baseY = startY + (targetY - startY) * drawInEased;
+      const baseZ = startZ + (targetZ - startZ) * drawInEased;
+      
+      // Apply rotation to base position
+      const rotX = baseX * cosA - baseZ * sinA;
+      const rotZ = baseX * sinA + baseZ * cosA;
+      const rotY = baseY;
+      
+      // Calculate bounce amplitude based on substate
+      if (stateElapsed < STATE2_ABSORPTION_DURATION) {
+        // Substate 1: Bounce based on distance from Fibonacci target
+        // The further from target, the bigger the bounce
+        // As particles settle into position, bounce naturally decays
+        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
+        
+        // Calculate current distance from target (how far we still need to travel)
+        // This creates a natural bounce that decreases as we approach the sphere
+        const distFromTarget = Math.sqrt(
+          (rotX - targetX * cosA + targetZ * sinA) ** 2 +
+          (rotY - targetY) ** 2 +
+          (rotZ - targetX * sinA - targetZ * cosA) ** 2
+        );
+        
+        // Base bounce amplitude that decays over time
+        const timeDecay = 1 - (s1Progress * 0.7); // Decay to 30% by end of s1
+        // Distance-based amplitude: particles further from target bounce more
+        const distBasedAmp = Math.min(1, distFromTarget / 20) * (0.3 + rnd * 0.2);
+        
+        bounceAmp = SHELL_RADIUS * distBasedAmp * timeDecay;
+      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
+        // Substate 2: Continue bounce decay to zero
+        // By now particles should be close to their Fibonacci positions
+        const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
+        const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
+        
+        // Smooth decay from substate 1 ending amplitude
+        const s1EndAmp = 0.3; // Remaining amplitude at end of s1
+        bounceAmp = SHELL_RADIUS * s1EndAmp * (1 - easeOutCubic(s2Progress)) * (0.5 + rnd * 0.3);
+      } else {
+        // Substate 3: No bounce, stable Fibonacci sphere
+        bounceAmp = 0;
+      }
+      
+      // Apply bouncing as radial offset
+      if (bounceAmp > 0.01 && drawInProgress > 0.2) {
+        const bounceFreq = 6 + rnd * 4;
+        const bouncePhase = time * bounceFreq + rnd * 50;
+        // Use distance from center to calculate radial bounce
+        const r = Math.sqrt(rotX * rotX + rotY * rotY + rotZ * rotZ) || 1;
+        const bounceOffset = Math.sin(bouncePhase) * bounceAmp;
+        const scale = 1 + (bounceOffset / r);
+        
+        positions[i3] = rotX * scale;
+        positions[i3 + 1] = rotY * scale;
+        positions[i3 + 2] = rotZ * scale;
+      } else {
+        positions[i3] = rotX;
+        positions[i3 + 1] = rotY;
+        positions[i3 + 2] = rotZ;
+      }
+      
+      // Color interpolation (blue -> orange, only in substate 3)
       const colorEased = easeOutCubic(colorT);
       const flicker = (1 - colorT) * Math.sin(time * 0.008 + rnd * 5) * 0.15;
       const brightness = 0.85 + flicker;
@@ -391,25 +374,24 @@ export function animateState2And3(
       colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
       
       // Size with bounce pulsing
-      const pulse = bounceAmp > 0.01 ? Math.abs(Math.sin(time * 6 + i)) * 0.3 * (bounceAmp / targetR) : 0;
+      const pulse = bounceAmp > 0.01 ? Math.abs(Math.sin(time * 6 + i)) * 0.3 * (bounceAmp / SHELL_RADIUS) : 0;
       sizes[i] = 1.6 + rnd * 0.4 + pulse;
       alphas[i] = 0.9;
       
     } else {
-      // STATE 3: SOLAR SYSTEM - matches substate 3 exactly
-      // Use uniform SHELL_RADIUS for clean Fibonacci sphere surface
-      const targetR = SHELL_RADIUS * 0.8;
+      // STATE 3: SOLAR SYSTEM - stable Fibonacci sphere with 20% compression
+      const compressionFactor = 0.8;
       
-      // Fibonacci position
-      const fx = fibX * targetR;
-      const fy = fibY * targetR;
-      const fz = fibZ * targetR;
+      // Apply compression and rotation to Fibonacci position
+      const fx = fibTargetX * compressionFactor;
+      const fy = fibTargetY * compressionFactor;
+      const fz = fibTargetZ * compressionFactor;
       
       const rx = fx * cosA - fz * sinA;
       const rz = fx * sinA + fz * cosA;
       
       const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.2;
-      const breatheScale = 1 + breathe / targetR;
+      const breatheScale = 1 + breathe / (SHELL_RADIUS * compressionFactor);
       
       positions[i3] = rx * breatheScale;
       positions[i3 + 1] = fy * breatheScale;
