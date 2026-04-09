@@ -170,11 +170,15 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           data.time.current;
       }
 
-      if (refs.coreGroup.current) {
+      if (refs.coreGroup.current && refs.coreGroup.current.children.length >= 2) {
         const mesh = refs.coreGroup.current.children[0] as THREE.Mesh;
         const glow = refs.coreGroup.current.children[1] as THREE.Mesh;
-        (mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
-        (glow.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+        if (mesh && (mesh.material as THREE.ShaderMaterial).uniforms?.uTime) {
+          (mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+        }
+        if (glow && (glow.material as THREE.ShaderMaterial).uniforms?.uTime) {
+          (glow.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+        }
       }
 
       // Update planet glow shader uniforms
