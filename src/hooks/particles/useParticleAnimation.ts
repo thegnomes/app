@@ -4,7 +4,6 @@ import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
 import {
   STATE4_CONCENTRATE,
-  STATE1_DURATION,
   TIME_STEP,
   TOTAL_MAIN,
   TRAIL_LENGTH,

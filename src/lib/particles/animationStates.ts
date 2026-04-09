@@ -41,56 +41,25 @@ const COLOR_DIFF_B = SOFT_CYAN_B - DARK_BLUE_B;
 
 export function animateState0(
   attributes: ParticleAttributes,
-  data: ParticleData,
-  time: number,
+  _data: ParticleData,
+  _time: number,
   _coreColor: THREE.Color
 ): void {
+  void _data;
+  void _time;
+  void _coreColor;
   const { positions, colors, sizes, alphas } = attributes;
-  const { brainPositions, random } = data;
-
-  // Pre-calculate time-based values outside the loop
-  const pulse = 1 + Math.sin(time * 0.6) * 0.01;
-  const coreSize = 2.5 + Math.sin(time * 2.0) * 0.4;
 
   for (let i = 0; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
-
-    if (i === 0) {
-      // Central glow - subtle neural core
-      positions[i3] = 0;
-      positions[i3 + 1] = 0;
-      positions[i3 + 2] = 0;
-      // Soft cyan core - reduced brightness
-      colors[i3] = 0.1;
-      colors[i3 + 1] = 0.5;
-      colors[i3 + 2] = 0.6;
-      sizes[i] = coreSize;
-      alphas[i] = 0.7;
-      continue;
-    }
-
-    const rnd = random[i];
-
-    // Apply pulsing animation
-    positions[i3] = brainPositions[i3] * pulse;
-    positions[i3 + 1] = brainPositions[i3 + 1] * pulse;
-    positions[i3 + 2] = brainPositions[i3 + 2] * pulse;
-
-    // Twinkle calculation
-    const twinkle = Math.sin(time * (0.8 + rnd * 1.2) + rnd * 6.283);
-    const neuralIntensity = (twinkle + 1) * 0.25; // 0 to 0.5
-    
-    // Interpolate colors manually (no object allocation)
-    const brightness = 0.15 + neuralIntensity * 0.4;
-    colors[i3] = (DARK_BLUE_R + COLOR_DIFF_R * neuralIntensity) * brightness;
-    colors[i3 + 1] = (DARK_BLUE_G + COLOR_DIFF_G * neuralIntensity) * brightness;
-    colors[i3 + 2] = (DARK_BLUE_B + COLOR_DIFF_B * neuralIntensity) * brightness;
-
-    // Size with glow
-    sizes[i] = 0.25 + rnd * 0.15 + neuralIntensity * (0.6 + rnd * 0.4);
-
-    // Alpha
-    alphas[i] = 0.25 + rnd * 0.15 + neuralIntensity * 0.2;
+    positions[i3] = 0;
+    positions[i3 + 1] = 0;
+    positions[i3 + 2] = 0;
+    colors[i3] = 0;
+    colors[i3 + 1] = 0;
+    colors[i3 + 2] = 0;
+    sizes[i] = 0;
+    alphas[i] = 0;
   }
 }
 
@@ -120,6 +89,8 @@ export function animateState1(
   _primaryColor: THREE.Color,
   _secondaryColor: THREE.Color
 ): void {
+  void _primaryColor;
+  void _secondaryColor;
   const { positions, colors, sizes, alphas } = attributes;
   const { homePositions, brainPositions, random } = data;
 
@@ -134,7 +105,7 @@ export function animateState1(
       // Background stars appear first (0-800ms), then core fades in (1000-1800ms)
       const CORE_VISIBLE_START = 1000; // Core starts appearing at 1s
       const CORE_DURATION = 800; // 0.8s to fully appear
-      let coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_VISIBLE_START) / CORE_DURATION));
+      const coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_VISIBLE_START) / CORE_DURATION));
       const coreEased = easeOutCubic(coreT);
       
       positions[i3] = 0;
@@ -249,9 +220,12 @@ export function animateState2And3(
   time: number,
   _speed: number,
   shellAngle: number,
-  primaryColor: THREE.Color,
-  secondaryColor: THREE.Color
+  _primaryColor: THREE.Color,
+  _secondaryColor: THREE.Color
 ): void {
+  void _speed;
+  void _primaryColor;
+  void _secondaryColor;
   const { positions, colors, sizes, alphas } = attributes;
   const {
     random,
@@ -279,6 +253,7 @@ export function animateState2And3(
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);
     const sinA = Math.sin(shellAngle);
+    const entryR = 6 + random[i] * 22;
     
     // Fibonacci sphere formation for substate 3
     const phi = Math.PI * (3 - Math.sqrt(5));

@@ -5,6 +5,11 @@ import { StateText } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import './App.css';
+import {
+  STATE2_ABSORPTION_DURATION,
+  STATE2_STABILIZE_DURATION,
+  STATE2_DURATION,
+} from '@/lib/particles/constants';
 
 export type AppState = 0 | 1 | 2 | 3 | 4;
 
@@ -32,6 +37,7 @@ function App() {
   
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   
   // Camera pan state
@@ -48,6 +54,23 @@ function App() {
     offset: { x: 0, y: 0 },
     targetOffset: { x: 0, y: 0 },
   });
+
+  const clearState2Timers = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    substateTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+    substateTimersRef.current = [];
+  }, []);
+
+  const dispatchState2SubstateEvent = useCallback((substate: 1 | 2 | 3, startMs: number, endMs: number) => {
+    window.dispatchEvent(
+      new CustomEvent('particle:state2-substate-change', {
+        detail: { substate, startMs, endMs },
+      })
+    );
+  }, []);
 
   // Handle transition from State 0 (video brain) to State 1 (starfield)
   const handleVideoTransition = useCallback(() => {
@@ -121,15 +144,36 @@ function App() {
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       setState(2);
       inState2Ref.current = true;
+
+      dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
+      substateTimersRef.current.push(
+        setTimeout(() => {
+          dispatchState2SubstateEvent(
+            2,
+            STATE2_ABSORPTION_DURATION,
+            STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION
+          );
+        }, STATE2_ABSORPTION_DURATION)
+      );
+      substateTimersRef.current.push(
+        setTimeout(() => {
+          dispatchState2SubstateEvent(
+            3,
+            STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION,
+            80000
+          );
+        }, STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION)
+      );
+
       holdTimerRef.current = setTimeout(() => {
         inState2Ref.current = false;
         setState(3);
-      }, 7000);
+      }, STATE2_DURATION);
     };
 
     const handleMouseUp = () => {
       if (inState2Ref.current) {
-        if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+        clearState2Timers();
         inState2Ref.current = false;
         setState(4);
       }
@@ -139,10 +183,11 @@ function App() {
     window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
+      clearState2Timers();
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, []);
+  }, [clearState2Timers, dispatchState2SubstateEvent]);
 
   // Auto-return from state 4 to state 1
   useEffect(() => {
