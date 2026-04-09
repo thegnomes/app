@@ -205,11 +205,11 @@ const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
   SUBSTATE_1_START: 0,
-  SUBSTATE_1_END: 3000,
-  SUBSTATE_2_START: 3000,
-  SUBSTATE_2_END: 5000,
-  SUBSTATE_3_START: 5000,
-  SUBSTATE_3_END: 8000,
+  SUBSTATE_1_END: 6000,
+  SUBSTATE_2_START: 6000,
+  SUBSTATE_2_END: 10000,
+  SUBSTATE_3_START: 10000,
+  SUBSTATE_3_END: 13000,
 } as const;
 
 export function animateState2And3(
@@ -253,11 +253,11 @@ export function animateState2And3(
     const fibTargetZ = fibonacciPositions[i3 + 2];
 
     if (state === 2) {
-      // STATE 2: CHARGING SHELL with 3 substates (0-16000ms)
+      // STATE 2: CHARGING SHELL with 3 substates (0-13000ms)
       // 
       // Substate 1 (0-6000ms): Particles flow from starfield to Fibonacci positions
       // Substate 2 (6000-10000ms): Spike/thorn bounce with decay
-      // Substate 3 (10000-16000ms): Stable sphere with color shift + compression
+      // Substate 3 (10000-13000ms): Stable sphere with color shift + compression
       
       // Start from starfield position
       const startX = snapshotPositions[i3];
