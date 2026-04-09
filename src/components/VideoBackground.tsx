@@ -5,14 +5,19 @@ interface VideoBackgroundProps {
   onTransition: () => void;
 }
 
+// Transition to starfield at 1:35 (95 seconds)
+const TRANSITION_TIME = 95;
+
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
+  const hasTransitionedRef = useRef(false);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
+      hasTransitionedRef.current = false;
       // Play the zoom video
       if (zoomVideoRef.current) {
         zoomVideoRef.current.play();
@@ -20,11 +25,27 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
     }
   };
 
+  const handleTimeUpdate = () => {
+    const video = zoomVideoRef.current;
+    if (!video || hasTransitionedRef.current) return;
+    
+    // Transition at 1:35 mark
+    if (video.currentTime >= TRANSITION_TIME) {
+      hasTransitionedRef.current = true;
+      // Start fading out the video while starfield fades in
+      setIsFadingOut(true);
+      // Trigger transition to starfield
+      onTransition();
+    }
+  };
+
   const handleZoomEnded = () => {
-    // Start fading out the video while starfield fades in
-    setIsFadingOut(true);
-    // Trigger transition to starfield (starts fading in)
-    onTransition();
+    // Fallback: if video ends before transition (shouldn't happen), trigger it
+    if (!hasTransitionedRef.current) {
+      hasTransitionedRef.current = true;
+      setIsFadingOut(true);
+      onTransition();
+    }
   };
 
   if (!isActive) return null;
@@ -51,7 +72,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         />
       )}
 
-      {/* Zoom transition video - plays to completion, then crossfades */}
+      {/* Zoom transition video - transitions at 1:35 mark */}
       <video
         ref={zoomVideoRef}
         src="/brain_zoom.webm"
@@ -64,6 +85,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         style={{
           transition: 'opacity 0.5s ease-out',
         }}
+        onTimeUpdate={handleTimeUpdate}
         onEnded={handleZoomEnded}
       />
       
