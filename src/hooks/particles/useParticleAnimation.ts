@@ -243,7 +243,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = false;
-          if (refs.neuralConnections.current) refs.neuralConnections.current.visible = true;
           break;
 
         case 1:
@@ -262,7 +261,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = false;
-          if (refs.neuralConnections.current) refs.neuralConnections.current.visible = false;
           break;
 
         case 2:
@@ -286,7 +284,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             refs.orbitGroup.current.visible = currentState === 3;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = false;
-          if (refs.neuralConnections.current) refs.neuralConnections.current.visible = false;
 
           // State 3: Animate planets
           if (currentState === 3) {
@@ -310,7 +307,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = true;
-          if (refs.neuralConnections.current) refs.neuralConnections.current.visible = false;
 
           animateState4(
             attributes,
