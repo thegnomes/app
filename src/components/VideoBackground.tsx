@@ -39,27 +39,26 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         pointerEvents: isFadingOut ? 'none' : 'auto',
       }}
     >
-      {/* Idle brain GIF - slow rotation */}
+      {/* Idle brain video - slow rotation */}
       {!isZooming && (
-        <img
-          src="/Brain_7.gif"
-          alt="Brain"
-          className="w-full h-full object-contain"
-          style={{
-            width: 'min(45vh, 450px)',
-            height: 'min(45vh, 450px)',
-          }}
+        <video
+          src="/idle_brain.webm"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover"
         />
       )}
 
       {/* Zoom transition video - plays to completion, then crossfades */}
       <video
         ref={zoomVideoRef}
-        src="/brain_zoom.mp4"
+        src="/brain_zoom.webm"
         muted
         playsInline
         className={`
-          absolute inset-0 w-full h-full object-contain
+          absolute inset-0 w-full h-full object-cover
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
         style={{

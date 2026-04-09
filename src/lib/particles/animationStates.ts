@@ -110,15 +110,15 @@ const STAR1_DIFF_B = STAR_COLOR_B - BRAIN_COLOR_B;
 export function animateState1(
   attributes: ParticleAttributes,
   data: ParticleData,
-  stateElapsed: number,
-  snapshotPositions: Float32Array,
+  _stateElapsed: number,
+  _snapshotPositions: Float32Array,
   time: number,
   coreColor: THREE.Color,
   _primaryColor: THREE.Color,
   _secondaryColor: THREE.Color
 ): void {
   const { positions, colors, sizes, alphas } = attributes;
-  const { homePositions, brainPositions, random } = data;
+  const { homePositions, random } = data;
 
   for (let i = 0; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
@@ -139,57 +139,30 @@ export function animateState1(
 
     const rnd = random[i];
     
-    // Calculate animation progress
-    const brainX = brainPositions[i3];
-    const brainY = brainPositions[i3 + 1];
-    const brainZ = brainPositions[i3 + 2];
-    const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
-    const distDelay = (distFromCenter / 25) * 0.3;
-    const delay = distDelay + rnd * 0.3;
-    
-    let t = (stateElapsed / STATE1_DURATION - delay) / (1 - delay);
-    t = Math.max(0, Math.min(1, t));
-    const eased = easeOutCubic(t);
-
-    const sx = snapshotPositions[i3];
-    const sy = snapshotPositions[i3 + 1];
-    const sz = snapshotPositions[i3 + 2];
+    // Particles are immediately at their starfield positions (homePositions)
+    // No entry animation - ensures continuity with the video's last frame
     const tx = homePositions[i3];
     const ty = homePositions[i3 + 1];
     const tz = homePositions[i3 + 2];
-
-    // Two-phase animation
-    if (t < 0.4) {
-      const expandEased = easeOutCubic(t / 0.4);
-      const currentExpansion = 1 + expandEased * 2.5;
-      positions[i3] = sx * currentExpansion;
-      positions[i3 + 1] = sy * currentExpansion;
-      positions[i3 + 2] = sz * currentExpansion;
-    } else {
-      const disperseEased = easeOutCubic((t - 0.4) / 0.6);
-      const maxExpandX = sx * 3.5;
-      const maxExpandY = sy * 3.5;
-      const maxExpandZ = sz * 3.5;
-      
-      positions[i3] = maxExpandX + (tx - maxExpandX) * disperseEased;
-      positions[i3 + 1] = maxExpandY + (ty - maxExpandY) * disperseEased;
-      positions[i3 + 2] = maxExpandZ + (tz - maxExpandZ) * disperseEased;
-    }
-
-    // Twinkle effect - brighter for more visible starfield
-    const twinkle = Math.sin(time * (1.0 + rnd * 2.0) + rnd * 6.283);
-    const glimmerIntensity = (Math.max(0, twinkle) * 0.4 + 0.2) * eased;
     
-    // Manual color interpolation (no object allocation) - increased brightness
-    const brightness = 0.3 + glimmerIntensity * 0.8;
-    colors[i3] = (BRAIN_COLOR_R + STAR1_DIFF_R * eased) * brightness;
-    colors[i3 + 1] = (BRAIN_COLOR_G + STAR1_DIFF_G * eased) * brightness;
-    colors[i3 + 2] = (BRAIN_COLOR_B + STAR1_DIFF_B * eased) * brightness;
+    positions[i3] = tx;
+    positions[i3 + 1] = ty;
+    positions[i3 + 2] = tz;
 
-    // Size and alpha - brighter and more visible
-    const baseSize = 0.5 + rnd * 0.3 + (0.7 + rnd * 0.5) * eased;
-    sizes[i] = (baseSize + glimmerIntensity * 0.8) * eased;
-    alphas[i] = (0.4 + rnd * 0.3) * eased + glimmerIntensity * 0.5;
+    // Twinkle effect for starfield appearance
+    const twinkle = Math.sin(time * (1.0 + rnd * 2.0) + rnd * 6.283);
+    const glimmerIntensity = Math.max(0, twinkle) * 0.4 + 0.2;
+    
+    // Starfield colors - bright white/blue stars
+    const brightness = 0.3 + glimmerIntensity * 0.8;
+    colors[i3] = STAR_COLOR_R * brightness;
+    colors[i3 + 1] = STAR_COLOR_G * brightness;
+    colors[i3 + 2] = STAR_COLOR_B * brightness;
+
+    // Size and alpha - consistent starfield appearance
+    const baseSize = 0.5 + rnd * 0.3 + (0.7 + rnd * 0.5);
+    sizes[i] = baseSize + glimmerIntensity * 0.8;
+    alphas[i] = (0.4 + rnd * 0.3) + glimmerIntensity * 0.5;
   }
 }
 
