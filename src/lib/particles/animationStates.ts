@@ -128,10 +128,11 @@ export function animateState1(
 
     if (i === 0) {
       // Core particle - bright center of starfield
-      // Core appears AFTER background particles for continuity
-      const coreDelay = 0.5; // Core appears after background has started
-      let coreT = (stateElapsed / STATE1_DURATION - coreDelay) / (1 - coreDelay);
-      coreT = Math.max(0, Math.min(1, coreT * 3)); // 3x speed to catch up quickly
+      // Core appears AFTER background starts but BEFORE background is complete
+      // This creates a layered reveal: brain dissolves -> stars appear -> core brightens
+      const CORE_DELAY = 150; // 150ms delay - starts while background is still forming
+      const CORE_SPEED = 600; // 600ms to fully appear
+      let coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_DELAY) / CORE_SPEED));
       const coreEased = easeOutCubic(coreT);
       
       positions[i3] = 0;
@@ -140,7 +141,7 @@ export function animateState1(
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      // Core fades in after background
+      // Core fades in with pulsing
       sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
       alphas[i] = 0.9 * coreEased;
       continue;
@@ -154,11 +155,13 @@ export function animateState1(
     const brainY = brainPositions[i3 + 1];
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
-    const distDelay = (distFromCenter / 25) * 0.3;
-    const delay = distDelay + rnd * 0.2; // No minimum delay - start immediately
     
-    let t = (stateElapsed / STATE1_DURATION - delay) / (1 - delay);
-    t = Math.max(0, Math.min(1, t));
+    // Fast entry: particles start immediately, no delay
+    // Use a compressed timeline for quicker visibility (400ms)
+    const FAST_ENTRY = 400; // 400ms for particles to fully appear
+    let t = Math.min(1, stateElapsed / FAST_ENTRY);
+    // Add slight variation per particle based on distance from center
+    t = Math.max(0, t - (distFromCenter / 60) * 0.3 - rnd * 0.2);
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];

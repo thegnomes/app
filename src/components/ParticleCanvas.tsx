@@ -46,8 +46,8 @@ export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasPr
         background: state === 0 ? 'black' : 'radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%)',
         cursor: cursorStyle,
         opacity: state === 0 ? 0 : 1, // Hide in State 0, show in other states
-        // Smooth fade-in for State 1 to overlap with video fade-out
-        transition: 'opacity 0.6s ease-in',
+        // NO transition - particles must be visible immediately for seamless video handoff
+        transition: 'none',
         pointerEvents: state === 0 ? 'none' : 'auto',
       }}
     />
