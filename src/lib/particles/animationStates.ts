@@ -290,8 +290,8 @@ export function animateState2And3(
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: Particles coming from starfield with thorn bounce
-        // Interpolate from starfield position toward sphere
+        // Substate 1: Particles coming from starfield
+        // Smooth radial approach toward sphere, no bounce yet
         
         // Calculate direction from start to Fibonacci target
         const toFibX = fibX - startX;
@@ -299,88 +299,61 @@ export function animateState2And3(
         const toFibZ = fibZ - startZ;
         
         // Current position: interpolate from starfield toward Fibonacci
-        // Use eased progress for smooth arrival
-        const cx = startX + toFibX * drawInEased * 0.7; // Only 70% toward target in s1
-        const cy = startY + toFibY * drawInEased * 0.7;
-        const cz = startZ + toFibZ * drawInEased * 0.7;
+        // Full progress to reach target by end of substate 1
+        const cx = startX + toFibX * drawInEased;
+        const cy = startY + toFibY * drawInEased;
+        const cz = startZ + toFibZ * drawInEased;
         
         // Apply rotation to create spinning effect
         const rx = cx * cosA - cz * sinA;
         const rz = cx * sinA + cz * cosA;
         const ry = cy;
         
-        // Substate 1: Radial bounce creating thorn/spike effect
-        // Different speeds per particle create spiky appearance
+        // No bounce in substate 1 - just smooth approach
+        positions[i3] = rx;
+        positions[i3 + 1] = ry;
+        positions[i3 + 2] = rz;
         
-        // Spike/thorn wave calculation
-        const idxPhase = (i % 11) * 0.57; // 11 phase groups for uneven distribution
+      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
+        // Substate 2: Spike/thorn bounce effect with decay
+        const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
+        const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
+        
+        // At start of s2, particles are at Fibonacci positions (from s1)
+        // Apply rotation for spinning
+        const fx = fibX * cosA - fibZ * sinA;
+        const fz = fibX * sinA + fibZ * cosA;
+        const fy = fibY;
+        
+        // Spike/thorn bounce calculation - repetitive throughout s2, amplitude decays toward s3
+        const idxPhase = (i % 11) * 0.57; // 11 phase groups
         const speedGroup = (i % 7); // 7 speed groups
-        const baseFreq = 12 + speedGroup * 2.5 + rnd * 3; // Varied frequencies
+        const baseFreq = 12 + speedGroup * 2.5 + rnd * 3;
         
-        // Multi-wave for sharp spikes
+        // Multi-wave for sharp spikes - REPETITIVE (continuous oscillation)
         const primaryWave = Math.sin(time * baseFreq + idxPhase);
         const harmonicWave = Math.sin(time * baseFreq * 2.7 + idxPhase * 1.3) * 0.4;
         const slowPulse = Math.sin(time * baseFreq * 0.4 + idxPhase * 0.5) * 0.2;
-        
-        // Combine - the harmonic creates sharp peaks (thorns)
         const spikeWave = primaryWave + harmonicWave * Math.abs(primaryWave) + slowPulse;
         
-        // Amplitude: bigger bounce for energetic effect
-        const baseAmp = 0.25 + rnd * 0.35; // 25-60% of shell radius
-        const bounceAmp = SHELL_RADIUS * baseAmp;
+        // Base amplitude - repetitive bounce throughout substate 2
+        const baseAmp = 0.3 + rnd * 0.4; // 30-70% of shell radius
+        let bounceAmp = SHELL_RADIUS * baseAmp;
         
-        // Apply radial bounce (toward/away from center)
+        // Amplitude decay only starts in last 40% of s2 (preparing for s3 transition)
+        if (s2Progress > 0.6) {
+          const decayProgress = (s2Progress - 0.6) / 0.4; // 0 to 1 in last 40%
+          bounceAmp *= (1 - easeOutCubic(decayProgress));
+        }
+        
+        // Apply radial bounce (repetitive - keeps oscillating)
         const bounceOffset = spikeWave * bounceAmp;
-        const r = Math.sqrt(rx * rx + ry * ry + rz * rz) || 1;
+        const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
         const scale = 1 + (bounceOffset / r);
         
-        positions[i3] = rx * scale;
-        positions[i3 + 1] = ry * scale;
-        positions[i3 + 2] = rz * scale;
-        
-      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Continue draw-in to Fibonacci formation with decaying bounce
-        const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
-        const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
-        const s2Eased = easeOutCubic(s2Progress);
-        
-        // Continue from s1 position (70% there) to full Fibonacci
-        const toFibX = fibX - startX;
-        const toFibY = fibY - startY;
-        const toFibZ = fibZ - startZ;
-        
-        // Progress from 70% to 100%
-        const s1Progress = 0.7;
-        const currentProgress = s1Progress + (1 - s1Progress) * drawInEased;
-        
-        const cx = startX + toFibX * currentProgress;
-        const cy = startY + toFibY * currentProgress;
-        const cz = startZ + toFibZ * currentProgress;
-        
-        // Apply rotation
-        const rx = cx * cosA - cz * sinA;
-        const rz = cx * sinA + cz * cosA;
-        const ry = cy;
-        
-        // Decaying bounce
-        const s1Amp = 0.25 + rnd * 0.35;
-        const decayedAmp = SHELL_RADIUS * s1Amp * (1 - s2Eased);
-        
-        if (decayedAmp > 0.01) {
-          const bounceFreq = 6 + rnd * 4;
-          const bouncePhase = time * bounceFreq + rnd * 50;
-          const bounceOffset = Math.sin(bouncePhase) * decayedAmp;
-          const r = Math.sqrt(rx * rx + ry * ry + rz * rz) || 1;
-          const scale = 1 + (bounceOffset / r);
-          
-          positions[i3] = rx * scale;
-          positions[i3 + 1] = ry * scale;
-          positions[i3 + 2] = rz * scale;
-        } else {
-          positions[i3] = rx;
-          positions[i3 + 1] = ry;
-          positions[i3 + 2] = rz;
-        }
+        positions[i3] = fx * scale;
+        positions[i3 + 1] = fy * scale;
+        positions[i3 + 2] = fz * scale;
         
       } else {
         // Substate 3: Stable Fibonacci sphere with compression + color
