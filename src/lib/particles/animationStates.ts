@@ -280,36 +280,36 @@ export function animateState2And3(
       let compressionFactor = 1;
       let baseRadius: number;
       
+      // Total draw-in duration spans substate 1 + substate 2 (0-5000ms)
+      // Each particle has individual delay for staggered arrival
+      const totalDrawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      const particleDelay = delay * 2.5; // Staggered delay based on migrator status
+      const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
+      const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
+      const drawInEased = easeOutCubic(drawInProgress);
+      
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: Draw-in phase with radial bounce
-        // Progress from 0 to 1 over substate 1 duration
-        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
-        // Use easing but slower to not reach full formation yet
-        const drawProgress = easeOutCubic(s1Progress * 0.85); // Only 85% toward target
+        // Substate 1: Particles coming from starfield with thorn bounce
+        // Interpolate from starfield position toward sphere
         
-        // Calculate direction from center to Fibonacci target
-        const fibDist = Math.sqrt(fibX * fibX + fibY * fibY + fibZ * fibZ) || 1;
-        const dirX = fibX / fibDist;
-        const dirY = fibY / fibDist;
-        const dirZ = fibZ / fibDist;
+        // Calculate direction from start to Fibonacci target
+        const toFibX = fibX - startX;
+        const toFibY = fibY - startY;
+        const toFibZ = fibZ - startZ;
         
-        // Current target radius during draw-in
-        const currentTargetR = SHELL_RADIUS * drawProgress;
-        baseRadius = currentTargetR;
+        // Current position: interpolate from starfield toward Fibonacci
+        // Use eased progress for smooth arrival
+        const cx = startX + toFibX * drawInEased * 0.7; // Only 70% toward target in s1
+        const cy = startY + toFibY * drawInEased * 0.7;
+        const cz = startZ + toFibZ * drawInEased * 0.7;
         
-        // Position along the radial line toward Fibonacci target
-        const bx = dirX * currentTargetR;
-        const by = dirY * currentTargetR;
-        const bz = dirZ * currentTargetR;
-        
-        // Apply rotation
-        const rx = bx * cosA - bz * sinA;
-        const rz = bx * sinA + bz * cosA;
-        const ry = by;
+        // Apply rotation to create spinning effect
+        const rx = cx * cosA - cz * sinA;
+        const rz = cx * sinA + cz * cosA;
+        const ry = cy;
         
         // Substate 1: Radial bounce creating thorn/spike effect
-        // Particles bounce toward and away from core on single axis
         // Different speeds per particle create spiky appearance
         
         // Spike/thorn wave calculation
@@ -325,7 +325,7 @@ export function animateState2And3(
         // Combine - the harmonic creates sharp peaks (thorns)
         const spikeWave = primaryWave + harmonicWave * Math.abs(primaryWave) + slowPulse;
         
-        // Amplitude: bigger for particles still approaching, varied by random
+        // Amplitude: bigger bounce for energetic effect
         const baseAmp = 0.25 + rnd * 0.35; // 25-60% of shell radius
         const bounceAmp = SHELL_RADIUS * baseAmp;
         
@@ -339,31 +339,28 @@ export function animateState2And3(
         positions[i3 + 2] = rz * scale;
         
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Transition to Fibonacci formation with decaying bounce
+        // Substate 2: Continue draw-in to Fibonacci formation with decaying bounce
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         const s2Eased = easeOutCubic(s2Progress);
         
-        // Start from substate 1 end position, move to Fibonacci
-        const s1EndR = SHELL_RADIUS * 0.85;
-        const fibDist = Math.sqrt(fibX * fibX + fibY * fibY + fibZ * fibZ) || 1;
-        const dirX = fibX / fibDist;
-        const dirY = fibY / fibDist;
-        const dirZ = fibZ / fibDist;
+        // Continue from s1 position (70% there) to full Fibonacci
+        const toFibX = fibX - startX;
+        const toFibY = fibY - startY;
+        const toFibZ = fibZ - startZ;
         
-        // Interpolate radius from s1 end to full Fibonacci
-        const currentR = s1EndR + (SHELL_RADIUS - s1EndR) * s2Eased;
-        baseRadius = currentR;
+        // Progress from 70% to 100%
+        const s1Progress = 0.7;
+        const currentProgress = s1Progress + (1 - s1Progress) * drawInEased;
         
-        // Position
-        const bx = dirX * currentR;
-        const by = dirY * currentR;
-        const bz = dirZ * currentR;
+        const cx = startX + toFibX * currentProgress;
+        const cy = startY + toFibY * currentProgress;
+        const cz = startZ + toFibZ * currentProgress;
         
         // Apply rotation
-        const rx = bx * cosA - bz * sinA;
-        const rz = bx * sinA + bz * cosA;
-        const ry = by;
+        const rx = cx * cosA - cz * sinA;
+        const rz = cx * sinA + cz * cosA;
+        const ry = cy;
         
         // Decaying bounce
         const s1Amp = 0.25 + rnd * 0.35;
