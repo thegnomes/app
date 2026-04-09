@@ -127,11 +127,10 @@ export function animateState1(
     const i3 = i * 3;
 
     if (i === 0) {
-      // Core particle - bright center of starfield
-      // Core appears AFTER background starts but BEFORE background is complete
-      // This creates a layered reveal: brain dissolves -> stars appear -> core brightens
-      const CORE_DELAY = 400; // 400ms delay - starts after some stars are visible
-      const CORE_SPEED = 1500; // 1.5s to fully appear - gradual like background
+      // Core particle - appears AFTER background particles are visible
+      // Background stars appear first, then core fades in as the center anchor
+      const CORE_DELAY = 800; // 800ms delay - background stars visible first
+      const CORE_SPEED = 1200; // 1.2s to fully appear
       let coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_DELAY) / CORE_SPEED));
       const coreEased = easeOutCubic(coreT);
       
@@ -141,7 +140,7 @@ export function animateState1(
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      // Core fades in with pulsing
+      // Core fades in after background
       sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
       alphas[i] = 0.9 * coreEased;
       continue;
@@ -150,18 +149,17 @@ export function animateState1(
     const rnd = random[i];
     
     // Calculate animation progress for entry effect
-    // Background particles appear FIRST for continuity from brain zoom
+    // Background particles appear FIRST (immediately), core comes later
     const brainX = brainPositions[i3];
     const brainY = brainPositions[i3 + 1];
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
     
-    // Gradual entry over 2.5 seconds for smooth transition with transparent video
-    // Particles fade in gradually while the zoom video plays above
-    const GRADUAL_ENTRY = 2500; // 2.5s for full appearance
-    let t = Math.min(1, stateElapsed / GRADUAL_ENTRY);
-    // Particles farther from center appear slightly later for organic spread
-    t = Math.max(0, t - (distFromCenter / 80) * 0.4 - rnd * 0.15);
+    // Background appears over 1.5s - starts immediately
+    const BG_ENTRY = 1500; // 1.5s for full appearance
+    let t = Math.min(1, stateElapsed / BG_ENTRY);
+    // Slight variation based on distance from center for organic feel
+    t = Math.max(0, t - (distFromCenter / 100) * 0.2 - rnd * 0.1);
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];
@@ -320,33 +318,34 @@ export function animateState2And3(
       // STATE 2: Three substages
       
       if (subStage === 1) {
-        // SUBSTAGE 1: Absorption (0-3000ms) - Continuous bouncing that slowly stabilizes
+        // SUBSTAGE 1: Absorption (0-3000ms) - FAST CHAOTIC BOUNCING ONLY
         const absorptionProgress = Math.min(1, Math.max(0, (stateElapsed - delay) / STATE2_ABSORPTION_DURATION));
+        const easedAbsorption = easeOutCubic(absorptionProgress);
         
-        // Continuous bouncing using time-based sine wave (not progress-based)
-        // Bounce frequency slows down as we approach substate 2
-        const baseFreq = 4; // Base bounce frequency
-        const freqDecay = 1 - (absorptionProgress * 0.5); // Frequency slows to 50% by end
-        const bounceFreq = baseFreq * freqDecay;
-        const bouncePhase = time * bounceFreq + random[i] * 10;
+        // FAST chaotic bouncing - higher frequency for more energy
+        const bounceFreq = 8 + random[i] * 6; // 8-14 Hz - very fast bouncing
+        const bouncePhase = time * bounceFreq + random[i] * 100;
         
-        // Amplitude decays as we progress toward stabilization
-        const amplitudeDecay = Math.exp(-absorptionProgress * 1.5);
-        const bounceAmp = entryR * 0.4 * amplitudeDecay;
+        // Large bounce amplitude that starts high and decays toward end of substate 1
+        const amplitudeDecay = 1 - (easedAbsorption * 0.3); // Only 30% decay by end of substate 1
+        const bounceAmp = entryR * (0.5 + random[i] * 0.3) * amplitudeDecay;
         
-        // Base radius grows from 0 to entryR
-        const baseR = entryR * easeOutCubic(absorptionProgress);
+        // Base radius grows toward shell
+        const baseR = entryR * easedAbsorption;
         
-        // Add continuous bounce offset
-        const bounceOffset = Math.sin(bouncePhase) * bounceAmp * (1 - absorptionProgress * 0.3);
-        const currentR = baseR + bounceOffset;
+        // CHAOTIC bounce - multiple sine waves for irregular motion
+        const bounceOffset = Math.sin(bouncePhase) * bounceAmp + 
+                            Math.sin(bouncePhase * 1.3 + i) * bounceAmp * 0.5 +
+                            Math.cos(bouncePhase * 0.7) * bounceAmp * 0.3;
         
-        // Chaotic vibration that decays toward end of substate 1
-        const chaosDecay = Math.exp(-absorptionProgress * 2);
-        const chaosAmp = 3 * chaosDecay;
-        const vibX = Math.sin(time * 0.03 + i) * chaosAmp;
-        const vibY = Math.cos(time * 0.035 + i) * chaosAmp;
-        const vibZ = Math.sin(time * 0.028 + i * 2) * chaosAmp;
+        const currentR = Math.max(0, baseR + bounceOffset);
+        
+        // HIGH chaos/vibration for energetic look
+        const chaosFreq = 0.05 + random[i] * 0.03;
+        const chaosAmp = (4 + random[i] * 3) * (1 - easedAbsorption * 0.2);
+        const vibX = Math.sin(time * chaosFreq + i * 2) * chaosAmp;
+        const vibY = Math.cos(time * chaosFreq * 1.4 + i * 3) * chaosAmp;
+        const vibZ = Math.sin(time * chaosFreq * 0.8 + i * 5) * chaosAmp;
         
         let sx = directions[i3] * currentR;
         const sy = directions[i3 + 1] * currentR;
@@ -362,71 +361,82 @@ export function animateState2And3(
         positions[i3 + 1] = sy + vibY;
         positions[i3 + 2] = sz + vibZ;
         
-        // Bright cyan/blue colors
-        const brightness = 0.6 + absorptionProgress * 0.6 + Math.sin(time * 0.01 + rnd * 5) * 0.15 * chaosDecay;
+        // Bright cyan/blue colors - energetic
+        const brightness = 0.7 + easedAbsorption * 0.5 + Math.sin(time * 0.02 + rnd * 5) * 0.3;
         colors[i3] = BLUE_R * brightness;
         colors[i3 + 1] = BLUE_G * brightness;
         colors[i3 + 2] = BLUE_B * brightness;
         
-        // Size pulses with bounce
-        const bounceSize = 1 + Math.abs(Math.sin(bouncePhase)) * 0.3 * amplitudeDecay;
-        sizes[i] = (0.8 + absorptionProgress * 0.8) * bounceSize;
-        alphas[i] = 0.4 + absorptionProgress * 0.4;
+        // Size pulses with fast bounce
+        const bounceSize = 1 + Math.abs(Math.sin(bouncePhase)) * 0.4;
+        sizes[i] = (0.8 + easedAbsorption * 1.0) * bounceSize;
+        alphas[i] = 0.5 + easedAbsorption * 0.4;
         
       } else if (subStage === 2) {
-        // SUBSTAGE 2: Stabilization (3000-5000ms) - Movement decays to form stable sphere
+        // SUBSTAGE 2: Stabilization (3000-5000ms) - Bouncing decays to form stable sphere
         const stabilizeEased = easeOutCubic(subStageProgress);
+        const decayFactor = 1 - stabilizeEased; // 1 -> 0 as we stabilize
         
-        // Interpolate from entryR to final state2Radius
-        const baseR = entryR + (state2Radius[i] - entryR) * stabilizeEased;
+        // Target radius interpolates from entry to final
+        const targetR = entryR + (state2Radius[i] - entryR) * stabilizeEased;
         
-        // Decaying movement - volatility decreases as sphere stabilizes
-        const decayFactor = 1 - stabilizeEased;
-        const pulseAmp = 6 * decayFactor; // Decreasing from 6 to 0
-        const pulseFreq = 0.008 + random[i] * 0.004;
-        const pulse = Math.sin(stateElapsed * pulseFreq + random[i] * 10) * pulseAmp;
+        // CONTINUOUS BOUNCING that decays to zero by end of substate 2
+        const bounceFreq = 6 + random[i] * 4; // Slower than substate 1 but still bouncy
+        const bouncePhase = time * bounceFreq + random[i] * 50;
         
-        // Add settling wobble that decays
-        const wobble = Math.exp(-subStageProgress * 4) * Math.sin(subStageProgress * Math.PI * 3) * 2;
+        // Bounce amplitude decays from large to ZERO
+        const bounceDecay = Math.exp(-subStageProgress * 4); // Strong decay
+        const bounceAmp = entryR * 0.3 * bounceDecay;
         
-        const r = Math.max(0, baseR + pulse + wobble);
+        // Bounce offset that fades to zero
+        const bounceOffset = Math.sin(bouncePhase) * bounceAmp * decayFactor;
         
-        let sx = directions[i3] * r;
-        const sy = directions[i3 + 1] * r;
-        let sz = directions[i3 + 2] * r;
+        // Final radius with decaying bounce
+        const currentR = targetR + bounceOffset;
+        
+        // Chaos/vibration also decays to zero
+        const chaosDecay = Math.exp(-subStageProgress * 3);
+        const chaosAmp = 2 * chaosDecay;
+        const vibX = Math.sin(time * 0.02 + i) * chaosAmp;
+        const vibY = Math.cos(time * 0.025 + i) * chaosAmp;
+        const vibZ = Math.sin(time * 0.018 + i * 2) * chaosAmp;
+        
+        let sx = directions[i3] * currentR;
+        const sy = directions[i3 + 1] * currentR;
+        let sz = directions[i3 + 2] * currentR;
         const srx = sx * cosA - sz * sinA;
         const srz = sx * sinA + sz * cosA;
         sx = srx;
         sz = srz;
         
-        positions[i3] = sx;
-        positions[i3 + 1] = sy;
-        positions[i3 + 2] = sz;
+        positions[i3] = sx + vibX;
+        positions[i3 + 1] = sy + vibY;
+        positions[i3 + 2] = sz + vibZ;
         
-        // Bright cyan/blue colors - stabilize
-        const brightness = 0.8 + Math.sin(stateElapsed * 0.005 + rnd * 3) * 0.15 * decayFactor;
+        // Bright cyan/blue colors - calming down
+        const flicker = Math.sin(stateElapsed * 0.01 + rnd * 5) * 0.2 * decayFactor;
+        const brightness = 0.85 + flicker;
         colors[i3] = BLUE_R * brightness;
         colors[i3 + 1] = BLUE_G * brightness;
         colors[i3 + 2] = BLUE_B * brightness;
         
-        sizes[i] = 1.8 + stabilizeEased * 0.4;
+        // Size stabilizes
+        sizes[i] = 1.8 + stabilizeEased * 0.3;
         alphas[i] = 0.85 + stabilizeEased * 0.1;
         
       } else {
-        // SUBSTAGE 3: Color shift (5000-7000ms) - Blue to orange + 20% sphere compression
-        // This state ends with the EXACT same sphere as State 3
+        // SUBSTAGE 3: Color shift (5000-7000ms) - Blue to orange, stable rotating sphere
+        // STABLE SPHERE - no bouncing, just rotation
         const colorSpeedFactor = 0.5 + rnd * 1.0;
         const adjustedProgress = Math.min(1, subStageProgress * colorSpeedFactor);
         const colorEased = easeOutCubic(adjustedProgress);
         
-        // Compress sphere by 20% during color shift, ending at 80% of original
-        const compressionFactor = 1 - (colorEased * 0.2);
-        const targetR = state2Radius[i] * compressionFactor;
+        // Stable compressed radius (80% of original)
+        const targetR = state2Radius[i] * 0.8;
         
-        // Match State 3's pulse exactly for seamless transition
-        const pulseAmp = 1 + random[i];
-        const pulse = Math.sin(stateElapsed * 0.002 + random[i] * 10) * pulseAmp;
-        const r = Math.max(0, targetR + pulse);
+        // STABLE - minimal pulse for breathing effect only, not bouncing
+        const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.3;
+        const r = Math.max(0, targetR + breathe);
         
         let sx = directions[i3] * r;
         const sy = directions[i3 + 1] * r;
@@ -441,23 +451,24 @@ export function animateState2And3(
         positions[i3 + 2] = sz;
         
         // Color interpolation from blue to orange
-        const brightness = 0.85 + Math.sin(stateElapsed * 0.002 + rnd * 3) * 0.15;
+        const brightness = 0.9 + Math.sin(stateElapsed * 0.001 + rnd * 3) * 0.05;
         colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
         colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
         colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
         
-        // Match State 3 sizes for seamless transition
-        sizes[i] = 1.8 + rnd * 0.4 + colorEased * 0.2;
+        // Stable sizes
+        sizes[i] = 2.0 + rnd * 0.3;
         alphas[i] = 0.9;
       }
       
     } else {
-      // STATE 3: Solar System - Stable shell, planets orbiting
-      // Shell is fully stable - matches substate 3's final state exactly
-      const baseR = state2Radius[i] * 0.8; // 80% compressed (matches substate 3 final)
-      const pulseAmp = 1 + random[i];
-      const pulse = Math.sin(stateElapsed * 0.002 + random[i] * 10) * pulseAmp;
-      const r = Math.max(0, baseR + pulse);
+      // STATE 3: Solar System - Stable rotating orange sphere with planets orbiting
+      // STABLE SPHERE - matches substate 3 exactly
+      const targetR = state2Radius[i] * 0.8; // 80% compressed
+      
+      // STABLE - minimal breathing only
+      const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.3;
+      const r = Math.max(0, targetR + breathe);
 
       let sx = directions[i3] * r;
       const sy = directions[i3 + 1] * r;
