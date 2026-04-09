@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -12,8 +12,15 @@ const TRANSITION_TIME = 0.5; // Trigger starfield at 500ms, video continues play
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
   const hasTransitionedRef = useRef(false);
+
+  useEffect(() => {
+    if (isActive) {
+      setIsVisible(true);
+    }
+  }, [isActive]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
@@ -43,9 +50,14 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   const handleZoomEnded = () => {
     // Video ended naturally, now fade it out
     setIsFadingOut(true);
+    window.setTimeout(() => {
+      setIsVisible(false);
+      setIsZooming(false);
+    }, 800);
   };
 
-  if (!isActive) return null;
+  // Keep mounted while zoom video is playing/fading, even after parent switches to state 1
+  if (!isActive && !isVisible && !isZooming) return null;
 
   return (
     <div
