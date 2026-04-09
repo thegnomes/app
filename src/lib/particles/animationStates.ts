@@ -230,9 +230,6 @@ export function animateState2And3(
   const { positions, colors, sizes, alphas } = attributes;
   const {
     random,
-    migrator,
-    migratorDelay,
-    nonMigratorDelay,
     fibonacciPositions,
   } = data;
 
@@ -245,10 +242,6 @@ export function animateState2And3(
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
     const rnd = random[i];
-    
-    // Delay for particle arrival
-    const isMigrator = migrator[i] === 1;
-    const delay = isMigrator ? migratorDelay[i] * 0.3 : nonMigratorDelay[i] * 0.2;
 
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);
@@ -260,11 +253,11 @@ export function animateState2And3(
     const fibTargetZ = fibonacciPositions[i3 + 2];
 
     if (state === 2) {
-      // STATE 2: CHARGING SHELL with 3 substates (0-8000ms)
+      // STATE 2: CHARGING SHELL with 3 substates (0-16000ms)
       // 
-      // Substate 1 (0-3000ms): Particles drawn toward core, bouncing radially with thorn effect
-      // Substate 2 (3000-5000ms): Bounce decays, particles settle into Fibonacci sphere
-      // Substate 3 (5000-8000ms): Stable sphere with color shift + compression
+      // Substate 1 (0-6000ms): Particles flow from starfield to Fibonacci positions
+      // Substate 2 (6000-10000ms): Spike/thorn bounce with decay
+      // Substate 3 (10000-16000ms): Stable sphere with color shift + compression
       
       // Start from starfield position
       const startX = snapshotPositions[i3];
@@ -280,10 +273,17 @@ export function animateState2And3(
       let compressionFactor = 1;
       let baseRadius: number;
       
-      // Total draw-in duration spans substate 1 + substate 2 (0-5000ms)
+      // Total draw-in duration spans substate 1 + substate 2 (0-10000ms)
       // Each particle has individual delay for staggered arrival
       const totalDrawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-      const particleDelay = delay * 2.5; // Staggered delay based on migrator status
+      
+      // Staggered delay: use random + particle index for varied start times
+      // Creates wave-like arrival from starfield
+      const indexDelay = (i / TOTAL_MAIN) * 2000; // Spread over 2 seconds by index
+      const randomDelay = rnd * 1500; // Random component
+      const phaseOffset = Math.sin((i % 23) * 0.27) * 800; // Wave pattern for clustering
+      const particleDelay = indexDelay + randomDelay + phaseOffset;
+      
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
       const drawInEased = easeOutCubic(drawInProgress);
