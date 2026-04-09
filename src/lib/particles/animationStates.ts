@@ -128,27 +128,34 @@ export function animateState1(
 
     if (i === 0) {
       // Core particle - bright center of starfield
+      // Core appears first with its own timing
+      const coreDelay = 0; // Core appears immediately at start of state 1
+      let coreT = (stateElapsed / STATE1_DURATION - coreDelay) / (1 - coreDelay);
+      coreT = Math.max(0, Math.min(1, coreT * 2)); // 2x speed for core to appear faster
+      const coreEased = easeOutCubic(coreT);
+      
       positions[i3] = 0;
       positions[i3 + 1] = 0;
       positions[i3 + 2] = 0;
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      // Keep core visible with pulsing effect
-      sizes[i] = 3.0 + Math.sin(time * 3) * 0.5;
-      alphas[i] = 0.9;
+      // Core pulses and fades in quickly
+      sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
+      alphas[i] = 0.9 * coreEased;
       continue;
     }
 
     const rnd = random[i];
     
     // Calculate animation progress for entry effect
+    // Background particles start appearing after core is visible (0.15 delay minimum)
     const brainX = brainPositions[i3];
     const brainY = brainPositions[i3 + 1];
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
-    const distDelay = (distFromCenter / 25) * 0.3;
-    const delay = distDelay + rnd * 0.3;
+    const distDelay = (distFromCenter / 25) * 0.25;
+    const delay = 0.15 + distDelay + rnd * 0.25; // 0.15 minimum delay so core appears first
     
     let t = (stateElapsed / STATE1_DURATION - delay) / (1 - delay);
     t = Math.max(0, Math.min(1, t));
@@ -240,6 +247,7 @@ export function animateState2And3(
     random,
     migrator,
     migratorDelay,
+    nonMigratorDelay,
     directions,
     state2Radius,
   } = data;
