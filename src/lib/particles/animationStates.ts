@@ -94,17 +94,17 @@ export function animateState1(
   const { positions, colors, sizes, alphas } = attributes;
   const { homePositions, brainPositions, random } = data;
 
-  // BACKGROUND PARTICLES - appear FIRST (0-800ms)
-  // CORE PARTICLE - appears AFTER background is established (1000ms+)
+  // BACKGROUND PARTICLES - appear FIRST (0-600ms, fully visible by ~800ms)
+  // CORE PARTICLE - appears AFTER background is established (1200ms-2200ms)
   
   for (let i = 0; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
 
     if (i === 0) {
       // CORE PARTICLE - INVISIBLE until background is established
-      // Background stars appear first (0-800ms), then core fades in (1000-1800ms)
-      const CORE_VISIBLE_START = 1000; // Core starts appearing at 1s
-      const CORE_DURATION = 800; // 0.8s to fully appear
+      // Background stars appear first (0-600ms), then core fades in (1200-2200ms)
+      const CORE_VISIBLE_START = 1200; // Core starts appearing AFTER background is fully visible
+      const CORE_DURATION = 1000; // 1s to fully appear for dramatic effect
       const coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_VISIBLE_START) / CORE_DURATION));
       const coreEased = easeOutCubic(coreT);
       
@@ -127,11 +127,12 @@ export function animateState1(
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
     
-    // Background appears over 800ms - completes BEFORE core starts
-    const BG_ENTRY = 800; // 0.8s for full appearance
-    let t = Math.min(1, stateElapsed / BG_ENTRY);
-    // All particles appear quickly with slight variation
-    t = Math.max(0, t - (distFromCenter / 150) * 0.1 - rnd * 0.05);
+    // Background appears quickly over 600ms - completes WELL BEFORE core starts (1200ms)
+    const BG_ENTRY = 600; // 0.6s for full appearance
+    // Particles closer to center appear first, outer particles follow
+    const distDelay = (distFromCenter / 150) * 0.08;
+    const rndDelay = rnd * 0.03;
+    let t = Math.max(0, Math.min(1, (stateElapsed / BG_ENTRY) - distDelay - rndDelay));
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];
