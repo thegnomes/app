@@ -314,34 +314,32 @@ export function animateState2And3(
       
       // Calculate bounce amplitude based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: Bounce based on distance from Fibonacci target
+        // Substate 1: Fast, repetitive bounce based on distance from Fibonacci target
+        // NO decay in substate 1 - bounce stays constant and energetic
         // The further from target, the bigger the bounce
-        // As particles settle into position, bounce naturally decays
-        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
         
         // Calculate current distance from target (how far we still need to travel)
-        // This creates a natural bounce that decreases as we approach the sphere
         const distFromTarget = Math.sqrt(
           (rotX - targetX * cosA + targetZ * sinA) ** 2 +
           (rotY - targetY) ** 2 +
           (rotZ - targetX * sinA - targetZ * cosA) ** 2
         );
         
-        // Base bounce amplitude that decays over time
-        const timeDecay = 1 - (s1Progress * 0.7); // Decay to 30% by end of s1
         // Distance-based amplitude: particles further from target bounce more
-        const distBasedAmp = Math.min(1, distFromTarget / 20) * (0.3 + rnd * 0.2);
+        // Higher base amplitude for more energetic bounce
+        const distBasedAmp = Math.min(1, distFromTarget / 15) * (0.4 + rnd * 0.3);
         
-        bounceAmp = SHELL_RADIUS * distBasedAmp * timeDecay;
+        // Constant bounce amplitude - NO decay in substate 1
+        bounceAmp = SHELL_RADIUS * distBasedAmp;
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Continue bounce decay to zero
-        // By now particles should be close to their Fibonacci positions
+        // Substate 2: Bounce decay begins here
+        // Smooth decay from substate 1 amplitude to zero
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         
-        // Smooth decay from substate 1 ending amplitude
-        const s1EndAmp = 0.3; // Remaining amplitude at end of s1
-        bounceAmp = SHELL_RADIUS * s1EndAmp * (1 - easeOutCubic(s2Progress)) * (0.5 + rnd * 0.3);
+        // Start from full s1 amplitude and decay to zero
+        const s1Amp = (0.4 + rnd * 0.3); // Full s1 amplitude
+        bounceAmp = SHELL_RADIUS * s1Amp * (1 - easeOutCubic(s2Progress));
       } else {
         // Substate 3: No bounce, stable Fibonacci sphere
         bounceAmp = 0;
@@ -349,11 +347,35 @@ export function animateState2And3(
       
       // Apply bouncing as radial offset
       if (bounceAmp > 0.01 && drawInProgress > 0.2) {
-        const bounceFreq = 6 + rnd * 4;
-        const bouncePhase = time * bounceFreq + rnd * 50;
+        const isSubstate1 = stateElapsed < STATE2_ABSORPTION_DURATION;
+        
+        let bounceOffset: number;
+        
+        if (isSubstate1) {
+          // Substate 1: Spikes/Thorns effect
+          // Each particle bounces at different speeds creating spiky protrusions
+          // Use particle index to create structured variation (not just random)
+          const idxPhase = (i % 7) * 0.9; // 7 different phase groups
+          const speedVar = 8 + (i % 5) * 3; // 5 different speed groups
+          const baseFreq = speedVar + rnd * 4;
+          
+          // Multi-layered bounce for spike effect
+          const primaryWave = Math.sin(time * baseFreq + idxPhase + rnd * 10);
+          const secondaryWave = Math.sin(time * baseFreq * 2.3 + idxPhase * 1.5) * 0.5;
+          const spikeWave = Math.sin(time * baseFreq * 0.7 + idxPhase * 0.5) * 0.3;
+          
+          // Combine waves - sharp peaks create thorn-like appearance
+          const combinedWave = primaryWave + secondaryWave * Math.abs(primaryWave) + spikeWave;
+          bounceOffset = combinedWave * bounceAmp;
+        } else {
+          // Substate 2+: Smooth decaying bounce
+          const bounceFreq = 6 + rnd * 4;
+          const bouncePhase = time * bounceFreq + rnd * 50;
+          bounceOffset = Math.sin(bouncePhase) * bounceAmp;
+        }
+        
         // Use distance from center to calculate radial bounce
         const r = Math.sqrt(rotX * rotX + rotY * rotY + rotZ * rotZ) || 1;
-        const bounceOffset = Math.sin(bouncePhase) * bounceAmp;
         const scale = 1 + (bounceOffset / r);
         
         positions[i3] = rotX * scale;
