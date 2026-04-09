@@ -5,9 +5,9 @@ interface VideoBackgroundProps {
   onTransition: () => void;
 }
 
-// Transition to starfield 400ms before video ends for smoother handoff
-// Video is ~1480ms, transition at ~1080ms to start fade overlap
-const TRANSITION_TIME = 1.08;
+// Let the zoom video play through its entirety - it has transparency
+// Starfield will fade in gradually underneath while video plays
+const TRANSITION_TIME = 0.1; // Trigger starfield fade-in very early
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
@@ -57,7 +57,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
       style={{
         opacity: isFadingOut ? 0 : 1,
-        transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
+        transition: isFadingOut ? 'opacity 2.5s ease-out' : 'none',
         pointerEvents: isFadingOut ? 'none' : 'auto',
       }}
     >
