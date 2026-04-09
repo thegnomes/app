@@ -286,7 +286,8 @@ export function animateState2And3(
       
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
-      const drawInEased = easeOutCubic(drawInProgress);
+      // Ramp: slow start, accelerate toward end (ease-in-out for smooth ramp)
+      const drawInEased = easeInOutCubic(drawInProgress);
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
@@ -315,7 +316,7 @@ export function animateState2And3(
         positions[i3 + 2] = rz;
         
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Spike/thorn bounce effect with decay
+        // Substate 2: Spike/thorn bounce effect with smooth ramp in and decay out
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         
@@ -325,7 +326,7 @@ export function animateState2And3(
         const fz = fibX * sinA + fibZ * cosA;
         const fy = fibY;
         
-        // Spike/thorn bounce calculation - repetitive throughout s2, amplitude decays toward s3
+        // Spike/thorn bounce calculation - repetitive throughout s2
         const idxPhase = (i % 11) * 0.57; // 11 phase groups
         const speedGroup = (i % 7); // 7 speed groups
         const baseFreq = 12 + speedGroup * 2.5 + rnd * 3;
@@ -336,17 +337,27 @@ export function animateState2And3(
         const slowPulse = Math.sin(time * baseFreq * 0.4 + idxPhase * 0.5) * 0.2;
         const spikeWave = primaryWave + harmonicWave * Math.abs(primaryWave) + slowPulse;
         
-        // Base amplitude - repetitive bounce throughout substate 2
+        // Base amplitude for full bounce
         const baseAmp = 0.3 + rnd * 0.4; // 30-70% of shell radius
-        let bounceAmp = SHELL_RADIUS * baseAmp;
+        const fullBounceAmp = SHELL_RADIUS * baseAmp;
         
-        // Amplitude decay only starts in last 40% of s2 (preparing for s3 transition)
-        if (s2Progress > 0.6) {
-          const decayProgress = (s2Progress - 0.6) / 0.4; // 0 to 1 in last 40%
-          bounceAmp *= (1 - easeOutCubic(decayProgress));
+        // Smooth envelope: ramp up over 30%, hold, then decay over 40%
+        let amplitudeFactor: number;
+        if (s2Progress < 0.3) {
+          // Ramp up: 0 to 1 over first 30% (smooth start from s1)
+          amplitudeFactor = easeOutCubic(s2Progress / 0.3);
+        } else if (s2Progress < 0.6) {
+          // Full amplitude: hold at 1 from 30% to 60%
+          amplitudeFactor = 1;
+        } else {
+          // Decay: 1 to 0 from 60% to 100% (smooth transition to s3)
+          const decayProgress = (s2Progress - 0.6) / 0.4;
+          amplitudeFactor = 1 - easeOutCubic(decayProgress);
         }
         
-        // Apply radial bounce (repetitive - keeps oscillating)
+        const bounceAmp = fullBounceAmp * amplitudeFactor;
+        
+        // Apply radial bounce
         const bounceOffset = spikeWave * bounceAmp;
         const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
         const scale = 1 + (bounceOffset / r);

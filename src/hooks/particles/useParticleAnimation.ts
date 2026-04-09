@@ -268,7 +268,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
         case 2:
         case 3:
-          data.shellAngle.current += 0.003 * config.speed;
+          // Faster shell rotation for visible spinning effect
+          data.shellAngle.current += 0.012 * config.speed;
           animateState2And3(
             attributes,
             particleData,
