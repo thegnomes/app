@@ -256,11 +256,14 @@ export function animateState2And3(
     const sinA = Math.sin(shellAngle);
     const entryR = 6 + random[i] * 22;
     
-    // Fibonacci sphere formation for substate 3
-    const phi = Math.PI * (3 - Math.sqrt(5));
-    const yFib = 1 - (i / (TOTAL_MAIN - 1)) * 2;
+    // Fibonacci sphere formation - golden angle distribution
+    // Use (i-1) for 1-indexed loop to get proper distribution starting from particle 1
+    const particleIndex = i - 1;
+    const particleCount = TOTAL_MAIN - 1;
+    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
+    const yFib = 1 - (particleIndex / (particleCount - 1)) * 2; // Range: 1 to -1
     const rAtY = Math.sqrt(1 - yFib * yFib);
-    const theta = phi * i;
+    const theta = phi * particleIndex;
     const fibX = Math.cos(theta) * rAtY;
     const fibY = yFib;
     const fibZ = Math.sin(theta) * rAtY;
@@ -299,15 +302,21 @@ export function animateState2And3(
         const endOfS1Decay = 1 - (s1Progress * s1Progress * 0.5); // Parabolic decay
         bounceAmp = baseTargetR * (0.35 + random[i] * 0.25) * endOfS1Decay;
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Smooth decay from s1 end to zero
+        // Substate 2: Smooth decay from s1 end to zero - NO random factor for clean sphere
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
-        // Start from s1's ending amplitude (~0.5) and decay to 0
-        const s1EndAmp = 0.5; // Normalized amplitude at end of s1
-        bounceAmp = baseTargetR * s1EndAmp * (0.4 + random[i] * 0.2) * (1 - easeOutCubic(s2Progress));
+        // Start from s1's ending amplitude and decay to exactly 0
+        // Use fixed amplitude (no random) so all particles end at their target radius
+        const s1EndAmp = 0.45; // Normalized amplitude at end of s1
+        bounceAmp = baseTargetR * s1EndAmp * (1 - easeOutCubic(s2Progress));
+        
+        // Start blending to Fibonacci during substate 2
+        // This ensures we reach a clean Fibonacci sphere by the end of substate 2
+        fibWeight = easeOutCubic(s2Progress);
       } else {
-        // Substate 3: No bounce, stable sphere
+        // Substate 3: Stable Fibonacci sphere with color shift
         bounceAmp = 0;
+        fibWeight = 1; // Fully Fibonacci by substate 3
         
         const s3Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION;
         const s3Progress = s3Elapsed / STATE2_COLOR_SHIFT_DURATION;
@@ -319,9 +328,6 @@ export function animateState2And3(
         
         // Compression: 100% -> 80%
         compressionFactor = 1 - (s3Eased * 0.2);
-        
-        // Fibonacci formation blends in during substate 3
-        fibWeight = s3Eased;
       }
       
       // Apply compression to target radius
