@@ -273,25 +273,24 @@ export function animateState2And3(
       let compressionFactor = 1;
       let baseRadius: number;
       
-      // Total draw-in duration spans substate 1 + substate 2 (0-10000ms)
-      // Each particle has individual delay for staggered arrival
-      const totalDrawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      // Substate 1 draw-in duration (0-6000ms)
+      const drawInDuration = STATE2_ABSORPTION_DURATION;
       const colorInterpolationStart =
         STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.6;
       const colorInterpolationDuration =
         STATE2_STABILIZE_DURATION * 0.4 + STATE2_COLOR_SHIFT_DURATION;
       
-      // Staggered delay: use random + particle index for varied start times
-      // Creates wave-like arrival from starfield
-      const indexDelay = (i / TOTAL_MAIN) * 2000; // Spread over 2 seconds by index
-      const randomDelay = rnd * 1500; // Random component
-      const phaseOffset = Math.sin((i % 23) * 0.27) * 800; // Wave pattern for clustering
+      // Keep a small stagger for texture, but ensure everyone moves early enough
+      // to avoid a late jump right before substate 2.
+      const indexDelay = (i / TOTAL_MAIN) * 420;
+      const randomDelay = rnd * 280;
+      const phaseOffset = Math.sin((i % 23) * 0.27) * 120;
       const particleDelay = indexDelay + randomDelay + phaseOffset;
       
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
-      const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
-      // Linear for constant speed approach (no ramp, steady flow)
-      const drawInEased = drawInProgress;
+      const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
+      // Faster early pull-in to avoid sluggish start.
+      const drawInEased = easeOutCubic(drawInProgress);
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
@@ -324,11 +323,21 @@ export function animateState2And3(
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         
-        // At start of s2, particles are at Fibonacci positions (from s1)
+        // Blend smoothly from current draw-in position to fibonacci anchor
+        // during early substate 2 to remove visual jump at the handoff.
+        const preFx = startX + (fibX - startX) * drawInEased;
+        const preFy = startY + (fibY - startY) * drawInEased;
+        const preFz = startZ + (fibZ - startZ) * drawInEased;
+        const settleToAnchor = Math.min(1, s2Progress / 0.2);
+
+        const anchorX = preFx + (fibX - preFx) * settleToAnchor;
+        const anchorY = preFy + (fibY - preFy) * settleToAnchor;
+        const anchorZ = preFz + (fibZ - preFz) * settleToAnchor;
+
         // Apply rotation for spinning
-        const fx = fibX * cosA - fibZ * sinA;
-        const fz = fibX * sinA + fibZ * cosA;
-        const fy = fibY;
+        const fx = anchorX * cosA - anchorZ * sinA;
+        const fz = anchorX * sinA + anchorZ * cosA;
+        const fy = anchorY;
         
         // Spike/thorn bounce calculation - repetitive throughout s2
         const idxPhase = (i % 11) * 0.57; // 11 phase groups
