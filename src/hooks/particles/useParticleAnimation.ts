@@ -125,8 +125,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.6, 0.05);
       }
 
-      // Trigger nova effect on every state change - create 4 rings at 45 degree angles
-      if (refs.systemGroup.current) {
+      // Trigger nova effect on state changes except State 1 (starfield)
+      if (refs.systemGroup.current && state !== 1) {
         // Clean up any existing novas first (including their containers)
         if (refs.novaMeshes.current.length > 0) {
           refs.novaMeshes.current.forEach((nova) => {
