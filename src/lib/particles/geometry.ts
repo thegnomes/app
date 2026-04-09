@@ -18,6 +18,23 @@ export function easeInOutCubic(t: number): number {
 }
 
 /**
+ * Easing function: ease in quad
+ * Slight slow start, then linear-ish
+ * Good for maintaining constant speed with gentle ramp
+ */
+export function easeInQuad(t: number): number {
+  return t * t;
+}
+
+/**
+ * Easing function: smooth step
+ * Very gentle curve, nearly linear in middle
+ */
+export function smoothStep(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+/**
  * Generate random positions within a cube for home positions
  * @param count - Number of particles
  * @param out - Output Float32Array (length = count * 3)

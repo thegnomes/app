@@ -20,7 +20,7 @@ import {
   SHARED_ROTATION,
   ORBIT_SEGMENTS,
 } from './constants';
-import { easeOutCubic, easeInOutCubic } from './geometry';
+import { easeOutCubic, easeInOutCubic, smoothStep } from './geometry';
 import type { PlanetInstance } from './scene';
 
 // ============================================
@@ -286,8 +286,8 @@ export function animateState2And3(
       
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
-      // Ramp: slow start, accelerate toward end (ease-in-out for smooth ramp)
-      const drawInEased = easeInOutCubic(drawInProgress);
+      // Gentle ramp with nearly constant speed
+      const drawInEased = smoothStep(drawInProgress);
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {

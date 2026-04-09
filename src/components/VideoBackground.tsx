@@ -30,21 +30,22 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
     const video = zoomVideoRef.current;
     if (!video || hasTransitionedRef.current) return;
     
-    // Transition at 1:35 mark
+    // Transition at specified mark - trigger starfield but DON'T fade video
+    // Video has alpha transparency so it overlays on top of starfield
     if (video.currentTime >= TRANSITION_TIME) {
       hasTransitionedRef.current = true;
-      // Start fading out the video while starfield fades in
-      setIsFadingOut(true);
-      // Trigger transition to starfield
+      // Trigger transition to starfield (starts rendering underneath)
       onTransition();
+      // Note: Video keeps playing with alpha, no fade out
     }
   };
 
   const handleZoomEnded = () => {
+    // Video ended, fade it out now
+    setIsFadingOut(true);
     // Fallback: if video ends before transition (shouldn't happen), trigger it
     if (!hasTransitionedRef.current) {
       hasTransitionedRef.current = true;
-      setIsFadingOut(true);
       onTransition();
     }
   };
