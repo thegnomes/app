@@ -9,7 +9,6 @@ import {
   createPlanets,
   createOrbitGroup,
   createTrail,
-  createNeuralConnections,
   handleResize,
 } from '@/lib/particles/scene';
 import { initializeParticleData, initializeTrailHistory, initializeTrailPositions, getMigratorCount } from '@/lib/particles/particleData';
@@ -30,7 +29,6 @@ export interface SceneRefs {
   systemGroup: React.MutableRefObject<THREE.Group | null>;
   novaMeshes: React.MutableRefObject<THREE.Mesh[]>;
   novaState: React.MutableRefObject<{ active: boolean; startTime: number }>;
-  neuralConnections: React.MutableRefObject<THREE.LineSegments | null>;
 }
 
 export interface AnimationData {
@@ -71,7 +69,6 @@ export function useParticleScene(config: ParticleConfig) {
   const systemGroupRef = useRef<THREE.Group | null>(null);
   const novaMeshesRef = useRef<THREE.Mesh[]>([]);
   const novaStateRef = useRef({ active: false, startTime: 0 });
-  const neuralConnectionsRef = useRef<THREE.LineSegments | null>(null);
 
   // Animation data refs
   const timeRef = useRef(0);
@@ -142,11 +139,6 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup.add(trail);
     trailRef.current = trail;
 
-    // Create neural connections for brain state
-    const neuralConnections = createNeuralConnections(data.brainPositions, 3, 7);
-    systemGroup.add(neuralConnections);
-    neuralConnectionsRef.current = neuralConnections;
-
     // Handle resize
     const onResize = () => {
       if (cameraRef.current && rendererRef.current) {
@@ -193,7 +185,6 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup: systemGroupRef,
     novaMeshes: novaMeshesRef,
     novaState: novaStateRef,
-    neuralConnections: neuralConnectionsRef,
   };
 
   const data: AnimationData = {

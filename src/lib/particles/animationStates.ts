@@ -127,11 +127,11 @@ export function animateState1(
     const i3 = i * 3;
 
     if (i === 0) {
-      // Core particle - appears AFTER background particles are visible
-      // Background stars appear first, then core fades in as the center anchor
-      const CORE_DELAY = 800; // 800ms delay - background stars visible first
-      const CORE_SPEED = 1200; // 1.2s to fully appear
-      let coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_DELAY) / CORE_SPEED));
+      // CORE PARTICLE - appears AFTER background particles
+      // Background stars appear first (0-1000ms), then core fades in
+      const CORE_DELAY = 1200; // 1.2s delay - background well visible first
+      const CORE_DURATION = 800; // 0.8s to fully appear
+      let coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_DELAY) / CORE_DURATION));
       const coreEased = easeOutCubic(coreT);
       
       positions[i3] = 0;
@@ -140,7 +140,7 @@ export function animateState1(
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      // Core fades in after background
+      // Core fades in after background is established
       sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
       alphas[i] = 0.9 * coreEased;
       continue;
@@ -148,18 +148,18 @@ export function animateState1(
 
     const rnd = random[i];
     
-    // Calculate animation progress for entry effect
-    // Background particles appear FIRST (immediately), core comes later
+    // BACKGROUND PARTICLES - appear FIRST before core
+    // Start immediately, fully visible by 1000ms
     const brainX = brainPositions[i3];
     const brainY = brainPositions[i3 + 1];
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
     
-    // Background appears over 1.5s - starts immediately
-    const BG_ENTRY = 1500; // 1.5s for full appearance
+    // Fast entry: background particles visible quickly
+    const BG_ENTRY = 1000; // 1s for full appearance
     let t = Math.min(1, stateElapsed / BG_ENTRY);
-    // Slight variation based on distance from center for organic feel
-    t = Math.max(0, t - (distFromCenter / 100) * 0.2 - rnd * 0.1);
+    // Center particles appear first, outer particles slightly delayed
+    t = Math.max(0, t - (distFromCenter / 120) * 0.15 - rnd * 0.05);
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];
@@ -230,6 +230,16 @@ const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
 
+// Event milestone tracking for State 2 text animations
+export const STATE2_MILESTONES = {
+  SUBSTATE_1_START: 0,
+  SUBSTATE_1_END: 3000,
+  SUBSTATE_2_START: 3000,
+  SUBSTATE_2_END: 5000,
+  SUBSTATE_3_START: 5000,
+  SUBSTATE_3_END: 8000,
+} as const;
+
 export function animateState2And3(
   attributes: ParticleAttributes,
   data: ParticleData,
@@ -244,7 +254,6 @@ export function animateState2And3(
 ): void {
   const { positions, colors, sizes, alphas } = attributes;
   const {
-    homePositions,
     random,
     migrator,
     migratorDelay,
@@ -252,47 +261,6 @@ export function animateState2And3(
     directions,
     state2Radius,
   } = data;
-  
-  // Pre-calculate substate blending factors for seamless transitions
-  // These blend across the entire State 2 duration (0-7000ms)
-  const totalState2Progress = Math.min(1, stateElapsed / STATE2_DURATION);
-  
-  // Substate 1: 0-3000ms (bounce only)
-  // Substate 2: 3000-5000ms (bounce decay)
-  // Substate 3: 5000-7000ms (color shift + compression)
-  const substate1End = STATE2_ABSORPTION_DURATION / STATE2_DURATION; // ~0.43
-  const substate2End = (STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) / STATE2_DURATION; // ~0.71
-
-  // Pre-extract color components to avoid repeated property access
-  const primaryR = primaryColor.r;
-  const primaryG = primaryColor.g;
-  const primaryB = primaryColor.b;
-  const secondaryR = secondaryColor.r;
-  const secondaryG = secondaryColor.g;
-  const secondaryB = secondaryColor.b;
-  const primaryDiffR = secondaryR - primaryR;
-  const primaryDiffG = secondaryG - primaryG;
-  const primaryDiffB = secondaryB - primaryB;
-
-  // Determine which substate of State 2 we're in
-  // Substage 1: 0-3000ms - Absorption (max volatility)
-  // Substage 2: 3000-5000ms - Stabilization (forming stable sphere)
-  // Substage 3: 5000-7000ms - Color shift (blue to orange, different speeds)
-  let subStage: 1 | 2 | 3 = 1;
-  let subStageProgress = 0;
-  
-  if (state === 2) {
-    if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-      subStage = 1;
-      subStageProgress = stateElapsed / STATE2_ABSORPTION_DURATION;
-    } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-      subStage = 2;
-      subStageProgress = (stateElapsed - STATE2_ABSORPTION_DURATION) / STATE2_STABILIZE_DURATION;
-    } else {
-      subStage = 3;
-      subStageProgress = (stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION) / STATE2_COLOR_SHIFT_DURATION;
-    }
-  }
 
   // Core particle hidden in state 3
   if (state === 3) {
@@ -302,147 +270,143 @@ export function animateState2And3(
 
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
-    const isMigrator = migrator[i] === 1;
     const rnd = random[i];
     
-    // All particles (migrators and non-migrators) participate in State 2 shell formation
-    const delay = isMigrator
-      ? migratorDelay[i] * 0.5 // Faster absorption for migrators
-      : nonMigratorDelay[i] * 0.3; // Slightly delayed for non-migrators
+    // Delay for particle arrival
+    const isMigrator = migrator[i] === 1;
+    const delay = isMigrator ? migratorDelay[i] * 0.3 : nonMigratorDelay[i] * 0.2;
 
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);
     const sinA = Math.sin(shellAngle);
-    const entryR = 6 + random[i] * 22;
-
-    // Calculate base target position on shell
-    let tx = directions[i3] * entryR;
-    const ty = directions[i3 + 1] * entryR;
-    let tz = directions[i3 + 2] * entryR;
-    const rx = tx * cosA - tz * sinA;
-    const rz = tx * sinA + tz * cosA;
-    tx = rx;
-    tz = rz;
+    
+    // Fibonacci sphere formation for substate 3
+    const phi = Math.PI * (3 - Math.sqrt(5));
+    const yFib = 1 - (i / (TOTAL_MAIN - 1)) * 2;
+    const rAtY = Math.sqrt(1 - yFib * yFib);
+    const theta = phi * i;
+    const fibX = Math.cos(theta) * rAtY;
+    const fibY = yFib;
+    const fibZ = Math.sin(theta) * rAtY;
 
     if (state === 2) {
-      // STATE 2: SEAMLESS CONTINUOUS ANIMATION
-      // Particles start from starfield positions, drawn to shell, bounce, then stabilize
+      // STATE 2: CHARGING SHELL with 3 substates (0-8000ms)
       
-      // Phase 1: Draw from starfield to shell (first 800ms per particle)
-      const drawInDuration = 800;
+      // Draw-in: particles move from starfield to shell
+      const drawInDuration = 600;
       const drawInProgress = Math.min(1, Math.max(0, (stateElapsed - delay) / drawInDuration));
       const drawInEased = easeOutCubic(drawInProgress);
       
-      // Start from starfield position (snapshot from State 1)
+      // Start from starfield position
       const startX = snapshotPositions[i3];
       const startY = snapshotPositions[i3 + 1];
       const startZ = snapshotPositions[i3 + 2];
       
-      // Target shell position (with compression factored in for substate 3)
-      const baseShellR = state2Radius[i];
+      // Target radius
+      let targetR = state2Radius[i];
       
-      // Compression happens in substate 3 (5000-7000ms)
-      let compressionFactor = 1;
-      if (stateElapsed > STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        const s3Progress = (stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION) / STATE2_COLOR_SHIFT_DURATION;
-        compressionFactor = 1 - (easeOutCubic(Math.min(1, s3Progress)) * 0.2);
-      }
-      const targetShellR = baseShellR * compressionFactor;
-      
-      // Interpolate shell radius from entry to final over full duration
-      const currentShellR = entryR + (targetShellR - entryR) * Math.min(1, stateElapsed / STATE2_DURATION);
-      
-      // Calculate shell position
-      let shellX = directions[i3] * currentShellR;
-      const shellY = directions[i3 + 1] * currentShellR;
-      let shellZ = directions[i3 + 2] * currentShellR;
-      const srx = shellX * cosA - shellZ * sinA;
-      const srz = shellX * sinA + shellZ * cosA;
-      shellX = srx;
-      shellZ = srz;
-      
-      // BOUNCE AMPLITUDE across all substates:
-      // - Substate 1 (0-3000ms): High bounce, full chaos
-      // - Substate 2 (3000-5000ms): Decay to zero
-      // - Substate 3 (5000-7000ms): Zero (stable)
+      // Substate calculations
       let bounceAmp = 0;
-      if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: Fast chaotic bouncing
-        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
-        bounceAmp = entryR * (0.5 + random[i] * 0.4) * (1 - s1Progress * 0.1);
-      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Decay to zero
-        const s2Progress = (stateElapsed - STATE2_ABSORPTION_DURATION) / STATE2_STABILIZE_DURATION;
-        bounceAmp = entryR * 0.4 * (1 - easeOutCubic(s2Progress));
-      }
-      // Substate 3: bounceAmp = 0
-      
-      // Calculate bounce offset
-      let bounceOffset = 0;
-      if (bounceAmp > 0.01 && drawInProgress > 0.5) {
-        const bounceFreq = 12 + random[i] * 8; // 12-20 Hz fast bounce
-        const bouncePhase = time * bounceFreq + random[i] * 100;
-        bounceOffset = Math.sin(bouncePhase) * bounceAmp;
-      }
-      
-      // Final position: interpolate from starfield to shell, add bounce
-      const baseX = startX + (shellX - startX) * drawInEased;
-      const baseY = startY + (shellY - startY) * drawInEased;
-      const baseZ = startZ + (shellZ - startZ) * drawInEased;
-      
-      // Apply bounce as radial offset
-      const bounceScale = 1 + (bounceOffset / Math.max(0.001, currentShellR));
-      
-      positions[i3] = baseX * bounceScale;
-      positions[i3 + 1] = baseY * bounceScale;
-      positions[i3 + 2] = baseZ * bounceScale;
-      
-      // COLOR: Blue in substates 1-2, shift to orange in substate 3
       let colorT = 0;
-      if (stateElapsed > STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        const s3Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION;
-        const colorSpeed = 0.5 + rnd * 0.5;
-        colorT = Math.min(1, (s3Elapsed / STATE2_COLOR_SHIFT_DURATION) * colorSpeed);
-      }
-      const colorEased = easeOutCubic(colorT);
+      let compressionT = 0;
+      let fibonacciT = 0;
       
-      const brightness = 0.85 + Math.sin(time * 0.008 + rnd * 5) * 0.1 * (1 - colorT);
+      if (stateElapsed < STATE2_ABSORPTION_DURATION) {
+        // SUBSTATE 1 (0-3000ms): CHAOTIC BOUNCING
+        const s1Progress = stateElapsed / STATE2_ABSORPTION_DURATION;
+        bounceAmp = targetR * (0.4 + random[i] * 0.3) * (1 - s1Progress * 0.15);
+      } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
+        // SUBSTATE 2 (3000-5000ms): BOUNCE DECAY
+        const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
+        const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
+        const s2Eased = easeOutCubic(s2Progress);
+        bounceAmp = targetR * 0.25 * (1 - s2Eased);
+      } else {
+        // SUBSTATE 3 (5000-8000ms): COMPRESSION + COLOR + FIBONACCI
+        const s3Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION;
+        const s3Progress = s3Elapsed / STATE2_COLOR_SHIFT_DURATION;
+        const s3Eased = easeOutCubic(Math.min(1, s3Progress));
+        
+        bounceAmp = 0;
+        const colorSpeed = 0.6 + rnd * 0.4;
+        colorT = Math.min(1, s3Progress * colorSpeed);
+        compressionT = s3Eased;
+        fibonacciT = s3Eased;
+      }
+      
+      // Apply compression
+      const compressionFactor = 1 - (compressionT * 0.2);
+      targetR *= compressionFactor;
+      
+      // Blend between directional and fibonacci positions
+      const fibWeight = fibonacciT;
+      let targetX = (directions[i3] * (1 - fibWeight) + fibX * fibWeight) * targetR;
+      let targetY = (directions[i3 + 1] * (1 - fibWeight) + fibY * fibWeight) * targetR;
+      let targetZ = (directions[i3 + 2] * (1 - fibWeight) + fibZ * fibWeight) * targetR;
+      
+      // Apply rotation
+      const rx = targetX * cosA - targetZ * sinA;
+      const rz = targetX * sinA + targetZ * cosA;
+      targetX = rx;
+      targetZ = rz;
+      
+      // Interpolate from starfield to target
+      const shellX = startX + (targetX - startX) * drawInEased;
+      const shellY = startY + (targetY - startY) * drawInEased;
+      const shellZ = startZ + (targetZ - startZ) * drawInEased;
+      
+      // Apply bouncing
+      if (bounceAmp > 0.01 && drawInProgress > 0.3) {
+        const bounceFreq = 10 + random[i] * 6;
+        const bouncePhase = time * bounceFreq + random[i] * 50;
+        const bounceOffset = Math.sin(bouncePhase) * bounceAmp;
+        const r = Math.sqrt(shellX * shellX + shellY * shellY + shellZ * shellZ);
+        const bounceScale = 1 + (bounceOffset / Math.max(0.001, r));
+        positions[i3] = shellX * bounceScale;
+        positions[i3 + 1] = shellY * bounceScale;
+        positions[i3 + 2] = shellZ * bounceScale;
+      } else {
+        positions[i3] = shellX;
+        positions[i3 + 1] = shellY;
+        positions[i3 + 2] = shellZ;
+      }
+      
+      // Color interpolation
+      const colorEased = easeOutCubic(colorT);
+      const brightness = 0.9 + Math.sin(time * 0.005 + rnd * 3) * 0.1 * (1 - colorT);
       colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
       colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
       colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
       
-      // SIZE: Grow during draw-in, stabilize
-      sizes[i] = 1.6 + rnd * 0.4 + (bounceAmp / entryR) * 0.3;
-      alphas[i] = 0.85 + drawInEased * 0.1;
+      const bouncePulse = bounceAmp > 0.01 ? Math.sin(time * 8 + i) * 0.2 : 0;
+      sizes[i] = 1.8 + rnd * 0.3 + bouncePulse * (bounceAmp / targetR);
+      alphas[i] = 0.9;
       
     } else {
-      // STATE 3: Solar System - Stable rotating orange sphere with planets orbiting
-      // STABLE SPHERE - matches substate 3 exactly
-      const targetR = state2Radius[i] * 0.8; // 80% compressed
+      // STATE 3: SOLAR SYSTEM - matches substate 3 exactly
+      const targetR = state2Radius[i] * 0.8;
       
-      // STABLE - minimal breathing only
-      const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.3;
-      const r = Math.max(0, targetR + breathe);
+      // Fibonacci position
+      const fx = fibX * targetR;
+      const fy = fibY * targetR;
+      const fz = fibZ * targetR;
+      
+      const rx = fx * cosA - fz * sinA;
+      const rz = fx * sinA + fz * cosA;
+      
+      const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.2;
+      const breatheScale = 1 + breathe / targetR;
+      
+      positions[i3] = rx * breatheScale;
+      positions[i3 + 1] = fy * breatheScale;
+      positions[i3 + 2] = rz * breatheScale;
 
-      let sx = directions[i3] * r;
-      const sy = directions[i3 + 1] * r;
-      let sz = directions[i3 + 2] * r;
-      const srx = sx * cosA - sz * sinA;
-      const srz = sx * sinA + sz * cosA;
-      sx = srx;
-      sz = srz;
-
-      positions[i3] = sx;
-      positions[i3 + 1] = sy;
-      positions[i3 + 2] = sz;
-
-      // Orange/yellow colors for solar system state
-      const brightness = 0.8 + Math.sin(stateElapsed * 0.002 + rnd * 3) * 0.15;
+      const brightness = 0.9 + Math.sin(stateElapsed * 0.001 + rnd * 3) * 0.08;
       colors[i3] = ORANGE_R * brightness;
       colors[i3 + 1] = ORANGE_G * brightness;
       colors[i3 + 2] = ORANGE_B * brightness;
 
-      sizes[i] = 1.8 + rnd * 0.4;
+      sizes[i] = 1.8 + rnd * 0.3;
       alphas[i] = 0.9;
     }
   }
