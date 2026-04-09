@@ -1,3 +1,5 @@
+import type * as THREE from 'three';
+
 // ============================================
 // GLSL Shaders for Particle System
 // ============================================
@@ -181,8 +183,6 @@ export const planetGlowFragmentShader = `
     gl_FragColor = vec4(grad, alpha);
   }
 `;
-
-import type * as THREE from 'three';
 
 /**
  * Shader uniforms interface
