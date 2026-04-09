@@ -331,7 +331,9 @@ export function animateState2And3(
       }
       
       // Apply compression to target radius
-      const targetR = baseTargetR * compressionFactor;
+      // For Fibonacci sphere (substate 3), use uniform SHELL_RADIUS for clean surface
+      // For chaotic phases (substate 1-2), use varied state2Radius for depth
+      const targetR = (fibWeight > 0.9 ? SHELL_RADIUS : baseTargetR) * compressionFactor;
       
       // Calculate base position (directional for s1-s2, fibonacci blend for s3)
       const dirX = directions[i3];
@@ -395,7 +397,8 @@ export function animateState2And3(
       
     } else {
       // STATE 3: SOLAR SYSTEM - matches substate 3 exactly
-      const targetR = state2Radius[i] * 0.8;
+      // Use uniform SHELL_RADIUS for clean Fibonacci sphere surface
+      const targetR = SHELL_RADIUS * 0.8;
       
       // Fibonacci position
       const fx = fibX * targetR;
