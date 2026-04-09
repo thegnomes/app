@@ -3,6 +3,9 @@ import type { AppState, ParticleData, ParticleAttributes } from '@/types';
 import {
   STATE1_DURATION,
   STATE2_DURATION,
+  STATE2_ABSORPTION_DURATION,
+  STATE2_STABILIZE_DURATION,
+  STATE2_COLOR_SHIFT_DURATION,
   TRAVEL_DURATION,
   STABILIZE_DURATION,
   STATE4_CONCENTRATE,
@@ -181,6 +184,17 @@ const COOL_DIFF_R = COOL_WHITE_R - WHITE_R;
 const COOL_DIFF_G = COOL_WHITE_G - WHITE_G;
 const COOL_DIFF_B = COOL_WHITE_B - WHITE_B;
 
+// Color constants for blue to orange interpolation (State 2 substage 3)
+const BLUE_R = 0.133;
+const BLUE_G = 0.827;
+const BLUE_B = 0.933; // Cyan/blue base
+const ORANGE_R = 0.976;
+const ORANGE_G = 0.451;
+const ORANGE_B = 0.086; // Orange
+const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
+const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
+const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
+
 export function animateState2And3(
   attributes: ParticleAttributes,
   data: ParticleData,
@@ -199,7 +213,6 @@ export function animateState2And3(
     random,
     migrator,
     migratorDelay,
-    nonMigratorDelay,
     directions,
     state2Radius,
   } = data;
@@ -215,8 +228,25 @@ export function animateState2And3(
   const primaryDiffG = secondaryG - primaryG;
   const primaryDiffB = secondaryB - primaryB;
 
-  // Global time for state 3 calculations
-  const globalT = state === 3 ? stateElapsed + STATE2_DURATION : stateElapsed;
+  // Determine which substate of State 2 we're in
+  // Substage 1: 0-3000ms - Absorption (max volatility)
+  // Substage 2: 3000-5000ms - Stabilization (forming stable sphere)
+  // Substage 3: 5000-7000ms - Color shift (blue to orange, different speeds)
+  let subStage: 1 | 2 | 3 = 1;
+  let subStageProgress = 0;
+  
+  if (state === 2) {
+    if (stateElapsed < STATE2_ABSORPTION_DURATION) {
+      subStage = 1;
+      subStageProgress = stateElapsed / STATE2_ABSORPTION_DURATION;
+    } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
+      subStage = 2;
+      subStageProgress = (stateElapsed - STATE2_ABSORPTION_DURATION) / STATE2_STABILIZE_DURATION;
+    } else {
+      subStage = 3;
+      subStageProgress = (stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION) / STATE2_COLOR_SHIFT_DURATION;
+    }
+  }
 
   // Core particle hidden in state 3
   if (state === 3) {
@@ -227,169 +257,165 @@ export function animateState2And3(
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
     const isMigrator = migrator[i] === 1;
+    const rnd = random[i];
+    
+    // All particles (migrators and non-migrators) participate in State 2 shell formation
     const delay = isMigrator
-      ? migratorDelay[i]
-      : nonMigratorDelay[i] + STATE2_DURATION;
-
-    // State 2: Non-migrators stay at home positions with subtle movement
-    if (state === 2 && !isMigrator) {
-      const hx = homePositions[i3];
-      const hy = homePositions[i3 + 1];
-      const hz = homePositions[i3 + 2];
-
-      positions[i3] = hx + Math.sin(time + i) * 0.2;
-      positions[i3 + 1] = hy + Math.cos(time + i) * 0.2;
-      positions[i3 + 2] = hz + Math.sin(time + i * 0.5) * 0.2;
-
-      const rnd = random[i];
-      const mixFactor = rnd * 0.5;
-      const brightness = 0.8 + rnd * 0.4;
-      // Manual interpolation: white -> cool white
-      colors[i3] = (WHITE_R + COOL_DIFF_R * mixFactor) * brightness;
-      colors[i3 + 1] = (WHITE_G + COOL_DIFF_G * mixFactor) * brightness;
-      colors[i3 + 2] = (WHITE_B + COOL_DIFF_B * mixFactor) * brightness;
-      sizes[i] = rnd * 0.8 + 0.3;
-      alphas[i] = 0.6 + rnd * 0.3;
-      continue;
-    }
-
-    // Before delay: particles hover at home positions
-    if (globalT < delay) {
-      const hx = homePositions[i3];
-      const hy = homePositions[i3 + 1];
-      const hz = homePositions[i3 + 2];
-
-      positions[i3] = hx + Math.sin(time + i) * 0.2;
-      positions[i3 + 1] = hy + Math.cos(time + i) * 0.2;
-      positions[i3 + 2] = hz + Math.sin(time + i * 0.5) * 0.2;
-
-      const rnd = random[i];
-      if (!isMigrator) {
-        const mixFactor = rnd * 0.5;
-        const brightness = 0.8 + rnd * 0.4;
-        colors[i3] = (WHITE_R + COOL_DIFF_R * mixFactor) * brightness;
-        colors[i3 + 1] = (WHITE_G + COOL_DIFF_G * mixFactor) * brightness;
-        colors[i3 + 2] = (WHITE_B + COOL_DIFF_B * mixFactor) * brightness;
-        sizes[i] = rnd * 0.8 + 0.3;
-        alphas[i] = 0.6 + rnd * 0.3;
-      } else {
-        // Migrators start transitioning to shell colors
-        const brightness = 0.7 + rnd * 0.6;
-        colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
-        colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
-        colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
-        sizes[i] = rnd * 0.8 + 0.2;
-        alphas[i] = 0.5;
-      }
-      continue;
-    }
-
-    // After delay: particles travel to shell
-    const life = globalT - delay;
-    const entryR = 6 + random[i] * 22;
-
-    // Calculate target radius (expands to shell radius in state 3)
-    const state3Elapsed = Math.max(0, globalT - STATE2_DURATION);
-    const state3T = Math.min(state3Elapsed / 2500, 1);
-    const state3Ease = easeOutCubic(state3T);
-    const targetR = state2Radius[i] + (SHELL_RADIUS - state2Radius[i]) * state3Ease;
+      ? migratorDelay[i] * 0.5 // Faster absorption for migrators
+      : nonMigratorDelay[i] * 0.3; // Slightly delayed for non-migrators
 
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);
     const sinA = Math.sin(shellAngle);
+    const entryR = 6 + random[i] * 22;
 
-    if (life < TRAVEL_DURATION) {
-      // Travel phase: move from home to entry point
-      const travelT = life / TRAVEL_DURATION;
-      const easedTravel = easeOutCubic(travelT);
+    // Calculate base target position on shell
+    let tx = directions[i3] * entryR;
+    const ty = directions[i3 + 1] * entryR;
+    let tz = directions[i3 + 2] * entryR;
+    const rx = tx * cosA - tz * sinA;
+    const rz = tx * sinA + tz * cosA;
+    tx = rx;
+    tz = rz;
 
-      let tx = directions[i3] * entryR;
-      const ty = directions[i3 + 1] * entryR;
-      let tz = directions[i3 + 2] * entryR;
-
-      // Apply shell rotation
-      const rx = tx * cosA - tz * sinA;
-      const rz = tx * sinA + tz * cosA;
-      tx = rx;
-      tz = rz;
-
-      const hx = homePositions[i3];
-      const hy = homePositions[i3 + 1];
-      const hz = homePositions[i3 + 2];
-
-      positions[i3] = hx + (tx - hx) * easedTravel;
-      positions[i3 + 1] = hy + (ty - hy) * easedTravel;
-      positions[i3 + 2] = hz + (tz - hz) * easedTravel;
-
-      const rnd = random[i];
-      const brightness = 0.9 + easedTravel * 0.8; // Increased brightness
-      colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
-      colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
-      colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
-      sizes[i] = 1.0 + easedTravel * 2.0; // Larger sizes
-      alphas[i] = 0.6 + easedTravel * 0.3; // Higher alpha
+    if (state === 2) {
+      // STATE 2: Three substages
+      
+      if (subStage === 1) {
+        // SUBSTAGE 1: Absorption (0-3000ms) - Max volatility, particles moving to shell
+        const absorptionProgress = Math.min(1, Math.max(0, (stateElapsed - delay) / (STATE2_ABSORPTION_DURATION * 0.7)));
+        const easedAbsorption = easeOutCubic(absorptionProgress);
+        
+        const hx = homePositions[i3];
+        const hy = homePositions[i3 + 1];
+        const hz = homePositions[i3 + 2];
+        
+        // Move from home to shell position with max volatility
+        if (absorptionProgress > 0) {
+          const volatility = 1 - easedAbsorption; // Max volatility at start
+          const pulseAmp = 20 + random[i] * 15; // Large chaotic movement
+          const pulseFreq = 0.02 + random[i] * 0.01;
+          const chaosX = Math.sin(time * pulseFreq + i) * pulseAmp * volatility;
+          const chaosY = Math.cos(time * pulseFreq * 1.3 + i) * pulseAmp * volatility;
+          const chaosZ = Math.sin(time * pulseFreq * 0.7 + i * 2) * pulseAmp * volatility;
+          
+          positions[i3] = hx + (tx - hx) * easedAbsorption + chaosX;
+          positions[i3 + 1] = hy + (ty - hy) * easedAbsorption + chaosY;
+          positions[i3 + 2] = hz + (tz - hz) * easedAbsorption + chaosZ;
+        } else {
+          // Still at home, waiting for delay
+          positions[i3] = hx + Math.sin(time + i) * 0.2;
+          positions[i3 + 1] = hy + Math.cos(time + i) * 0.2;
+          positions[i3 + 2] = hz + Math.sin(time + i * 0.5) * 0.2;
+        }
+        
+        // Bright cyan/blue colors
+        const brightness = 0.8 + easedAbsorption * 0.6 + Math.sin(time * 0.01 + rnd * 5) * 0.3;
+        colors[i3] = BLUE_R * brightness;
+        colors[i3 + 1] = BLUE_G * brightness;
+        colors[i3 + 2] = BLUE_B * brightness;
+        
+        const volatility = 1 - easedAbsorption;
+        sizes[i] = 0.8 + easedAbsorption * 1.5 + volatility * 1.0;
+        alphas[i] = 0.5 + easedAbsorption * 0.4;
+        
+      } else if (subStage === 2) {
+        // SUBSTAGE 2: Stabilization (3000-5000ms) - Forming stable sphere
+        const stabilizeEased = easeOutCubic(subStageProgress);
+        const baseR = entryR + (state2Radius[i] - entryR) * stabilizeEased;
+        
+        // Reduced but still present volatility
+        const volatility = 1 - stabilizeEased;
+        const pulseAmp = 8 * volatility; // Decreasing volatility
+        const pulse = Math.sin(stateElapsed * 0.008 + random[i] * 10) * pulseAmp;
+        const chaosOffset = Math.sin(stateElapsed * 0.005 + i) * (2 * volatility);
+        
+        const r = Math.max(0, baseR + pulse + chaosOffset);
+        
+        let sx = directions[i3] * r;
+        const sy = directions[i3 + 1] * r;
+        let sz = directions[i3 + 2] * r;
+        const srx = sx * cosA - sz * sinA;
+        const srz = sx * sinA + sz * cosA;
+        sx = srx;
+        sz = srz;
+        
+        positions[i3] = sx;
+        positions[i3 + 1] = sy;
+        positions[i3 + 2] = sz;
+        
+        // Transitioning from blue to slightly more stable blue
+        const brightness = 0.9 + Math.sin(stateElapsed * 0.005 + rnd * 3) * 0.2;
+        colors[i3] = BLUE_R * brightness;
+        colors[i3 + 1] = BLUE_G * brightness;
+        colors[i3 + 2] = BLUE_B * brightness;
+        
+        sizes[i] = 1.5 + stabilizeEased * 0.5;
+        alphas[i] = 0.8 + stabilizeEased * 0.15;
+        
+      } else {
+        // SUBSTAGE 3: Color shift (5000-7000ms) - Blue to orange, different speeds per particle
+        // Each particle has different color interpolation speed based on random value
+        const colorSpeedFactor = 0.5 + rnd * 1.0; // 0.5x to 1.5x speed
+        const adjustedProgress = Math.min(1, subStageProgress * colorSpeedFactor);
+        const colorEased = easeOutCubic(adjustedProgress);
+        
+        // Stable sphere position (fully formed)
+        const baseR = state2Radius[i];
+        const pulseAmp = 2 + random[i] * 2; // Minimal volatility
+        const pulse = Math.sin(stateElapsed * 0.003 + random[i] * 10) * pulseAmp;
+        const r = Math.max(0, baseR + pulse);
+        
+        let sx = directions[i3] * r;
+        const sy = directions[i3 + 1] * r;
+        let sz = directions[i3 + 2] * r;
+        const srx = sx * cosA - sz * sinA;
+        const srz = sx * sinA + sz * cosA;
+        sx = srx;
+        sz = srz;
+        
+        positions[i3] = sx;
+        positions[i3 + 1] = sy;
+        positions[i3 + 2] = sz;
+        
+        // Color interpolation from blue to orange (different speeds per particle)
+        const brightness = 0.9 + Math.sin(stateElapsed * 0.003 + rnd * 3) * 0.1;
+        colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
+        colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
+        colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
+        
+        sizes[i] = 2.0 + colorEased * 0.5;
+        alphas[i] = 0.95;
+      }
+      
     } else {
-      // Stabilized phase: orbit on shell
-      const activeLife = life - TRAVEL_DURATION;
-      
-      // State 2: Keep volatile with constant chaos
-      // State 3: Gradually stabilize
-      const isState3 = state === 3;
-      const stabilizeT = isState3 ? Math.min(activeLife / STABILIZE_DURATION, 1) : 0;
-      const easedStabilize = isState3 ? easeOutCubic(stabilizeT) : 0;
+      // STATE 3: Solar System - Stable shell, planets orbiting
+      // Shell is fully stable at this point
+      const baseR = state2Radius[i];
+      const pulseAmp = 1 + random[i]; // Minimal pulse
+      const pulse = Math.sin(stateElapsed * 0.002 + random[i] * 10) * pulseAmp;
+      const r = Math.max(0, baseR + pulse);
 
-      const baseR = entryR + (targetR - entryR) * easedStabilize;
-      
-      // State 2: Large chaotic pulse that never settles
-      // State 3: Reducing pulse as it stabilizes
-      const pulseAmp = isState3 
-        ? (1 - easedStabilize) * (12 + random[i] * 10)
-        : (15 + random[i] * 12); // Constant large amplitude in State 2
-      
-      // State 2: Faster, more chaotic movement with multiple frequencies
-      // State 3: Slower, settling movement
-      const pulseFreq = isState3 ? 0.005 : 0.015;
-      const pulse = Math.sin(activeLife * pulseFreq + random[i] * 10) * pulseAmp;
-      
-      // State 2: Add extra noise/chaos
-      const chaosOffset = isState3 ? 0 : Math.sin(activeLife * 0.008 + i) * (3 + random[i] * 4);
-      
-      const r = Math.max(0, baseR + pulse + chaosOffset);
+      let sx = directions[i3] * r;
+      const sy = directions[i3 + 1] * r;
+      let sz = directions[i3 + 2] * r;
+      const srx = sx * cosA - sz * sinA;
+      const srz = sx * sinA + sz * cosA;
+      sx = srx;
+      sz = srz;
 
-      let tx = directions[i3] * r;
-      const ty = directions[i3 + 1] * r;
-      let tz = directions[i3 + 2] * r;
+      positions[i3] = sx;
+      positions[i3 + 1] = sy;
+      positions[i3 + 2] = sz;
 
-      const rx = tx * cosA - tz * sinA;
-      const rz = tx * sinA + tz * cosA;
-      tx = rx;
-      tz = rz;
+      // Orange/yellow colors for solar system state
+      const brightness = 0.8 + Math.sin(stateElapsed * 0.002 + rnd * 3) * 0.15;
+      colors[i3] = ORANGE_R * brightness;
+      colors[i3 + 1] = ORANGE_G * brightness;
+      colors[i3 + 2] = ORANGE_B * brightness;
 
-      positions[i3] = tx;
-      positions[i3 + 1] = ty;
-      positions[i3 + 2] = tz;
-
-      const rnd = random[i];
-      
-      // State 2: Much brighter, more energetic colors
-      // State 3: Stabilizing brightness
-      const brightness = isState3 
-        ? 0.5 + easedStabilize * 0.8
-        : 1.0 + Math.sin(activeLife * 0.01 + rnd * 5) * 0.4; // Much brighter in State 2 (0.6-1.4 range)
-        
-      colors[i3] = (primaryR + primaryDiffR * rnd) * brightness;
-      colors[i3 + 1] = (primaryG + primaryDiffG * rnd) * brightness;
-      colors[i3 + 2] = (primaryB + primaryDiffB * rnd) * brightness;
-      
-      // State 2: Pulsing sizes - larger
-      // State 3: Settling sizes
-      sizes[i] = isState3
-        ? 0.6 + easedStabilize * 1.4 + (1 - easedStabilize) * 0.8
-        : 1.2 + Math.sin(activeLife * 0.012 + rnd * 8) * 0.8 + rnd * 0.6; // Larger in State 2
-        
-      alphas[i] = isState3
-        ? 0.2 + easedStabilize * 0.8
-        : 0.75 + Math.sin(activeLife * 0.008 + rnd * 3) * 0.15; // Much higher alpha in State 2 (0.6-0.9)
+      sizes[i] = 1.8 + rnd * 0.4;
+      alphas[i] = 0.9;
     }
   }
 }
@@ -407,7 +433,8 @@ export function animatePlanets(
   const startPos = new THREE.Vector3(-90, -70, 30);
 
   planets.forEach((planet, idx) => {
-    const entryTime = PLANET_ENTRY_BASE_TIME + idx * PLANET_ENTRY_DELAY;
+    // Planets start entering immediately in State 3 (no waiting for stabilization)
+    const entryTime = idx * PLANET_ENTRY_DELAY;
 
     if (stateElapsed < entryTime) {
       planet.group.visible = false;

@@ -118,13 +118,13 @@ function App() {
       // Only work in State 1
       if (stateRef.current !== 1) return;
       
-      // Start charging (hold to charge shell)
+      // Start charging (hold to charge shell) - 7000ms for 3 substages
       setState(2);
       inState2Ref.current = true;
       holdTimerRef.current = setTimeout(() => {
         inState2Ref.current = false;
         setState(3);
-      }, 5000);
+      }, 7000);
     };
 
     const handleMouseUp = () => {

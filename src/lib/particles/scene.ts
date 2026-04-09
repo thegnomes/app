@@ -226,13 +226,13 @@ export function createPlanets(parent: THREE.Object3D, angles: number[]): PlanetI
     const group = new THREE.Group();
     group.visible = false;
 
-    // Main planet mesh with dark grey standard material for 3D depth and shadows
+    // Main planet mesh with planet's unique color
     const mesh = new THREE.Mesh(
       new THREE.SphereGeometry(planetConfig.size, 32, 32),
       new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#444444'),
-        roughness: 0.6,
-        metalness: 0.3,
+        color: new THREE.Color(planetConfig.color),
+        roughness: 0.5,
+        metalness: 0.4,
       })
     );
     mesh.castShadow = true;

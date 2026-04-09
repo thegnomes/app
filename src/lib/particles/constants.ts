@@ -11,8 +11,17 @@ export const STATE1_DURATION = 2000;
 /** Duration of concentration phase in state 4 */
 export const STATE4_CONCENTRATE = 1000;
 
-/** Duration of state 2 (charging shell phase) */
-export const STATE2_DURATION = 5000;
+/** Duration of state 2 (charging shell phase) - 3 substages: absorption (3000ms) + stabilization (2000ms) + color shift (2000ms) */
+export const STATE2_DURATION = 7000;
+
+/** Substage 1: Particle absorption duration (max volatility) */
+export const STATE2_ABSORPTION_DURATION = 3000;
+
+/** Substage 2: Stabilization duration (forming stable sphere) */
+export const STATE2_STABILIZE_DURATION = 2000;
+
+/** Substage 3: Color interpolation duration (blue to orange) */
+export const STATE2_COLOR_SHIFT_DURATION = 2000;
 
 /** Duration for particles to stabilize in their orbits */
 export const STABILIZE_DURATION = 5000;
