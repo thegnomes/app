@@ -128,10 +128,10 @@ export function animateState1(
 
     if (i === 0) {
       // Core particle - bright center of starfield
-      // Core appears first with its own timing
-      const coreDelay = 0; // Core appears immediately at start of state 1
+      // Core appears AFTER background particles for continuity
+      const coreDelay = 0.5; // Core appears after background has started
       let coreT = (stateElapsed / STATE1_DURATION - coreDelay) / (1 - coreDelay);
-      coreT = Math.max(0, Math.min(1, coreT * 2)); // 2x speed for core to appear faster
+      coreT = Math.max(0, Math.min(1, coreT * 3)); // 3x speed to catch up quickly
       const coreEased = easeOutCubic(coreT);
       
       positions[i3] = 0;
@@ -140,7 +140,7 @@ export function animateState1(
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      // Core pulses and fades in quickly
+      // Core fades in after background
       sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
       alphas[i] = 0.9 * coreEased;
       continue;
@@ -149,13 +149,13 @@ export function animateState1(
     const rnd = random[i];
     
     // Calculate animation progress for entry effect
-    // Background particles start appearing after core is visible (0.15 delay minimum)
+    // Background particles appear FIRST for continuity from brain zoom
     const brainX = brainPositions[i3];
     const brainY = brainPositions[i3 + 1];
     const brainZ = brainPositions[i3 + 2];
     const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
-    const distDelay = (distFromCenter / 25) * 0.25;
-    const delay = 0.15 + distDelay + rnd * 0.25; // 0.15 minimum delay so core appears first
+    const distDelay = (distFromCenter / 25) * 0.3;
+    const delay = distDelay + rnd * 0.2; // No minimum delay - start immediately
     
     let t = (stateElapsed / STATE1_DURATION - delay) / (1 - delay);
     t = Math.max(0, Math.min(1, t));
