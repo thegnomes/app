@@ -6,8 +6,8 @@ interface VideoBackgroundProps {
 }
 
 // Let the zoom video play through its entirety - it has transparency
-// Transition later so brain_zoom has time to play before starfield appears
-const TRANSITION_TIME = 0.6; // Trigger starfield at 600ms, video continues playing
+// Video is ~1480ms, transition near the end to let it play fully
+const TRANSITION_TIME = 1.35; // Trigger starfield at 1350ms, video ends at ~1480ms
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
