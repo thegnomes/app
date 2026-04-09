@@ -147,6 +147,7 @@ function App() {
       inState2Ref.current = true;
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
+      const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       substateTimersRef.current.push(
         setTimeout(() => {
           dispatchState2SubstateEvent(
@@ -160,10 +161,10 @@ function App() {
         setTimeout(() => {
           dispatchState2SubstateEvent(
             3,
-            STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION,
-            80000
+            substate3Start,
+            STATE2_DURATION
           );
-        }, STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION)
+        }, substate3Start)
       );
 
       holdTimerRef.current = setTimeout(() => {
@@ -182,6 +183,11 @@ function App() {
       } else if (planetEntryReadyRef.current) {
         // Released after State 2 completed - planets start entering orbit
         planetEntryReadyRef.current = false;
+        window.dispatchEvent(
+          new CustomEvent('particle:state3-release-trigger', {
+            detail: { releasedAtMs: performance.now() },
+          })
+        );
         setState(3);
       }
     };

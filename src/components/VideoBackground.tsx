@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -52,6 +52,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       onClick={handleClick}
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
       style={{
+        backgroundColor: '#000000',
         opacity: isFadingOut ? 0 : 1,
         transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
         pointerEvents: isFadingOut ? 'none' : 'auto',
@@ -65,7 +66,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
           muted
           loop
           playsInline
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       )}
 

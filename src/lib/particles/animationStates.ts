@@ -276,6 +276,10 @@ export function animateState2And3(
       // Total draw-in duration spans substate 1 + substate 2 (0-10000ms)
       // Each particle has individual delay for staggered arrival
       const totalDrawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      const colorInterpolationStart =
+        STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.6;
+      const colorInterpolationDuration =
+        STATE2_STABILIZE_DURATION * 0.4 + STATE2_COLOR_SHIFT_DURATION;
       
       // Staggered delay: use random + particle index for varied start times
       // Creates wave-like arrival from starfield
@@ -354,10 +358,11 @@ export function animateState2And3(
           const decayProgress = (s2Progress - 0.6) / 0.4;
           amplitudeFactor = 1 - easeOutCubic(decayProgress);
           
-          // Color interpolation starts when bounce decay starts (at 60%)
-          const colorDecayProgress = (s2Progress - 0.6) / 0.5; // Slightly longer for color
-          const colorSpeed = 0.8 + rnd * 0.4;
-          colorT = Math.min(0.7, colorDecayProgress * colorSpeed); // Max 70% by end of s2
+          // Color interpolation starts exactly when bounce decay starts (at 60%)
+          colorT = Math.min(
+            1,
+            Math.max(0, (stateElapsed - colorInterpolationStart) / colorInterpolationDuration)
+          );
         }
         
         const bounceAmp = fullBounceAmp * amplitudeFactor;
@@ -380,9 +385,11 @@ export function animateState2And3(
         // Compression: 100% -> 80%
         compressionFactor = 1 - (s3Eased * 0.2);
         
-        // Color shift progress
-        const colorSpeed = 0.6 + rnd * 0.4;
-        colorT = Math.min(1, s3Progress * colorSpeed);
+        // Continue color shift that started in substate 2 decay
+        colorT = Math.min(
+          1,
+          Math.max(0, (stateElapsed - colorInterpolationStart) / colorInterpolationDuration)
+        );
         
         // Final Fibonacci position with compression
         const fx = fibX * compressionFactor;
@@ -466,7 +473,7 @@ export function animatePlanets(
       (stateElapsed - entryTime) / (PLANET_ENTRY_DURATION * 0.7), // 30% faster entry
       1
     );
-    const easedEntry = easeOutCubic(entryProgress);
+    const linearEntry = entryProgress;
 
     const endPos = new THREE.Vector3(
       Math.cos(planet.angle) * planet.radius,
@@ -475,11 +482,11 @@ export function animatePlanets(
     );
     endPos.applyEuler(SHARED_ROTATION);
 
-    planet.group.position.lerpVectors(startPos, endPos, easedEntry);
+    planet.group.position.lerpVectors(startPos, endPos, linearEntry);
 
     const startScale = 5.0;
     const endScale = 1.0;
-    const s = startScale + (endScale - startScale) * easedEntry;
+    const s = startScale + (endScale - startScale) * linearEntry;
     planet.group.scale.set(s, s, s);
 
     // Once entered, orbit at 2x speed
