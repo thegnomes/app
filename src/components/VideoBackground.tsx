@@ -54,7 +54,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   return (
     <div
       onClick={handleClick}
-      className="video-background fixed inset-0 z-10 cursor-pointer bg-black flex items-center justify-center overflow-hidden"
+      className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
       style={{
         opacity: isFadingOut ? 0 : 1,
         transition: isFadingOut ? 'opacity 2.5s ease-out' : 'none',
