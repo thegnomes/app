@@ -41,13 +41,8 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
   };
 
   const handleZoomEnded = () => {
-    // Video ended, fade it out now
+    // Video ended naturally, now fade it out
     setIsFadingOut(true);
-    // Fallback: if video ends before transition (shouldn't happen), trigger it
-    if (!hasTransitionedRef.current) {
-      hasTransitionedRef.current = true;
-      onTransition();
-    }
   };
 
   if (!isActive) return null;
@@ -58,7 +53,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
       style={{
         opacity: isFadingOut ? 0 : 1,
-        transition: isFadingOut ? 'opacity 2.5s ease-out' : 'none',
+        transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
         pointerEvents: isFadingOut ? 'none' : 'auto',
       }}
     >
@@ -74,7 +69,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         />
       )}
 
-      {/* Zoom transition video - transitions at 1:35 mark */}
+      {/* Zoom transition video - plays full with alpha, fades at end */}
       <video
         ref={zoomVideoRef}
         src="/brain_zoom.webm"
@@ -85,7 +80,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
         `}
         style={{
-          transition: 'opacity 0.5s ease-out',
+          transition: 'opacity 0.3s ease-out',
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleZoomEnded}

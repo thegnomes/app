@@ -39,6 +39,7 @@ function App() {
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
+  const planetEntryReadyRef = useRef(false); // Set when State 2 completes, triggers planets on mouse up
   
   // Camera pan state
   const panStateRef = useRef({
@@ -166,16 +167,22 @@ function App() {
       );
 
       holdTimerRef.current = setTimeout(() => {
+        // State 2 complete - ready for planet entry on mouse release
         inState2Ref.current = false;
-        setState(3);
+        planetEntryReadyRef.current = true;
       }, STATE2_DURATION);
     };
 
     const handleMouseUp = () => {
       if (inState2Ref.current) {
+        // Released early during State 2 - go to collapse
         clearState2Timers();
         inState2Ref.current = false;
         setState(4);
+      } else if (planetEntryReadyRef.current) {
+        // Released after State 2 completed - planets start entering orbit
+        planetEntryReadyRef.current = false;
+        setState(3);
       }
     };
 

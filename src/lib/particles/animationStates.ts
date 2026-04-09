@@ -20,7 +20,7 @@ import {
   SHARED_ROTATION,
   ORBIT_SEGMENTS,
 } from './constants';
-import { easeOutCubic, easeInOutCubic, smoothStep } from './geometry';
+import { easeOutCubic, easeInOutCubic } from './geometry';
 import type { PlanetInstance } from './scene';
 
 // ============================================
@@ -286,8 +286,8 @@ export function animateState2And3(
       
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / totalDrawInDuration);
-      // Gentle ramp with nearly constant speed
-      const drawInEased = smoothStep(drawInProgress);
+      // Linear for constant speed approach (no ramp, steady flow)
+      const drawInEased = drawInProgress;
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
@@ -353,6 +353,11 @@ export function animateState2And3(
           // Decay: 1 to 0 from 60% to 100% (smooth transition to s3)
           const decayProgress = (s2Progress - 0.6) / 0.4;
           amplitudeFactor = 1 - easeOutCubic(decayProgress);
+          
+          // Color interpolation starts when bounce decay starts (at 60%)
+          const colorDecayProgress = (s2Progress - 0.6) / 0.5; // Slightly longer for color
+          const colorSpeed = 0.8 + rnd * 0.4;
+          colorT = Math.min(0.7, colorDecayProgress * colorSpeed); // Max 70% by end of s2
         }
         
         const bounceAmp = fullBounceAmp * amplitudeFactor;

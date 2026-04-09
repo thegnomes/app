@@ -12,9 +12,9 @@ export const STATE1_DURATION = 2000;
 export const STATE4_CONCENTRATE = 1000;
 
 /** Duration of state 2 (charging shell phase) - 3 substages: 
- * absorption 0-6000ms + settle 6000-10000ms + transform 10000-16000ms
+ * absorption 0-6000ms + settle 6000-10000ms + transform 10000-13000ms
  */
-export const STATE2_DURATION = 16000;
+export const STATE2_DURATION = 13000;
 
 /** Substage 1: Particle absorption with radial approach (0-6000ms) */
 export const STATE2_ABSORPTION_DURATION = 6000;
@@ -22,8 +22,8 @@ export const STATE2_ABSORPTION_DURATION = 6000;
 /** Substage 2: Spike/thorn bounce decay to stable sphere (6000-10000ms) */
 export const STATE2_STABILIZE_DURATION = 4000;
 
-/** Substate 3: Compression + color shift (10000-16000ms) */
-export const STATE2_COLOR_SHIFT_DURATION = 6000;
+/** Substate 3: Compression + color shift (10000-13000ms) - half duration */
+export const STATE2_COLOR_SHIFT_DURATION = 3000;
 
 /** Duration for particles to stabilize in their orbits */
 export const STABILIZE_DURATION = 5000;
