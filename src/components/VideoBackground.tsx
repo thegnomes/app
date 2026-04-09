@@ -5,8 +5,8 @@ interface VideoBackgroundProps {
   onTransition: () => void;
 }
 
-// Transition to starfield at 1:35 (95 seconds)
-const TRANSITION_TIME = 95;
+// Transition to starfield 100ms before video ends (1380ms for 1480ms video)
+const TRANSITION_TIME = 1.38;
 
 export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
