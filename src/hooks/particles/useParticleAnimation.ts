@@ -1,4 +1,4 @@
-import { useEffect, type MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
@@ -49,6 +49,17 @@ interface UseParticleAnimationProps {
  * Hook to manage particle animation loop
  */
 export function useParticleAnimation({ state, config, refs, data, cameraPanRef }: UseParticleAnimationProps) {
+  const stateRef = useRef(state);
+  const speedRef = useRef(config.speed);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    speedRef.current = config.speed;
+  }, [config.speed]);
+
   // Main animation loop
   useEffect(() => {
     if (!refs.scene.current || !refs.camera.current || !refs.renderer.current) return;
@@ -67,7 +78,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       if (!particles.current || !particleData.current) return;
 
-      lastState.current = state;
+      const nextState = stateRef.current;
+
+      lastState.current = nextState;
       stateStart.current = performance.now();
 
       // Capture position snapshot
@@ -75,7 +88,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       snapshotPositions.current.set(pos);
 
       // State 4: Initialize burst velocities and trail history
-      if (state === 4 && particleData.current) {
+      if (nextState === 4 && particleData.current) {
         initializeBurstVelocities(particleData.current.burstVelocity);
 
         if (trail.current) {
@@ -95,7 +108,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // State 3: Reset planet first-orbit tracking and orbit geometries
-      if (state === 3) {
+      if (nextState === 3) {
         planets.current?.forEach((p) => {
           p.hasCompletedFirstOrbit = false;
           p.angleTraveled = 0;
@@ -120,12 +133,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // State 1: Create flash effect
-      if (state === 1 && !flashMesh.current && scene.current) {
+      if (nextState === 1 && !flashMesh.current && scene.current) {
         flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.6, 0.05);
       }
 
       // Trigger nova effect on state changes except State 1 (starfield)
-      if (refs.systemGroup.current && state !== 1) {
+      if (refs.systemGroup.current && nextState !== 1) {
         // Clean up any existing novas first (including their containers)
         if (refs.novaMeshes.current.length > 0) {
           refs.novaMeshes.current.forEach((nova) => {
@@ -142,7 +155,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
         
         // Create 4 new nova rings at 0, 45, 90, 135 degree rotations
-        const novaColor = STATE_PRIMARY_COLORS[state].clone();
+        const novaColor = STATE_PRIMARY_COLORS[nextState].clone();
         for (let i = 0; i < 4; i++) {
           // Pass rotation to createNovaMesh
           const rotationZ = (i * Math.PI) / 4;
@@ -158,10 +171,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       const now = performance.now();
       const stateElapsed = now - data.stateStart.current;
-      const currentState = state;
+      const currentState = stateRef.current;
+      const speed = speedRef.current;
 
       // Update time
-      data.time.current += TIME_STEP * config.speed;
+      data.time.current += TIME_STEP * speed;
 
       // Update shader uniforms
       if (refs.particles.current) {
@@ -269,7 +283,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         case 2:
         case 3:
           // Faster shell rotation for visible spinning effect
-          data.shellAngle.current += 0.012 * config.speed;
+          data.shellAngle.current += 0.012 * speed;
           animateState2And3(
             attributes,
             particleData,
@@ -277,7 +291,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             stateElapsed,
             data.snapshotPositions.current,
             data.time.current,
-            config.speed,
+            speed,
             data.shellAngle.current,
             data.currentPrimaryColor.current,
             data.currentSecondaryColor.current
@@ -301,7 +315,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             }
 
             if (refs.planets.current) {
-              animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, config.speed);
+              animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, speed);
             }
           }
           break;
@@ -382,7 +396,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // System group rotation
       if (refs.systemGroup.current) {
-        refs.systemGroup.current.rotation.y += 0.0005 * config.speed;
+        refs.systemGroup.current.rotation.y += 0.0005 * speed;
         refs.systemGroup.current.rotation.x = Math.sin(data.time.current * 0.1) * 0.02;
       }
 
@@ -468,5 +482,5 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       cancelAnimationFrame(data.animationId.current);
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [state, config.speed, refs, data, cameraPanRef]);
+  }, [refs, data, cameraPanRef]);
 }
