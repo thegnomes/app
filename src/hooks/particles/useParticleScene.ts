@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import type { ParticleConfig } from '@/types';
 import {
@@ -148,9 +148,8 @@ export function useParticleScene(config: ParticleConfig) {
     window.addEventListener('resize', onResize);
 
     // Cleanup
-    const animId = animationRef.current;
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(animationRef.current);
       window.removeEventListener('resize', onResize);
 
       if (rendererRef.current && initialContainer) {
@@ -171,38 +170,44 @@ export function useParticleScene(config: ParticleConfig) {
     currentCoreColorRef.current.set(config.centerColor);
   }, [config.centerColor]);
 
-  const refs: SceneRefs = {
-    scene: sceneRef,
-    camera: cameraRef,
-    renderer: rendererRef,
-    particles: particlesRef,
-    coreGroup: coreGroupRef,
-    orbitGroup: orbitGroupRef,
-    planets: planetsRef,
-    sunLight: sunLightRef,
-    trail: trailRef,
-    flashMesh: flashMeshRef,
-    systemGroup: systemGroupRef,
-    novaMeshes: novaMeshesRef,
-    novaState: novaStateRef,
-  };
+  const refs: SceneRefs = useMemo(
+    () => ({
+      scene: sceneRef,
+      camera: cameraRef,
+      renderer: rendererRef,
+      particles: particlesRef,
+      coreGroup: coreGroupRef,
+      orbitGroup: orbitGroupRef,
+      planets: planetsRef,
+      sunLight: sunLightRef,
+      trail: trailRef,
+      flashMesh: flashMeshRef,
+      systemGroup: systemGroupRef,
+      novaMeshes: novaMeshesRef,
+      novaState: novaStateRef,
+    }),
+    []
+  );
 
-  const data: AnimationData = {
-    time: timeRef,
-    stateStart: stateStartRef,
-    lastState: lastStateRef,
-    snapshotPositions: snapshotPosRef,
-    currentCoreColor: currentCoreColorRef,
-    currentPrimaryColor: currentPrimaryColorRef,
-    currentSecondaryColor: currentSecondaryColorRef,
-    shellAngle: shellAngleRef,
-    trailHistory: trailHistoryRef,
-    particleData: particleDataRef,
-    particleAttributes: particleAttributesRef,
-    animationId: animationRef,
-    mousePosition: mouseRef,
-    cameraDrift: cameraDriftRef,
-  };
+  const data: AnimationData = useMemo(
+    () => ({
+      time: timeRef,
+      stateStart: stateStartRef,
+      lastState: lastStateRef,
+      snapshotPositions: snapshotPosRef,
+      currentCoreColor: currentCoreColorRef,
+      currentPrimaryColor: currentPrimaryColorRef,
+      currentSecondaryColor: currentSecondaryColorRef,
+      shellAngle: shellAngleRef,
+      trailHistory: trailHistoryRef,
+      particleData: particleDataRef,
+      particleAttributes: particleAttributesRef,
+      animationId: animationRef,
+      mousePosition: mouseRef,
+      cameraDrift: cameraDriftRef,
+    }),
+    []
+  );
 
   return { refs, data, containerRef: containerRef };
 }
