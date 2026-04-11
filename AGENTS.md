@@ -38,8 +38,8 @@ npm run lint
 |-------|------|-------------|
 | 0 | Hidden | Canvas is transparent/disabled while video brain handles visuals. |
 | 1 | Star Field | Particles spread to starfield/home positions with subtle camera panning. |
-| 2 | Charging Shell | Holding interaction drives migrators into a shell with staged absorption, bounce/stabilization, and color shift. |
-| 3 | Solar System | Shell stabilizes while planets enter, orbit, and draw orbit lines progressively. |
+| 2 | Charging Shell | Holding interaction drives particles into a shell with staged absorption, clustered bipolar spike volatility, bounce decay, compression, shell color shift, and substate 3 glow. |
+| 3 | Solar System | The stabilized shell carries forward into the solar-system state while planets enter, orbit, and draw orbit lines progressively. |
 | 4 | Collapse | Early release during charging drives burst/collapse motion with migrator trails, then returns to State 1. |
 
 `App.tsx` owns the high-level state machine and mouse interaction. Particle state changes are consumed by hooks and animation modules.
@@ -52,10 +52,10 @@ The system is split across a thin React wrapper, hooks, and pure-ish Three.js he
 |------|----------------|
 | `src/components/ParticleCanvas.tsx` | **Orchestration wrapper**. Wires React props into `useParticleScene` and `useParticleAnimation`. Owns the container element, canvas-level cursor/opacity/pointer behavior. **Not the sole renderer.** |
 | `src/hooks/particles/useParticleScene.ts` | Scene, renderer, camera, refs, object creation, resize handling, buffer setup, and cleanup. |
-| `src/hooks/particles/useParticleAnimation.ts` | `requestAnimationFrame` loop, state transition handling, shader uniform updates, camera drift/panning, novas, flash cleanup, planets, trails, and calls into state animation functions. |
-| `src/lib/particles/constants.ts` | Timing, particle counts, trail length, orbit segment counts, renderer limits, camera values, colors, planet config, and animation tuning constants. |
-| `src/lib/particles/particleData.ts` | Particle data initialization, migrator selection/indexing, typed arrays, buffers, trail sizing, shell/home positions, and burst data. |
-| `src/lib/particles/animationStates.ts` | State-specific motion logic for hidden/starfield/charging shell/solar system/collapse behavior, including trail updates and burst velocity initialization. |
+| `src/hooks/particles/useParticleAnimation.ts` | `requestAnimationFrame` loop, delta-time progression, state transition handling, shader uniform updates, camera drift/panning, novas, flash cleanup, planets, trails, State 2/3 core glow scale continuity, and calls into state animation functions. |
+| `src/lib/particles/constants.ts` | Timing, particle counts, trail length, orbit segment counts, renderer limits, camera values, colors, planet config, State 2 spike-cluster tuning, and animation tuning constants. |
+| `src/lib/particles/particleData.ts` | Particle data initialization, migrator selection/indexing, typed arrays, buffers, trail sizing, shell/home positions, burst data, and precomputed State 2 spike cluster membership/weights/phases. |
+| `src/lib/particles/animationStates.ts` | State-specific motion logic for hidden/starfield/charging shell/solar system/collapse behavior, including clustered State 2 shell motion, shell/core color and glow timing, trail updates, and burst velocity initialization. |
 | `src/lib/particles/geometry.ts` | Position generation, easing helpers, and orbit geometry helpers. |
 | `src/lib/particles/shaders.ts` | GLSL shaders for particles, core/glow, and related visual treatments. |
 | `src/lib/particles/scene.ts` | Three.js object creation for particles, core/glow, planets, trails, flashes, and novas. |
@@ -66,14 +66,37 @@ Use the module that owns the behavior you are changing:
 
 | If changing... | Edit... |
 |----------------|---------|
-| Counts, timing constants, renderer limits, trail length, orbit segment count, camera constants, colors, planet config | `src/lib/particles/constants.ts` |
-| Migrator ratios, generated particle buffers, trail buffer sizing, per-particle initialization | `src/lib/particles/particleData.ts` |
-| Frame progression, shader uniform time updates, transition hooks, camera drift/panning, planet/orbit frame work, nova cleanup, render-loop concerns | `src/hooks/particles/useParticleAnimation.ts` |
-| Per-state motion curves, easing, shell formation, State 2 bounce/stabilization, State 3 shell/planet behavior, State 4 burst/trails, particle position/color/alpha/size updates | `src/lib/particles/animationStates.ts` |
+| Counts, timing constants, renderer limits, trail length, orbit segment count, camera constants, colors, planet config, State 2 spike-cluster tuning | `src/lib/particles/constants.ts` |
+| Migrator ratios, generated particle buffers, trail buffer sizing, per-particle initialization, State 2 cluster membership/weights/phases | `src/lib/particles/particleData.ts` |
+| Frame progression, shader uniform time updates, transition hooks, camera drift/panning, planet/orbit frame work, nova cleanup, render-loop concerns, core glow scale continuity | `src/hooks/particles/useParticleAnimation.ts` |
+| Per-state motion curves, easing, shell formation, State 2 clustered bipolar spike motion, State 2/3 shell glow and color continuity, State 4 burst/trails, particle position/color/alpha/size updates | `src/lib/particles/animationStates.ts` |
 | Scene object construction and disposal | `src/lib/particles/scene.ts` or `src/hooks/particles/useParticleScene.ts` (depending on lifecycle) |
 | Canvas DOM wiring, container style, hook orchestration | `src/components/ParticleCanvas.tsx` |
 
 Prefer changing the narrowest owner rather than pushing new logic up into `ParticleCanvas`.
+
+## Current Particle Motion Notes
+
+Current particle budgets and motion defaults are intentionally lighter than the original demo:
+
+| Value | Current implementation |
+|-------|------------------------|
+| `TOTAL_MAIN` | 1400 |
+| `MIGRATOR_RATIO` | 0.25 |
+| `TRAIL_LENGTH` | 5 |
+| `ORBIT_SEGMENTS` | 84 |
+| Time progression | Delta-time based, clamped by `MAX_FRAME_DELTA_MS` and normalized with `TARGET_FRAME_MS` |
+
+State 2 uses precomputed clustered spike metadata:
+
+- Cluster leaders are selected once in `particleData.ts` using `STATE2_SPIKE_CLUSTER_LEADER_RATIO`.
+- Cluster weights use leader, ring 1, and ring 2 weights from `constants.ts`.
+- If clusters overlap, the higher cluster weight wins rather than adding stacked amplitude.
+- Cluster motion is bipolar and radial around the stable shell anchor: particles move inward and outward around the shell, with an inward clamp from `STATE2_SPIKE_MIN_RADIUS_RATIO`.
+- Cluster phase and small phase lag are precomputed so neighbouring particles move coherently as visible spike/thorn clusters rather than random glitter.
+- Bounce decay, shell color interpolation, and sphere compression share timing in `animationStates.ts`; avoid reintroducing separate envelopes that make the shell snap stable and restart.
+- State 2 substate 3 adds eased shell glow, white-to-orange core color, stronger core particle glow, and glow spread just outside the shell.
+- State 3 preserves the stabilized shell and glow scale continuity so the transition from charging shell to solar system does not visibly drop in intensity.
 
 ## Quality Direction for Future Particle Work
 
@@ -83,7 +106,7 @@ For cinematic smoothness, favor **calm motion over raw particle density**:
 - Prefer controlled easing and lower-frequency movement.
 - Treat softness/glow as a shader or post-process problem, not a density problem.
 - Reduce motion aggressiveness before increasing particle count.
-- Keep State 2 especially restrained; high-frequency shell bounce reads as jitter before it reads as energy.
+- Keep State 2 structured: prefer coherent clustered bipolar spikes over fully random per-particle jitter.
 - Keep twinkle subtle. It should add life, not fight the main motion.
 
 ## Preferred Optimisation Targets
@@ -97,7 +120,7 @@ For cinematic smoothness, favor **calm motion over raw particle density**:
 | `ORBIT_SEGMENTS` | 72-96 |
 | Migrator ratio | 20-30% |
 | Time progression | Prefer delta-time animation over fixed-step |
-| State 2 bounce | Reduce frequency and amplitude substantially |
+| State 2 bounce | Use coherent clustered bipolar spikes and a single continuous decay envelope |
 | Twinkle | Reduce intensity to subtle levels |
 
 Current values may differ. Check `src/lib/particles/constants.ts`, `src/lib/particles/particleData.ts`, and `src/lib/particles/shaders.ts` before editing.
@@ -106,6 +129,7 @@ Current values may differ. Check `src/lib/particles/constants.ts`, `src/lib/part
 
 - **Avoid** making motion-quality edits in `src/components/ParticleCanvas.tsx` unless you are changing React wiring, canvas visibility, pointer behavior, or hook orchestration.
 - **Prefer** motion and performance edits in `src/lib/particles/constants.ts`, `src/lib/particles/particleData.ts`, `src/hooks/particles/useParticleAnimation.ts`, and `src/lib/particles/animationStates.ts`.
+- For State 2 spike changes, update cluster tuning in `constants.ts`, cluster membership generation in `particleData.ts`, and runtime motion/color/glow timing in `animationStates.ts`; keep render-loop glow scale continuity in `useParticleAnimation.ts`.
 - Preserve renderer, geometry, material, event listener, and animation-frame cleanup behavior.
 - Preserve strict TypeScript style: no unused locals/parameters, explicit types where local patterns expect them, and no loose `any` unless the surrounding code already requires it.
 - Distinguish current facts from recommended guidance in docs and comments. If a value is a target, label it as a target.
