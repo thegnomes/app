@@ -126,6 +126,14 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
       }
 
+      // Leaving State 1: clean up its point flash before creating any next-state flash.
+      if (nextState !== 1 && flashMesh.current && scene.current) {
+        scene.current.remove(flashMesh.current);
+        flashMesh.current.geometry.dispose();
+        (flashMesh.current.material as THREE.Material).dispose();
+        flashMesh.current = null;
+      }
+
       // State 3: Reset planet first-orbit tracking and orbit geometries
       if (nextState === 3) {
         if (!flashMesh.current && scene.current && refs.camera.current) {
@@ -165,39 +173,27 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.6, 0.05);
       }
 
-      // Leaving State 1: Immediately clean up flash to prevent white flare in next state
-      if (nextState !== 1 && flashMesh.current && scene.current) {
-        scene.current.remove(flashMesh.current);
-        flashMesh.current.geometry.dispose();
-        (flashMesh.current.material as THREE.Material).dispose();
-        flashMesh.current = null;
+      if (refs.systemGroup.current && refs.novaMeshes.current.length > 0) {
+        refs.novaMeshes.current.forEach((nova) => {
+          const container = (nova as THREE.Mesh & { container?: THREE.Group }).container;
+          nova.geometry.dispose();
+          (nova.material as THREE.Material).dispose();
+          if (container) {
+            refs.systemGroup.current?.remove(container);
+          } else {
+            refs.systemGroup.current?.remove(nova);
+          }
+        });
+        refs.novaMeshes.current = [];
       }
 
-      // Trigger nova effect on state changes except State 1 (starfield) and State 2 (charging shell)
-      // State 2 focuses on shell formation - skip nova to avoid white overlay interference
-      if (refs.systemGroup.current && nextState !== 1 && nextState !== 2) {
-        // Clean up any existing novas first (including their containers)
-        if (refs.novaMeshes.current.length > 0) {
-          refs.novaMeshes.current.forEach((nova) => {
-            const container = (nova as THREE.Mesh & { container?: THREE.Group }).container;
-            nova.geometry.dispose();
-            (nova.material as THREE.Material).dispose();
-            if (container) {
-              refs.systemGroup.current?.remove(container);
-            } else {
-              refs.systemGroup.current?.remove(nova);
-            }
-          });
-          refs.novaMeshes.current = [];
-        }
-        
-        const novaColor =
-          nextState === 3 ? new THREE.Color('#ffffff') : STATE_PRIMARY_COLORS[nextState].clone();
-        const ringCount = nextState === 3 ? 6 : 4;
-        const initialScale = nextState === 3 ? 0.2 : 0.5;
-        for (let i = 0; i < ringCount; i++) {
-          const rotationZ = (i * Math.PI) / ringCount;
-          const nova = createNovaMesh(refs.systemGroup.current, novaColor, initialScale, rotationZ);
+      // Trigger nova effect on state changes except State 1/2/3.
+      // State 3 uses a full-screen flash instead of visible ring geometry.
+      if (refs.systemGroup.current && nextState !== 1 && nextState !== 2 && nextState !== 3) {
+        const novaColor = STATE_PRIMARY_COLORS[nextState].clone();
+        for (let i = 0; i < 4; i++) {
+          const rotationZ = (i * Math.PI) / 4;
+          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5, rotationZ);
           refs.novaMeshes.current.push(nova);
         }
         refs.novaState.current = { active: true, startTime: transitionTime };
