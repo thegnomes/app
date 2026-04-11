@@ -41,7 +41,7 @@ import {
   updateTrail,
   initializeBurstVelocities,
 } from '@/lib/particles/animationStates';
-import { createFlashMesh, createNovaMesh } from '@/lib/particles/scene';
+import { createFlashMesh, createNovaMesh, createScreenFlashMesh } from '@/lib/particles/scene';
 
 const scaleFrameLerp = (factor: number, frameScale: number) => 1 - Math.pow(1 - factor, frameScale);
 const smoothstep01 = (value: number) => {
@@ -128,8 +128,13 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // State 3: Reset planet first-orbit tracking and orbit geometries
       if (nextState === 3) {
-        if (!flashMesh.current && scene.current) {
-          flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.95, 2.2);
+        if (!flashMesh.current && scene.current && refs.camera.current) {
+          flashMesh.current = createScreenFlashMesh(
+            scene.current,
+            refs.camera.current,
+            new THREE.Color('#ffffff'),
+            1
+          );
         }
 
         planets.current?.forEach((p) => {
@@ -255,9 +260,21 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Update flash mesh
       if (refs.flashMesh.current && refs.scene.current) {
         const mesh = refs.flashMesh.current;
-        mesh.scale.multiplyScalar(Math.pow(FLASH_SCALE_FACTOR, frameScale));
+        if (mesh.userData.screenFlash && refs.camera.current) {
+          const distance =
+            typeof mesh.userData.screenFlashDistance === 'number'
+              ? mesh.userData.screenFlashDistance
+              : 10;
+          mesh.position
+            .copy(refs.camera.current.position)
+            .add(refs.camera.current.getWorldDirection(new THREE.Vector3()).multiplyScalar(distance));
+          mesh.quaternion.copy(refs.camera.current.quaternion);
+        } else {
+          mesh.scale.multiplyScalar(Math.pow(FLASH_SCALE_FACTOR, frameScale));
+        }
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity -= FLASH_OPACITY_DECAY * frameScale;
+        const opacityDecay = mesh.userData.screenFlash ? 0.18 : FLASH_OPACITY_DECAY;
+        mat.opacity -= opacityDecay * frameScale;
 
         if (mat.opacity <= 0) {
           refs.scene.current.remove(mesh);

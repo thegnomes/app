@@ -481,6 +481,41 @@ export function createFlashMesh(
 }
 
 /**
+ * Create a camera-facing full-screen flash for hard transition beats.
+ */
+export function createScreenFlashMesh(
+  scene: THREE.Scene,
+  camera: THREE.PerspectiveCamera,
+  color: THREE.Color = new THREE.Color('#ffffff'),
+  opacity: number = 1
+): THREE.Mesh {
+  const distance = 10;
+  const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) * distance;
+  const width = height * camera.aspect;
+  const geometry = new THREE.PlaneGeometry(width, height);
+  const material = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    blending: THREE.NormalBlending,
+    depthWrite: false,
+    depthTest: false,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = 999;
+  mesh.userData.screenFlash = true;
+  mesh.userData.screenFlashDistance = distance;
+  mesh.position
+    .copy(camera.position)
+    .add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(distance));
+  mesh.quaternion.copy(camera.quaternion);
+  scene.add(mesh);
+
+  return mesh;
+}
+
+/**
  * Create nova/shockwave effect for state transitions
  */
 export function createNovaMesh(
