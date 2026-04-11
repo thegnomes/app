@@ -196,7 +196,7 @@ export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 export const SOLAR_VIDEO_CORE_OPACITY = 0.72;
 
 /** Forward offset toward the camera for the State 3 video core layer */
-export const SOLAR_VIDEO_CORE_FRONT_OFFSET = 3.5;
+export const SOLAR_VIDEO_CORE_FRONT_OFFSET = SHELL_RADIUS * 0.92;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

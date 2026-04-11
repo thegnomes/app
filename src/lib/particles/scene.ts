@@ -264,6 +264,7 @@ export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Me
 
   const mesh = new THREE.Mesh(geometry, material);
   mesh.visible = false;
+  mesh.renderOrder = 2;
   return mesh;
 }
 

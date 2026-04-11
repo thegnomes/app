@@ -178,12 +178,12 @@ const ORANGE_B = 0.086; // Orange
 const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
-const CORE_WHITE_R = 1.0;
-const CORE_WHITE_G = 1.0;
-const CORE_WHITE_B = 1.0;
-const CORE_WHITE_TO_ORANGE_R = ORANGE_R - CORE_WHITE_R;
-const CORE_WHITE_TO_ORANGE_G = ORANGE_G - CORE_WHITE_G;
-const CORE_WHITE_TO_ORANGE_B = ORANGE_B - CORE_WHITE_B;
+const CORE_BLUE_R = BLUE_R;
+const CORE_BLUE_G = BLUE_G;
+const CORE_BLUE_B = BLUE_B;
+const CORE_BLUE_TO_ORANGE_R = ORANGE_R - CORE_BLUE_R;
+const CORE_BLUE_TO_ORANGE_G = ORANGE_G - CORE_BLUE_G;
+const CORE_BLUE_TO_ORANGE_B = ORANGE_B - CORE_BLUE_B;
 
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
@@ -370,10 +370,10 @@ export function animateState2And3(
         const coreColorT = easeOutCubic(substate3T);
         const glowEntrance = easeInOutCubic(substate3T);
         const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
-        const glowBoost = 1 + orangePulse * 1.5 * glowEntrance;
-        const coreR = (CORE_WHITE_R + CORE_WHITE_TO_ORANGE_R * coreColorT) * glowBoost;
-        const coreG = (CORE_WHITE_G + CORE_WHITE_TO_ORANGE_G * coreColorT) * glowBoost;
-        const coreB = (CORE_WHITE_B + CORE_WHITE_TO_ORANGE_B * coreColorT) * glowBoost;
+        const glowBoost = 1 + orangePulse * 0.75 * glowEntrance * coreColorT;
+        const coreR = (CORE_BLUE_R + CORE_BLUE_TO_ORANGE_R * coreColorT) * glowBoost;
+        const coreG = (CORE_BLUE_G + CORE_BLUE_TO_ORANGE_G * coreColorT) * glowBoost;
+        const coreB = (CORE_BLUE_B + CORE_BLUE_TO_ORANGE_B * coreColorT) * glowBoost;
 
         coreColor.setRGB(coreR, coreG, coreB);
         colors[0] = coreR;
