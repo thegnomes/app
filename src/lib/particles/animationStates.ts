@@ -174,6 +174,7 @@ const ORANGE_B = 0.086; // Orange
 const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
+const TWO_PI = Math.PI * 2;
 
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
@@ -184,6 +185,26 @@ export const STATE2_MILESTONES = {
   SUBSTATE_3_START: 10000,
   SUBSTATE_3_END: 13000,
 } as const;
+
+function getFormationBounceOffset(
+  time: number,
+  rnd: number,
+  index: number,
+  localProgress: number,
+  globalProgress: number,
+  amplitudeShare: number
+): number {
+  const localEnvelope =
+    easeOutCubic(Math.min(1, localProgress / 0.22)) *
+    Math.max(0, 1 - localProgress * 0.35);
+  const decayEnvelope = Math.pow(Math.max(0, 1 - globalProgress), 1.25);
+  const phase = rnd * TWO_PI + (index % 17) * 0.41;
+  const lowWave = Math.sin(time * (2.0 + rnd * 0.7) + phase);
+  const midWave = Math.sin(time * (3.8 + rnd * 0.9) + phase * 1.6) * 0.35;
+  const outwardWave = Math.max(0, lowWave + midWave);
+
+  return SHELL_RADIUS * amplitudeShare * outwardWave * localEnvelope * decayEnvelope;
+}
 
 export function animateState2And3(
   attributes: ParticleAttributes,
@@ -259,13 +280,15 @@ export function animateState2And3(
       
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
+      const stabilizationEnd = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      const globalFormationProgress = Math.min(1, stateElapsed / stabilizationEnd);
       // Faster early pull-in to avoid sluggish start.
       const drawInEased = easeOutCubic(drawInProgress);
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
         // Substate 1: Particles coming from starfield
-        // Smooth radial approach toward sphere, no bounce yet
+        // Radial approach with volatile bounce that decays as the shell forms.
         
         // Calculate direction from start to Fibonacci target
         const toFibX = fibX - startX;
@@ -283,10 +306,19 @@ export function animateState2And3(
         const rz = cx * sinA + cz * cosA;
         const ry = cy;
         
-        // No bounce in substate 1 - just smooth approach
-        positions[i3] = rx;
-        positions[i3 + 1] = ry;
-        positions[i3 + 2] = rz;
+        const bounceOffset = getFormationBounceOffset(
+          time,
+          rnd,
+          i,
+          drawInProgress,
+          globalFormationProgress,
+          0.2 + rnd * 0.08
+        );
+        const r = Math.sqrt(rx * rx + ry * ry + rz * rz) || 1;
+        const scale = 1 + bounceOffset / r;
+        positions[i3] = rx * scale;
+        positions[i3 + 1] = ry * scale;
+        positions[i3 + 2] = rz * scale;
         
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
         // Substate 2: Calm shell overshoot with smooth ramp in and decay out
@@ -313,26 +345,26 @@ export function animateState2And3(
         const fz = anchorX * sinA + anchorZ * cosA;
         const fy = anchorY;
         
-        // Calm damped overshoot: slower, heavier motion instead of repetitive spikes.
+        // Damped overshoot: volatile at first, then visibly settles toward stability.
         const idxPhase = (i % 13) * 0.31;
-        const wavePhase = time * (1.2 + rnd * 0.5) + idxPhase;
+        const wavePhase = time * (1.5 + rnd * 0.6) + idxPhase;
         const settlePulse = Math.max(
           0,
-          Math.sin(localBounceProgress * Math.PI * 1.25)
-        ) * Math.exp(-localBounceProgress * 1.7);
-        const calmOscillation = (Math.sin(wavePhase) * 0.5 + 0.5) * 0.25;
-        const fullBounceAmp = SHELL_RADIUS * (0.06 + rnd * 0.12);
+          Math.sin(localBounceProgress * Math.PI * 1.6)
+        ) * Math.exp(-localBounceProgress * 1.25);
+        const calmOscillation = (Math.sin(wavePhase) * 0.5 + 0.5) * 0.45;
+        const fullBounceAmp = SHELL_RADIUS * (0.12 + rnd * 0.1);
         
         // Smooth envelope: ramp up gently, hold briefly, then decay.
         let amplitudeFactor = 0;
         if (hasReachedShell) {
-          if (localBounceProgress < 0.3) {
+          if (localBounceProgress < 0.2) {
             // Ramp up from circumference after this particle arrives.
-            amplitudeFactor = easeOutCubic(localBounceProgress / 0.35);
-          } else if (localBounceProgress < 0.5) {
-            amplitudeFactor = 0.85;
+            amplitudeFactor = easeOutCubic(localBounceProgress / 0.2);
+          } else if (localBounceProgress < 0.42) {
+            amplitudeFactor = 0.95;
           } else {
-            const decayProgress = (localBounceProgress - 0.5) / 0.5;
+            const decayProgress = (localBounceProgress - 0.42) / 0.58;
             amplitudeFactor = 1 - easeOutCubic(decayProgress);
           }
         }
@@ -348,7 +380,16 @@ export function animateState2And3(
         const bounceAmp = fullBounceAmp * amplitudeFactor;
         
         // Circumference-outward bounce only (never inward toward core).
-        const bounceOffset = (settlePulse * 0.7 + calmOscillation * 0.3) * bounceAmp;
+        const formationBounceOffset = getFormationBounceOffset(
+          time,
+          rnd,
+          i,
+          Math.max(drawInProgress, localBounceProgress),
+          globalFormationProgress,
+          0.14 + rnd * 0.06
+        );
+        const bounceOffset =
+          (settlePulse * 0.65 + calmOscillation * 0.35) * bounceAmp + formationBounceOffset;
         const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
         const scale = 1 + (bounceOffset / r);
         

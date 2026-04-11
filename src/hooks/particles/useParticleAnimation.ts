@@ -76,7 +76,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
     window.addEventListener('mousemove', handleMouseMove);
 
     // State change handler (defined inside effect to avoid linter immutability warnings)
-    const handleStateChange = () => {
+    const handleStateChange = (transitionTime: number) => {
       const { scene, particles, trail, flashMesh, planets, orbitGroup } = refs;
       const { lastState, stateStart, snapshotPositions, particleData } = data;
 
@@ -85,7 +85,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const nextState = stateRef.current;
 
       lastState.current = nextState;
-      stateStart.current = performance.now();
+      stateStart.current = transitionTime;
 
       // Capture position snapshot
       const pos = particles.current.geometry.attributes.position.array as Float32Array;
@@ -166,7 +166,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5, rotationZ);
           refs.novaMeshes.current.push(nova);
         }
-        refs.novaState.current = { active: true, startTime: performance.now() };
+        refs.novaState.current = { active: true, startTime: transitionTime };
       }
     };
 
@@ -184,7 +184,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const frameScale = deltaMs / TARGET_FRAME_MS;
       const coreColorLerp = scaleFrameLerp(CORE_COLOR_LERP, frameScale);
       const ambientColorLerp = scaleFrameLerp(AMBIENT_COLOR_LERP, frameScale);
-      const stateElapsed = now - data.stateStart.current;
+      let stateElapsed = now - data.stateStart.current;
       const currentState = stateRef.current;
       const speed = speedRef.current;
 
@@ -233,7 +233,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // Handle state transitions
       if (currentState !== data.lastState.current) {
-        handleStateChange();
+        handleStateChange(now);
+        stateElapsed = now - data.stateStart.current;
       }
 
       // Get attribute arrays
