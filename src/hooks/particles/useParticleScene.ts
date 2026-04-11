@@ -15,7 +15,7 @@ import {
 import { initializeParticleData, initializeTrailHistory, initializeTrailPositions, getMigratorCount } from '@/lib/particles/particleData';
 import { TOTAL_MAIN, STATE_PRIMARY_COLORS, STATE_SECONDARY_COLORS, PLANETS } from '@/lib/particles/constants';
 
-const SOLAR_VIDEO_CORE_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
+const SOLAR_VIDEO_CORE_SRC = new URL('../../../star_texture.mp4', import.meta.url).href;
 
 export interface SceneRefs {
   scene: React.MutableRefObject<THREE.Scene | null>;
@@ -131,7 +131,7 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup.add(coreGroup);
     coreGroupRef.current = coreGroup;
 
-    // Create the State 3 video-driven outer star surface.
+    // Create the State 3 video-driven sun sphere.
     const solarVideoCoreVideo = document.createElement('video');
     solarVideoCoreVideo.src = SOLAR_VIDEO_CORE_SRC;
     solarVideoCoreVideo.loop = true;

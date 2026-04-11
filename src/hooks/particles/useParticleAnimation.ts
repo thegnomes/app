@@ -28,6 +28,7 @@ import {
   PARTICLE_SIZE_MULTIPLIER,
   SOLAR_VIDEO_CORE_TRANSITION_DURATION,
   SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
+  SOLAR_VIDEO_CORE_ENTRY_SCALE,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -292,7 +293,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const targetSecondaryColor = STATE_SECONDARY_COLORS[currentState];
       const solarVideoCoreMix =
         currentState === 3
-          ? 0.08 + smoothstep01(stateElapsed / SOLAR_VIDEO_CORE_TRANSITION_DURATION) * 0.92
+          ? smoothstep01(stateElapsed / SOLAR_VIDEO_CORE_TRANSITION_DURATION)
           : 0;
       data.solarVideoCoreMix.current = solarVideoCoreMix;
 
@@ -494,8 +495,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         solarVideoCoreLayer.visible = shouldShowSolarCore;
         coreUniforms.uMix.value = shouldShowSolarCore ? data.solarVideoCoreMix.current : 0;
 
-        solarVideoCoreLayer.position.set(12, 0, 0);
-        solarVideoCoreLayer.rotation.y += 0.0009 * speed * frameScale;
+        const revealScale =
+          SOLAR_VIDEO_CORE_ENTRY_SCALE +
+          (1 - SOLAR_VIDEO_CORE_ENTRY_SCALE) * data.solarVideoCoreMix.current;
+        solarVideoCoreLayer.position.set(0, 0, 0);
+        solarVideoCoreLayer.scale.set(revealScale, revealScale, revealScale);
+        solarVideoCoreLayer.rotation.y += 0.0014 * speed * frameScale;
         solarVideoCoreLayer.rotation.x = Math.sin(data.time.current * 0.08) * 0.025;
 
         if (refs.solarVideoCoreVideo.current) {

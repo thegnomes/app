@@ -177,20 +177,23 @@ export const GLOW_RADIUS = 6;
 /** Glow opacity */
 export const GLOW_OPACITY = 0.55;
 
-/** Duration for the State 3 video-driven outer star layer to fade in */
-export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 4200;
+/** Duration for the State 3 textured sun sphere to reveal */
+export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 1000;
 
 /** Share of procedural core intensity faded as the State 3 video surface enters */
 export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.86;
 
-/** Radius for the State 3 video-driven outer star surface */
-export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 1.22;
+/** Radius for the State 3 textured sun sphere */
+export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 0.82;
 
-/** Segment count for the State 3 video-driven outer star surface */
+/** Segment count for the State 3 textured sun sphere */
 export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 
-/** Peak opacity for the State 3 video-driven outer star surface */
-export const SOLAR_VIDEO_CORE_OPACITY = 0.62;
+/** Peak opacity for the State 3 textured sun sphere */
+export const SOLAR_VIDEO_CORE_OPACITY = 0.96;
+
+/** Starting scale for the State 3 textured sun sphere reveal */
+export const SOLAR_VIDEO_CORE_ENTRY_SCALE = 0.72;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;
