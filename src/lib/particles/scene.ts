@@ -481,35 +481,47 @@ export function createFlashMesh(
 }
 
 /**
- * Create a camera-facing full-screen flash for hard transition beats.
+ * Create a collapse-style expanding flare for the State 3 solar entry.
  */
-export function createScreenFlashMesh(
-  scene: THREE.Scene,
-  camera: THREE.PerspectiveCamera,
-  color: THREE.Color = new THREE.Color('#ffffff'),
-  opacity: number = 1
-): THREE.Mesh {
-  const distance = 10;
-  const height = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) * distance;
-  const width = height * camera.aspect;
-  const geometry = new THREE.PlaneGeometry(width, height);
-  const material = new THREE.MeshBasicMaterial({
-    color,
+export function createSolarEntryFlareMesh(scene: THREE.Scene): THREE.Mesh {
+  const geometry = new THREE.SphereGeometry(1, 64, 64);
+  const material = new THREE.ShaderMaterial({
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float uOpacity;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+        float rim = pow(1.0 - abs(dot(normal, viewDir)), 1.35);
+        vec3 flareColor = mix(vec3(1.0, 0.38, 0.06), vec3(1.0), 1.0 - rim);
+        float alpha = uOpacity * (0.38 + rim * 0.72);
+        gl_FragColor = vec4(flareColor * (1.8 + rim * 1.4), alpha);
+      }
+    `,
+    uniforms: {
+      uOpacity: { value: 1.0 },
+    },
     transparent: true,
-    opacity,
-    blending: THREE.NormalBlending,
+    blending: THREE.AdditiveBlending,
     depthWrite: false,
     depthTest: false,
     side: THREE.DoubleSide,
   });
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.renderOrder = 999;
-  mesh.userData.screenFlash = true;
-  mesh.userData.screenFlashDistance = distance;
-  mesh.position
-    .copy(camera.position)
-    .add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(distance));
-  mesh.quaternion.copy(camera.quaternion);
+  mesh.scale.set(3.8, 3.8, 3.8);
+  mesh.renderOrder = 6;
+  mesh.userData.solarEntryFlare = true;
   scene.add(mesh);
 
   return mesh;

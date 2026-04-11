@@ -16,8 +16,6 @@ import {
   CAMERA_MOVE_AMPLITUDE,
   CAMERA_MOVE_FREQUENCY,
   CAMERA_Z,
-  FLASH_SCALE_FACTOR,
-  FLASH_OPACITY_DECAY,
   STATE_PRIMARY_COLORS,
   STATE_SECONDARY_COLORS,
   PLANETS,
@@ -41,7 +39,7 @@ import {
   updateTrail,
   initializeBurstVelocities,
 } from '@/lib/particles/animationStates';
-import { createFlashMesh, createNovaMesh, createScreenFlashMesh } from '@/lib/particles/scene';
+import { createFlashMesh, createNovaMesh, createSolarEntryFlareMesh } from '@/lib/particles/scene';
 
 const scaleFrameLerp = (factor: number, frameScale: number) => 1 - Math.pow(1 - factor, frameScale);
 const smoothstep01 = (value: number) => {
@@ -136,13 +134,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // State 3: Reset planet first-orbit tracking and orbit geometries
       if (nextState === 3) {
-        if (!flashMesh.current && scene.current && refs.camera.current) {
-          flashMesh.current = createScreenFlashMesh(
-            scene.current,
-            refs.camera.current,
-            new THREE.Color('#ffffff'),
-            1
-          );
+        if (!flashMesh.current && scene.current) {
+          flashMesh.current = createSolarEntryFlareMesh(scene.current);
         }
 
         planets.current?.forEach((p) => {
@@ -256,27 +249,28 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Update flash mesh
       if (refs.flashMesh.current && refs.scene.current) {
         const mesh = refs.flashMesh.current;
-        if (mesh.userData.screenFlash && refs.camera.current) {
-          const distance =
-            typeof mesh.userData.screenFlashDistance === 'number'
-              ? mesh.userData.screenFlashDistance
-              : 10;
-          mesh.position
-            .copy(refs.camera.current.position)
-            .add(refs.camera.current.getWorldDirection(new THREE.Vector3()).multiplyScalar(distance));
-          mesh.quaternion.copy(refs.camera.current.quaternion);
+        if (mesh.userData.solarEntryFlare) {
+          mesh.scale.multiplyScalar(Math.pow(1.045, frameScale));
+          const material = mesh.material as THREE.ShaderMaterial;
+          const opacityUniform = material.uniforms.uOpacity;
+          opacityUniform.value -= 0.012 * frameScale;
+          if (opacityUniform.value <= 0) {
+            refs.scene.current.remove(mesh);
+            mesh.geometry.dispose();
+            material.dispose();
+            refs.flashMesh.current = null;
+          }
         } else {
-          mesh.scale.multiplyScalar(Math.pow(FLASH_SCALE_FACTOR, frameScale));
-        }
-        const mat = mesh.material as THREE.MeshBasicMaterial;
-        const opacityDecay = mesh.userData.screenFlash ? 0.18 : FLASH_OPACITY_DECAY;
-        mat.opacity -= opacityDecay * frameScale;
+          mesh.scale.multiplyScalar(Math.pow(1.08, frameScale));
+          const mat = mesh.material as THREE.MeshBasicMaterial;
+          mat.opacity -= 0.02 * frameScale;
 
-        if (mat.opacity <= 0) {
-          refs.scene.current.remove(mesh);
-          mesh.geometry.dispose();
-          mat.dispose();
-          refs.flashMesh.current = null;
+          if (mat.opacity <= 0) {
+            refs.scene.current.remove(mesh);
+            mesh.geometry.dispose();
+            mat.dispose();
+            refs.flashMesh.current = null;
+          }
         }
       }
 
