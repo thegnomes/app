@@ -168,6 +168,9 @@ export const CORE_RADIUS = 1.5;
 /** Video star body radius inside the particle atmosphere */
 export const CORE_VIDEO_RADIUS = CORE_RADIUS * 3.4;
 
+/** Geometry detail for the video star surface */
+export const CORE_VIDEO_GEOMETRY_DETAIL = 40;
+
 /** Glow sphere radius */
 export const GLOW_RADIUS = 6;
 
@@ -175,7 +178,7 @@ export const GLOW_RADIUS = 6;
 export const GLOW_OPACITY = 0.55;
 
 /** Duration for the procedural core to hand authority to the video star in State 3 */
-export const CORE_VIDEO_TRANSITION_DURATION = 6000;
+export const CORE_VIDEO_TRANSITION_DURATION = 4200;
 
 /** Maximum glow boost as the video star becomes the core anchor */
 export const CORE_VIDEO_GLOW_BOOST = 1.65;

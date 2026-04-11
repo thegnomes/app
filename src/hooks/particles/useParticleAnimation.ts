@@ -279,7 +279,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const targetPrimaryColor = STATE_PRIMARY_COLORS[currentState];
       const targetSecondaryColor = STATE_SECONDARY_COLORS[currentState];
       const state3VideoMix =
-        currentState === 3 ? smoothstep01(stateElapsed / CORE_VIDEO_TRANSITION_DURATION) : 0;
+        currentState === 3
+          ? 0.08 + smoothstep01(stateElapsed / CORE_VIDEO_TRANSITION_DURATION) * 0.92
+          : 0;
       data.coreVideoMix.current = state3VideoMix;
       data.coreGlowBoost.current = 1 + state3VideoMix * (CORE_VIDEO_GLOW_BOOST - 1);
 
@@ -467,9 +469,17 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
         if (videoMesh) {
           const videoUniforms = (videoMesh.material as THREE.ShaderMaterial).uniforms;
-          videoMesh.visible = data.coreVideoMix.current > 0.001;
+          const shouldShowVideo = data.coreVideoMix.current > 0.001;
+          videoMesh.visible = shouldShowVideo;
           videoUniforms.uMix.value = data.coreVideoMix.current;
           videoUniforms.uGlowBoost.value = data.coreGlowBoost.current;
+          if (refs.coreVideo.current) {
+            if (shouldShowVideo && refs.coreVideo.current.paused) {
+              void refs.coreVideo.current.play();
+            } else if (!shouldShowVideo && !refs.coreVideo.current.paused) {
+              refs.coreVideo.current.pause();
+            }
+          }
         }
       }
 

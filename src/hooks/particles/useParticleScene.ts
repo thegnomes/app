@@ -14,7 +14,7 @@ import {
 import { initializeParticleData, initializeTrailHistory, initializeTrailPositions, getMigratorCount } from '@/lib/particles/particleData';
 import { TOTAL_MAIN, STATE_PRIMARY_COLORS, STATE_SECONDARY_COLORS, PLANETS } from '@/lib/particles/constants';
 
-const CORE_VIDEO_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
+const CORE_VIDEO_SRC = new URL('../../../orange-star-web.webm', import.meta.url).href;
 
 export interface SceneRefs {
   scene: React.MutableRefObject<THREE.Scene | null>;
@@ -23,6 +23,7 @@ export interface SceneRefs {
   particles: React.MutableRefObject<THREE.Points | null>;
   coreGroup: React.MutableRefObject<THREE.Group | null>;
   coreVideoMesh: React.MutableRefObject<THREE.Mesh | null>;
+  coreVideo: React.MutableRefObject<HTMLVideoElement | null>;
   orbitGroup: React.MutableRefObject<THREE.Group | null>;
   planets: React.MutableRefObject<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[] | null>;
   sunLight: React.MutableRefObject<THREE.PointLight | null>;
@@ -132,7 +133,7 @@ export function useParticleScene(config: ParticleConfig) {
     coreVideo.loop = true;
     coreVideo.muted = true;
     coreVideo.playsInline = true;
-    coreVideo.preload = 'auto';
+    coreVideo.preload = 'metadata';
     coreVideo.crossOrigin = 'anonymous';
     coreVideoRef.current = coreVideo;
 
@@ -144,7 +145,6 @@ export function useParticleScene(config: ParticleConfig) {
     coreVideoTexture.wrapS = THREE.RepeatWrapping;
     coreVideoTexture.wrapT = THREE.RepeatWrapping;
     coreVideoTextureRef.current = coreVideoTexture;
-    void coreVideo.play();
 
     // Create core group
     const { group: coreGroup, videoMesh } = createCoreGroup(config, coreVideoTexture);
@@ -219,6 +219,7 @@ export function useParticleScene(config: ParticleConfig) {
       particles: particlesRef,
       coreGroup: coreGroupRef,
       coreVideoMesh: coreVideoMeshRef,
+      coreVideo: coreVideoRef,
       orbitGroup: orbitGroupRef,
       planets: planetsRef,
       sunLight: sunLightRef,

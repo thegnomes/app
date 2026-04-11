@@ -18,6 +18,7 @@ import {
   PLANET_GLOW_OPACITY,
   ORBIT_SEGMENTS,
   CORE_VIDEO_RADIUS,
+  CORE_VIDEO_GEOMETRY_DETAIL,
   SHARED_ROTATION,
   TRAIL_COLOR,
 } from './constants';
@@ -165,8 +166,8 @@ export function createCoreGroup(
 
   const videoGeometry = new THREE.SphereGeometry(
     CORE_VIDEO_RADIUS,
-    CORE_GEOMETRY_DETAIL,
-    CORE_GEOMETRY_DETAIL
+    CORE_VIDEO_GEOMETRY_DETAIL,
+    CORE_VIDEO_GEOMETRY_DETAIL
   );
   const videoMaterial = new THREE.ShaderMaterial({
     vertexShader: `
@@ -219,6 +220,7 @@ export function createCoreGroup(
     depthWrite: false,
   });
   const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+  videoMesh.visible = false;
 
   // Glow mesh
   const glowGeometry = new THREE.SphereGeometry(
