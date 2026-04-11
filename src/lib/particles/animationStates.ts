@@ -276,10 +276,17 @@ export function animateState2And3(
     state2ClusterPhaseLag,
   } = data;
 
-  // Core particle hidden in state 3
+  // Core particle hidden in state 3, and during most of state 2 (only visible in substate 3)
   if (state === 3) {
     sizes[0] = 0;
     alphas[0] = 0;
+  } else if (state === 2) {
+    // In State 2, hide core particle until substate 3 to prevent white glow interference
+    const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+    if (stateElapsed < substate3Start) {
+      sizes[0] = 0;
+      alphas[0] = 0;
+    }
   }
 
   for (let i = 1; i < TOTAL_MAIN; i++) {
