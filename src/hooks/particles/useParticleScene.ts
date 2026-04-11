@@ -151,7 +151,7 @@ export function useParticleScene(config: ParticleConfig) {
     solarVideoCoreTextureRef.current = solarVideoCoreTexture;
 
     const solarVideoCoreLayer = createSolarVideoCoreLayer(solarVideoCoreTexture);
-    scene.add(solarVideoCoreLayer);
+    systemGroup.add(solarVideoCoreLayer);
     solarVideoCoreLayerRef.current = solarVideoCoreLayer;
 
     // Create planets with shared angles
@@ -196,6 +196,10 @@ export function useParticleScene(config: ParticleConfig) {
         solarVideoCoreVideoRef.current = null;
       }
 
+      if (solarVideoCoreLayerRef.current) {
+        solarVideoCoreLayerRef.current.geometry.dispose();
+        (solarVideoCoreLayerRef.current.material as THREE.Material).dispose();
+      }
       solarVideoCoreTextureRef.current?.dispose();
       solarVideoCoreTextureRef.current = null;
       solarVideoCoreLayerRef.current = null;

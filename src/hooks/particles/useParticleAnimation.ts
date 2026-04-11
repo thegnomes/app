@@ -357,7 +357,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             const state3Continuity = currentState === 3 ? 1 : 0;
             const glowEntrance = Math.max(state3Continuity, easedSubstate3T);
             const spreadScale = 1 + ((SHELL_RADIUS / GLOW_RADIUS) * 1.08 - 1) * glowEntrance;
-            glow.visible = currentState !== 3;
+            glow.visible = false;
             glow.scale.set(spreadScale, spreadScale, spreadScale);
           }
           if (refs.orbitGroup.current)
@@ -470,8 +470,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             1 - data.solarVideoCoreMix.current * SOLAR_VIDEO_CORE_PROCEDURAL_FADE;
         }
         glowUniforms.uColor.value.copy(data.currentCoreColor.current);
-        glow.visible = currentState !== 3;
-        glowUniforms.uOpacity.value = currentState === 3 ? 0 : GLOW_OPACITY;
+        const showProceduralGlow = currentState === 1;
+        glow.visible = showProceduralGlow;
+        glowUniforms.uOpacity.value = showProceduralGlow ? GLOW_OPACITY : 0;
         if (glowUniforms.uGlowBoost) {
           glowUniforms.uGlowBoost.value = 1;
         }

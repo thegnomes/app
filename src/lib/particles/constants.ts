@@ -184,13 +184,13 @@ export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 4200;
 export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.86;
 
 /** Radius for the State 3 video-driven outer star surface */
-export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 0.92;
+export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 1.22;
 
 /** Segment count for the State 3 video-driven outer star surface */
 export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 
 /** Peak opacity for the State 3 video-driven outer star surface */
-export const SOLAR_VIDEO_CORE_OPACITY = 0.58;
+export const SOLAR_VIDEO_CORE_OPACITY = 0.62;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

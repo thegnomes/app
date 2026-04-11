@@ -370,16 +370,21 @@ export function animateState2And3(
         const coreColorT = easeOutCubic(substate3T);
         const glowEntrance = easeInOutCubic(substate3T);
         const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
-        const glowBoost = 1 + orangePulse * 0.75 * glowEntrance * coreColorT;
-        const coreR = (CORE_BLUE_R + CORE_BLUE_TO_ORANGE_R * coreColorT) * glowBoost;
-        const coreG = (CORE_BLUE_G + CORE_BLUE_TO_ORANGE_G * coreColorT) * glowBoost;
-        const coreB = (CORE_BLUE_B + CORE_BLUE_TO_ORANGE_B * coreColorT) * glowBoost;
+        const coreR =
+          CORE_BLUE_R +
+          CORE_BLUE_TO_ORANGE_R * coreColorT +
+          ORANGE_R * orangePulse * 0.2 * glowEntrance;
+        const coreG =
+          CORE_BLUE_G +
+          CORE_BLUE_TO_ORANGE_G * coreColorT +
+          ORANGE_G * orangePulse * 0.1 * glowEntrance;
+        const coreB = CORE_BLUE_B + CORE_BLUE_TO_ORANGE_B * coreColorT;
 
         coreColor.setRGB(coreR, coreG, coreB);
         colors[0] = coreR;
         colors[1] = coreG;
         colors[2] = coreB;
-        sizes[0] = 4.2 + glowEntrance * (38 + orangePulse * 18);
+        sizes[0] = 4.2 + glowEntrance * (18 + orangePulse * 8);
         alphas[0] = 0.95 + glowEntrance * 0.05;
       }
       
