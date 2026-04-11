@@ -92,10 +92,10 @@ For cinematic smoothness, favor **calm motion over raw particle density**:
 
 | Target | Value |
 |--------|-------|
-| `TOTAL_MAIN` | 1200–1600 |
-| `TRAIL_LENGTH` | 4–6 |
-| `ORBIT_SEGMENTS` | 72–96 |
-| Migrator ratio | 20–30% |
+| `TOTAL_MAIN` | 1200-1600 |
+| `TRAIL_LENGTH` | 4-6 |
+| `ORBIT_SEGMENTS` | 72-96 |
+| Migrator ratio | 20-30% |
 | Time progression | Prefer delta-time animation over fixed-step |
 | State 2 bounce | Reduce frequency and amplitude substantially |
 | Twinkle | Reduce intensity to subtle levels |
