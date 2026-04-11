@@ -258,10 +258,11 @@ export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Me
         float rim = pow(1.0 - facing, 2.0);
         float limbSoftness = 0.5 + facing * 0.5;
         vec3 warmColor = mix(videoColor, videoColor * vec3(1.0, 0.48, 0.16), 0.34);
+        vec3 orangeGlow = vec3(1.0, 0.32, 0.04);
 
-        float alpha = uMix * uOpacity * limbSoftness * (0.82 + luminance * 0.16);
-        vec3 emissive = warmColor * (0.72 + luminance * 0.7 + facing * 0.18);
-        emissive += warmColor * rim * 0.34;
+        float alpha = uMix * uOpacity * limbSoftness * (0.9 + luminance * 0.18);
+        vec3 emissive = warmColor * (0.9 + luminance * 0.86 + facing * 0.28);
+        emissive += orangeGlow * (rim * 0.85 + luminance * 0.18);
 
         gl_FragColor = vec4(emissive, alpha);
       }

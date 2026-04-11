@@ -29,6 +29,7 @@ import {
   SOLAR_VIDEO_CORE_TRANSITION_DURATION,
   SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
   SOLAR_VIDEO_CORE_ENTRY_SCALE,
+  SOLAR_VIDEO_CORE_REVEAL_DELAY,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -127,6 +128,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // State 3: Reset planet first-orbit tracking and orbit geometries
       if (nextState === 3) {
+        if (!flashMesh.current && scene.current) {
+          flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.95, 2.2);
+        }
+
         planets.current?.forEach((p) => {
           p.hasCompletedFirstOrbit = false;
           p.angleTraveled = 0;
@@ -181,12 +186,13 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           refs.novaMeshes.current = [];
         }
         
-        // Create 4 new nova rings at 0, 45, 90, 135 degree rotations
-        const novaColor = STATE_PRIMARY_COLORS[nextState].clone();
-        for (let i = 0; i < 4; i++) {
-          // Pass rotation to createNovaMesh
-          const rotationZ = (i * Math.PI) / 4;
-          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5, rotationZ);
+        const novaColor =
+          nextState === 3 ? new THREE.Color('#ffffff') : STATE_PRIMARY_COLORS[nextState].clone();
+        const ringCount = nextState === 3 ? 6 : 4;
+        const initialScale = nextState === 3 ? 0.2 : 0.5;
+        for (let i = 0; i < ringCount; i++) {
+          const rotationZ = (i * Math.PI) / ringCount;
+          const nova = createNovaMesh(refs.systemGroup.current, novaColor, initialScale, rotationZ);
           refs.novaMeshes.current.push(nova);
         }
         refs.novaState.current = { active: true, startTime: transitionTime };
@@ -293,7 +299,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const targetSecondaryColor = STATE_SECONDARY_COLORS[currentState];
       const solarVideoCoreMix =
         currentState === 3
-          ? smoothstep01(stateElapsed / SOLAR_VIDEO_CORE_TRANSITION_DURATION)
+          ? smoothstep01(
+              (stateElapsed - SOLAR_VIDEO_CORE_REVEAL_DELAY) /
+                SOLAR_VIDEO_CORE_TRANSITION_DURATION
+            )
           : 0;
       data.solarVideoCoreMix.current = solarVideoCoreMix;
 
@@ -536,18 +545,18 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Animate nova effect (multiple rings)
       if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
         const novaElapsed = performance.now() - refs.novaState.current.startTime;
-        const novaDuration = 1800; // Longer for softer effect
+        const isState3Flare = currentState === 3;
+        const novaDuration = isState3Flare ? 900 : 1800;
         const progress = Math.min(novaElapsed / novaDuration, 1);
 
-        // Expand and fade
-        const startScale = 0.5;
-        const maxScale = 120; // Smaller for softer look
+        const startScale = isState3Flare ? 0.2 : 0.5;
+        const maxScale = isState3Flare ? 70 : 120;
         const scale = startScale + progress * maxScale;
 
-        // Softer fade - start fading earlier
-        // Material starts at 0.35 opacity, we modulate it down from there
-        const fadeProgress = Math.max(0, (progress - 0.15) / 0.85);
-        const opacity = 0.35 * (1 - fadeProgress * fadeProgress); // Quadratic fade for softness
+        const fadeStart = isState3Flare ? 0.04 : 0.15;
+        const fadeProgress = Math.max(0, (progress - fadeStart) / (1 - fadeStart));
+        const baseOpacity = isState3Flare ? 0.82 : 0.35;
+        const opacity = baseOpacity * (1 - fadeProgress * fadeProgress);
 
         refs.novaMeshes.current.forEach((nova) => {
           nova.scale.set(scale, scale, scale);

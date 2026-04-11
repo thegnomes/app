@@ -180,17 +180,20 @@ export const GLOW_OPACITY = 0.55;
 /** Duration for the State 3 textured sun sphere to reveal */
 export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 1000;
 
+/** Delay before the State 3 textured sun sphere reveals, leaving room for the entry flare */
+export const SOLAR_VIDEO_CORE_REVEAL_DELAY = 420;
+
 /** Share of procedural core intensity faded as the State 3 video surface enters */
 export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.86;
 
 /** Radius for the State 3 textured sun sphere */
-export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 0.82;
+export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 0.98;
 
 /** Segment count for the State 3 textured sun sphere */
 export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 
 /** Peak opacity for the State 3 textured sun sphere */
-export const SOLAR_VIDEO_CORE_OPACITY = 0.96;
+export const SOLAR_VIDEO_CORE_OPACITY = 1.0;
 
 /** Starting scale for the State 3 textured sun sphere reveal */
 export const SOLAR_VIDEO_CORE_ENTRY_SCALE = 0.72;
