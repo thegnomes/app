@@ -494,7 +494,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         solarVideoCoreLayer.visible = shouldShowSolarCore;
         coreUniforms.uMix.value = shouldShowSolarCore ? data.solarVideoCoreMix.current : 0;
 
-        solarVideoCoreLayer.position.set(0, 0, 0);
+        solarVideoCoreLayer.position.set(12, 0, 0);
         solarVideoCoreLayer.rotation.y += 0.0009 * speed * frameScale;
         solarVideoCoreLayer.rotation.x = Math.sin(data.time.current * 0.08) * 0.025;
 
