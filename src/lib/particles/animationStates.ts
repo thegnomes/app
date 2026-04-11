@@ -14,6 +14,10 @@ import {
   TRAIL_LENGTH,
   SHARED_ROTATION,
   ORBIT_SEGMENTS,
+  STATE2_SPIKE_BOUNCE_STRENGTH,
+  STATE2_SPIKE_MIN_RADIUS_RATIO,
+  STATE2_SPIKE_FREQUENCY,
+  STATE2_SPIKE_FREQUENCY_JITTER,
 } from './constants';
 import { easeOutCubic, easeInOutCubic } from './geometry';
 import type { PlanetInstance } from './scene';
@@ -174,7 +178,6 @@ const ORANGE_B = 0.086; // Orange
 const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
-const TWO_PI = Math.PI * 2;
 
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
@@ -186,24 +189,22 @@ export const STATE2_MILESTONES = {
   SUBSTATE_3_END: 13000,
 } as const;
 
-function getFormationBounceOffset(
+function getClusteredSpikeRadius(
   time: number,
-  rnd: number,
-  index: number,
-  localProgress: number,
-  globalProgress: number,
-  amplitudeShare: number
+  stableRadius: number,
+  envelope: number,
+  clusterWeight: number,
+  clusterPhase: number,
+  clusterPhaseLag: number
 ): number {
-  const localEnvelope =
-    easeOutCubic(Math.min(1, localProgress / 0.22)) *
-    Math.max(0, 1 - localProgress * 0.35);
-  const decayEnvelope = Math.pow(Math.max(0, 1 - globalProgress), 1.25);
-  const phase = rnd * TWO_PI + (index % 17) * 0.41;
-  const lowWave = Math.sin(time * (2.0 + rnd * 0.7) + phase);
-  const midWave = Math.sin(time * (3.8 + rnd * 0.9) + phase * 1.6) * 0.35;
-  const outwardWave = Math.max(0, lowWave + midWave);
+  if (clusterWeight <= 0 || envelope <= 0) return stableRadius;
 
-  return SHELL_RADIUS * amplitudeShare * outwardWave * localEnvelope * decayEnvelope;
+  const frequency = STATE2_SPIKE_FREQUENCY + Math.sin(clusterPhase * 1.7) * STATE2_SPIKE_FREQUENCY_JITTER;
+  const amplitude = SHELL_RADIUS * STATE2_SPIKE_BOUNCE_STRENGTH;
+  const signedOffset = envelope * clusterWeight * amplitude * Math.sin(time * frequency + clusterPhase + clusterPhaseLag);
+  const minRadius = stableRadius * STATE2_SPIKE_MIN_RADIUS_RATIO;
+
+  return Math.max(minRadius, stableRadius + signedOffset);
 }
 
 export function animateState2And3(
@@ -225,6 +226,9 @@ export function animateState2And3(
   const {
     random,
     fibonacciPositions,
+    state2ClusterWeight,
+    state2ClusterPhase,
+    state2ClusterPhaseLag,
   } = data;
 
   // Core particle hidden in state 3
@@ -245,6 +249,13 @@ export function animateState2And3(
     const fibTargetX = fibonacciPositions[i3];
     const fibTargetY = fibonacciPositions[i3 + 1];
     const fibTargetZ = fibonacciPositions[i3 + 2];
+    const stableX = fibTargetX * cosA - fibTargetZ * sinA;
+    const stableZ = fibTargetX * sinA + fibTargetZ * cosA;
+    const stableY = fibTargetY;
+    const stableRadius = Math.sqrt(stableX * stableX + stableY * stableY + stableZ * stableZ) || 1;
+    const stableUnitX = stableX / stableRadius;
+    const stableUnitY = stableY / stableRadius;
+    const stableUnitZ = stableZ / stableRadius;
 
     if (state === 2) {
       // STATE 2: CHARGING SHELL with 3 substates (0-13000ms)
@@ -282,6 +293,9 @@ export function animateState2And3(
       const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
       const stabilizationEnd = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       const globalFormationProgress = Math.min(1, stateElapsed / stabilizationEnd);
+      const clusterWeight = state2ClusterWeight[i];
+      const clusterPhase = state2ClusterPhase[i];
+      const clusterPhaseLag = state2ClusterPhaseLag[i];
       // Faster early pull-in to avoid sluggish start.
       const drawInEased = easeOutCubic(drawInProgress);
       
@@ -306,19 +320,24 @@ export function animateState2And3(
         const rz = cx * sinA + cz * cosA;
         const ry = cy;
         
-        const bounceOffset = getFormationBounceOffset(
+        const envelope =
+          easeOutCubic(drawInProgress) *
+          Math.pow(Math.max(0, 1 - globalFormationProgress), 0.9);
+        const displacedRadius = getClusteredSpikeRadius(
           time,
-          rnd,
-          i,
-          drawInProgress,
-          globalFormationProgress,
-          0.2 + rnd * 0.08
+          stableRadius,
+          envelope,
+          clusterWeight,
+          clusterPhase,
+          clusterPhaseLag
         );
-        const r = Math.sqrt(rx * rx + ry * ry + rz * rz) || 1;
-        const scale = 1 + bounceOffset / r;
-        positions[i3] = rx * scale;
-        positions[i3 + 1] = ry * scale;
-        positions[i3 + 2] = rz * scale;
+        const displacedX = stableUnitX * displacedRadius;
+        const displacedY = stableUnitY * displacedRadius;
+        const displacedZ = stableUnitZ * displacedRadius;
+
+        positions[i3] = rx + (displacedX - rx) * drawInEased;
+        positions[i3 + 1] = ry + (displacedY - ry) * drawInEased;
+        positions[i3 + 2] = rz + (displacedZ - rz) * drawInEased;
         
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
         // Substate 2: Calm shell overshoot with smooth ramp in and decay out
@@ -345,30 +364,6 @@ export function animateState2And3(
         const fz = anchorX * sinA + anchorZ * cosA;
         const fy = anchorY;
         
-        // Damped overshoot: volatile at first, then visibly settles toward stability.
-        const idxPhase = (i % 13) * 0.31;
-        const wavePhase = time * (1.5 + rnd * 0.6) + idxPhase;
-        const settlePulse = Math.max(
-          0,
-          Math.sin(localBounceProgress * Math.PI * 1.6)
-        ) * Math.exp(-localBounceProgress * 1.25);
-        const calmOscillation = (Math.sin(wavePhase) * 0.5 + 0.5) * 0.45;
-        const fullBounceAmp = SHELL_RADIUS * (0.12 + rnd * 0.1);
-        
-        // Smooth envelope: ramp up gently, hold briefly, then decay.
-        let amplitudeFactor = 0;
-        if (hasReachedShell) {
-          if (localBounceProgress < 0.2) {
-            // Ramp up from circumference after this particle arrives.
-            amplitudeFactor = easeOutCubic(localBounceProgress / 0.2);
-          } else if (localBounceProgress < 0.42) {
-            amplitudeFactor = 0.95;
-          } else {
-            const decayProgress = (localBounceProgress - 0.42) / 0.58;
-            amplitudeFactor = 1 - easeOutCubic(decayProgress);
-          }
-        }
-
         // Color interpolation starts exactly when bounce decay starts (global look preserved).
         if (s2Progress >= 0.6) {
           colorT = Math.min(
@@ -377,25 +372,30 @@ export function animateState2And3(
           );
         }
         
-        const bounceAmp = fullBounceAmp * amplitudeFactor;
-        
-        // Circumference-outward bounce only (never inward toward core).
-        const formationBounceOffset = getFormationBounceOffset(
+        const arrivalEnvelope = hasReachedShell
+          ? easeOutCubic(Math.min(1, localBounceProgress / 0.16))
+          : 0;
+        const decayEnvelope = Math.pow(Math.max(0, 1 - s2Progress), 1.45);
+        const envelope = arrivalEnvelope * decayEnvelope;
+        const displacedRadius = getClusteredSpikeRadius(
           time,
-          rnd,
-          i,
-          Math.max(drawInProgress, localBounceProgress),
-          globalFormationProgress,
-          0.14 + rnd * 0.06
+          stableRadius,
+          envelope,
+          clusterWeight,
+          clusterPhase,
+          clusterPhaseLag
         );
-        const bounceOffset =
-          (settlePulse * 0.65 + calmOscillation * 0.35) * bounceAmp + formationBounceOffset;
-        const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
-        const scale = 1 + (bounceOffset / r);
+        const settleMix = Math.min(1, s2Progress / 0.18);
+        const baseX = fx + (stableUnitX * stableRadius - fx) * settleMix;
+        const baseY = fy + (stableUnitY * stableRadius - fy) * settleMix;
+        const baseZ = fz + (stableUnitZ * stableRadius - fz) * settleMix;
+        const displacedX = stableUnitX * displacedRadius;
+        const displacedY = stableUnitY * displacedRadius;
+        const displacedZ = stableUnitZ * displacedRadius;
         
-        positions[i3] = fx * scale;
-        positions[i3 + 1] = fy * scale;
-        positions[i3 + 2] = fz * scale;
+        positions[i3] = baseX + (displacedX - baseX) * arrivalEnvelope;
+        positions[i3 + 1] = baseY + (displacedY - baseY) * arrivalEnvelope;
+        positions[i3 + 2] = baseZ + (displacedZ - baseZ) * arrivalEnvelope;
         
       } else {
         // Substate 3: Stable Fibonacci sphere with compression + color

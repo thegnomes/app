@@ -55,6 +55,30 @@ export const TRAIL_LENGTH = 5;
 /** Share of particles that migrate into shells and collapse trails */
 export const MIGRATOR_RATIO = 0.25;
 
+/** Share of shell particles that lead State 2 spike clusters */
+export const STATE2_SPIKE_CLUSTER_LEADER_RATIO = 0.1;
+
+/** Full radial weight for State 2 spike cluster leaders */
+export const STATE2_SPIKE_LEADER_WEIGHT = 1.0;
+
+/** Radial weight for the first nearby ring around a State 2 spike leader */
+export const STATE2_SPIKE_RING1_WEIGHT = 0.65;
+
+/** Radial weight for the second nearby ring around a State 2 spike leader */
+export const STATE2_SPIKE_RING2_WEIGHT = 0.35;
+
+/** Base amplitude multiplier for State 2 bipolar spike motion */
+export const STATE2_SPIKE_BOUNCE_STRENGTH = 0.42;
+
+/** Minimum radius ratio allowed for inward State 2 spike motion */
+export const STATE2_SPIKE_MIN_RADIUS_RATIO = 0.38;
+
+/** Base oscillation frequency for coherent State 2 spike clusters */
+export const STATE2_SPIKE_FREQUENCY = 3.4;
+
+/** Small per-cluster frequency spread for State 2 spike clusters */
+export const STATE2_SPIKE_FREQUENCY_JITTER = 0.45;
+
 // ============================================
 // Geometry Constants
 // ============================================

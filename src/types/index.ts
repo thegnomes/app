@@ -42,6 +42,9 @@ export interface ParticleData {
   burstVelocity: Float32Array;
   migratorIndexMap: Int32Array;
   state2Radius: Float32Array;
+  state2ClusterWeight: Float32Array;
+  state2ClusterPhase: Float32Array;
+  state2ClusterPhaseLag: Float32Array;
   brainPositions: Float32Array;
   fibonacciPositions: Float32Array; // Target positions on Fibonacci sphere
 }

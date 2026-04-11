@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 import type { ParticleAttributes, ParticleData } from '@/types';
-import { TOTAL_MAIN, TRAIL_LENGTH, SHELL_RADIUS, MIGRATOR_RATIO } from './constants';
+import {
+  TOTAL_MAIN,
+  TRAIL_LENGTH,
+  SHELL_RADIUS,
+  MIGRATOR_RATIO,
+  STATE2_SPIKE_CLUSTER_LEADER_RATIO,
+  STATE2_SPIKE_LEADER_WEIGHT,
+  STATE2_SPIKE_RING1_WEIGHT,
+  STATE2_SPIKE_RING2_WEIGHT,
+} from './constants';
 import {
   generateHomePositions,
   generateSpherePositions,
@@ -10,6 +19,91 @@ import {
   generateBrainPositions,
   generateFibonacciPositions,
 } from './geometry';
+
+const STATE2_SPIKE_RING1_COUNT = 5;
+const STATE2_SPIKE_RING2_COUNT = 10;
+
+function deterministicUnit(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function assignClusterParticle(
+  index: number,
+  weight: number,
+  phase: number,
+  lag: number,
+  clusterWeight: Float32Array,
+  clusterPhase: Float32Array,
+  clusterPhaseLag: Float32Array
+): void {
+  if (weight <= clusterWeight[index]) return;
+
+  clusterWeight[index] = weight;
+  clusterPhase[index] = phase;
+  clusterPhaseLag[index] = lag;
+}
+
+function initializeState2SpikeClusters(data: ParticleData): void {
+  const shellCount = TOTAL_MAIN - 1;
+  const leaderCount = Math.max(1, Math.round(shellCount * STATE2_SPIKE_CLUSTER_LEADER_RATIO));
+  const leaderStride = shellCount / leaderCount;
+
+  for (let leaderSlot = 0; leaderSlot < leaderCount; leaderSlot++) {
+    const leaderIndex = 1 + (Math.floor(leaderSlot * leaderStride + leaderStride * 0.37) % shellCount);
+    const leaderI3 = leaderIndex * 3;
+    const leaderX = data.fibonacciPositions[leaderI3];
+    const leaderY = data.fibonacciPositions[leaderI3 + 1];
+    const leaderZ = data.fibonacciPositions[leaderI3 + 2];
+    const phase = deterministicUnit(leaderIndex + leaderSlot * 101) * Math.PI * 2;
+    const nearest: { index: number; distSq: number }[] = [];
+
+    for (let i = 1; i < TOTAL_MAIN; i++) {
+      if (i === leaderIndex) continue;
+
+      const i3 = i * 3;
+      const dx = data.fibonacciPositions[i3] - leaderX;
+      const dy = data.fibonacciPositions[i3 + 1] - leaderY;
+      const dz = data.fibonacciPositions[i3 + 2] - leaderZ;
+      nearest.push({ index: i, distSq: dx * dx + dy * dy + dz * dz });
+    }
+
+    nearest.sort((a, b) => a.distSq - b.distSq);
+    assignClusterParticle(
+      leaderIndex,
+      STATE2_SPIKE_LEADER_WEIGHT,
+      phase,
+      0,
+      data.state2ClusterWeight,
+      data.state2ClusterPhase,
+      data.state2ClusterPhaseLag
+    );
+
+    for (let n = 0; n < STATE2_SPIKE_RING1_COUNT; n++) {
+      assignClusterParticle(
+        nearest[n].index,
+        STATE2_SPIKE_RING1_WEIGHT,
+        phase,
+        0.1 + n * 0.018,
+        data.state2ClusterWeight,
+        data.state2ClusterPhase,
+        data.state2ClusterPhaseLag
+      );
+    }
+
+    for (let n = STATE2_SPIKE_RING1_COUNT; n < STATE2_SPIKE_RING1_COUNT + STATE2_SPIKE_RING2_COUNT; n++) {
+      assignClusterParticle(
+        nearest[n].index,
+        STATE2_SPIKE_RING2_WEIGHT,
+        phase,
+        0.22 + (n - STATE2_SPIKE_RING1_COUNT) * 0.014,
+        data.state2ClusterWeight,
+        data.state2ClusterPhase,
+        data.state2ClusterPhaseLag
+      );
+    }
+  }
+}
 
 /**
  * Initialize all particle data arrays
@@ -31,6 +125,9 @@ export function initializeParticleData(): {
     burstVelocity: new Float32Array(TOTAL_MAIN * 3),
     migratorIndexMap: new Int32Array(TOTAL_MAIN),
     state2Radius: new Float32Array(TOTAL_MAIN),
+    state2ClusterWeight: new Float32Array(TOTAL_MAIN),
+    state2ClusterPhase: new Float32Array(TOTAL_MAIN),
+    state2ClusterPhaseLag: new Float32Array(TOTAL_MAIN),
     brainPositions: new Float32Array(TOTAL_MAIN * 3),
     fibonacciPositions: new Float32Array(TOTAL_MAIN * 3),
   };
@@ -59,6 +156,8 @@ export function initializeParticleData(): {
     data.state2Radius[i] = calculateState2Radius(SHELL_RADIUS, data.random[i]);
     data.migratorIndexMap[i] = -1;
   }
+
+  initializeState2SpikeClusters(data);
 
   // Assign migrators
   const shuffledIndices = shuffleIndices(TOTAL_MAIN);
