@@ -217,8 +217,10 @@ export function createCoreGroup(
 
 /**
  * Create the State 3 video-driven outer star surface.
+ * Front-biased emissive core layer - video only visible from front-facing angles.
  */
 export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Mesh {
+  // Use a slightly larger sphere for the front-biased emissive layer
   const geometry = new THREE.SphereGeometry(
     SOLAR_VIDEO_CORE_RADIUS,
     SOLAR_VIDEO_CORE_SEGMENTS,
@@ -229,11 +231,15 @@ export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Me
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying vec2 vUv;
+      varying float vFrontBias;
       void main() {
         vNormal = normalize(normalMatrix * normal);
         vUv = uv;
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
         vViewPosition = -mvPosition.xyz;
+        // Calculate front bias in vertex shader for efficiency
+        vec3 viewDir = normalize(-mvPosition.xyz);
+        vFrontBias = max(0.0, dot(vNormal, viewDir));
         gl_Position = projectionMatrix * mvPosition;
       }
     `,
@@ -245,21 +251,41 @@ export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Me
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       varying vec2 vUv;
+      varying float vFrontBias;
       void main() {
+        // Front-biased visibility - only show video on front-facing hemisphere
+        // vFrontBias is 1.0 when facing camera directly, 0.0 at silhouette
+        float frontVisibility = smoothstep(0.0, 0.35, vFrontBias);
+        
+        // Discard back-facing fragments completely for cleaner look
+        if (frontVisibility < 0.01) discard;
+        
         vec2 flowUv = vUv;
         flowUv.x += sin((vUv.y + uTime * 0.018) * 6.28318) * 0.01;
         flowUv.y += cos((vUv.x - uTime * 0.014) * 6.28318) * 0.008;
 
         vec3 videoColor = texture2D(uVideo, fract(flowUv)).rgb;
         float luminance = dot(videoColor, vec3(0.299, 0.587, 0.114));
-        vec3 normal = normalize(vNormal);
-        vec3 viewDir = normalize(vViewPosition);
-        float facing = clamp(dot(normal, viewDir), 0.0, 1.0);
-        float rim = pow(1.0 - facing, 1.7);
-        float surface = 0.32 + smoothstep(0.02, 0.82, facing) * 0.68;
+        
+        // Enhance brightness for emissive effect on front side
+        float emissiveBoost = 1.0 + vFrontBias * 0.5;
+        
+        // Rim effect stronger at edges but only on front hemisphere
+        float rim = pow(1.0 - vFrontBias, 2.0) * frontVisibility;
+        
+        // Surface intensity - brighter when facing camera
+        float surface = 0.25 + vFrontBias * 0.75;
+        
+        // Warm orange tint for star-like appearance
         vec3 warmColor = mix(videoColor, videoColor * vec3(1.0, 0.48, 0.16), 0.34);
-        float alpha = uMix * uOpacity * surface * (0.24 + luminance * 0.54 + rim * 0.24);
-        vec3 emissive = warmColor * (0.84 + luminance * 0.62) + warmColor * rim * 0.42;
+        
+        // Alpha combines mix control, front visibility, and luminance
+        float alpha = uMix * uOpacity * frontVisibility * surface * (0.3 + luminance * 0.7);
+        
+        // Emissive color with boost for front-facing areas
+        vec3 emissive = warmColor * emissiveBoost * (0.9 + luminance * 0.6);
+        emissive += warmColor * rim * 0.5;
+        
         gl_FragColor = vec4(emissive, alpha);
       }
     `,

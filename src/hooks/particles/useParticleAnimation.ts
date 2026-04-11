@@ -154,8 +154,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         flashMesh.current = createFlashMesh(scene.current, new THREE.Color('#ffffff'), 0.6, 0.05);
       }
 
-      // Trigger nova effect on state changes except State 1 (starfield)
-      if (refs.systemGroup.current && nextState !== 1) {
+      // Trigger nova effect on state changes except State 1 (starfield) and State 2 (charging shell)
+      // State 2 focuses on shell formation - skip nova to avoid white overlay interference
+      if (refs.systemGroup.current && nextState !== 1 && nextState !== 2) {
         // Clean up any existing novas first (including their containers)
         if (refs.novaMeshes.current.length > 0) {
           refs.novaMeshes.current.forEach((nova) => {
