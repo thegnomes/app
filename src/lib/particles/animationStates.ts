@@ -178,12 +178,12 @@ const ORANGE_B = 0.086; // Orange
 const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
-const CORE_GREEN_R = 0.133;
-const CORE_GREEN_G = 0.933;
-const CORE_GREEN_B = 0.42;
-const CORE_BLUE_TO_GREEN_R = CORE_GREEN_R - BLUE_R;
-const CORE_BLUE_TO_GREEN_G = CORE_GREEN_G - BLUE_G;
-const CORE_BLUE_TO_GREEN_B = CORE_GREEN_B - BLUE_B;
+const CORE_WHITE_R = 1.0;
+const CORE_WHITE_G = 1.0;
+const CORE_WHITE_B = 1.0;
+const CORE_WHITE_TO_ORANGE_R = ORANGE_R - CORE_WHITE_R;
+const CORE_WHITE_TO_ORANGE_G = ORANGE_G - CORE_WHITE_G;
+const CORE_WHITE_TO_ORANGE_B = ORANGE_B - CORE_WHITE_B;
 
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
@@ -315,22 +315,18 @@ export function animateState2And3(
       const drawInEased = easeOutCubic(drawInProgress);
       if (i === 1) {
         const coreColorT = transitionEased;
-        const orangePulse = transitionT > 0 ? Math.sin(time * 4.2) * 0.5 + 0.5 : 0;
-        const orangeGlow = orangePulse * transitionEased * 0.65;
-        const coreR = BLUE_R + CORE_BLUE_TO_GREEN_R * coreColorT;
-        const coreG = BLUE_G + CORE_BLUE_TO_GREEN_G * coreColorT;
-        const coreB = BLUE_B + CORE_BLUE_TO_GREEN_B * coreColorT;
+        const orangePulse = transitionT > 0 ? Math.sin(time * 4.4) * 0.5 + 0.5 : 0;
+        const glowBoost = 1 + orangePulse * (0.85 + transitionEased * 0.65);
+        const coreR = (CORE_WHITE_R + CORE_WHITE_TO_ORANGE_R * coreColorT) * glowBoost;
+        const coreG = (CORE_WHITE_G + CORE_WHITE_TO_ORANGE_G * coreColorT) * glowBoost;
+        const coreB = (CORE_WHITE_B + CORE_WHITE_TO_ORANGE_B * coreColorT) * glowBoost;
 
-        coreColor.setRGB(
-          coreR + (ORANGE_R - coreR) * orangeGlow,
-          coreG + (ORANGE_G - coreG) * orangeGlow,
-          coreB + (ORANGE_B - coreB) * orangeGlow
-        );
-        colors[0] = coreR + (ORANGE_R - coreR) * orangeGlow;
-        colors[1] = coreG + (ORANGE_G - coreG) * orangeGlow;
-        colors[2] = coreB + (ORANGE_B - coreB) * orangeGlow;
-        sizes[0] = (4.2 + orangePulse * 4.8 * transitionEased) * (0.9 + transitionEased * 0.4);
-        alphas[0] = 0.95;
+        coreColor.setRGB(coreR, coreG, coreB);
+        colors[0] = coreR;
+        colors[1] = coreG;
+        colors[2] = coreB;
+        sizes[0] = 42 + orangePulse * 18;
+        alphas[0] = 1;
       }
       
       // Calculate progress and base position based on substate

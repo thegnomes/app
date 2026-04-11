@@ -19,6 +19,8 @@ import {
   STATE_SECONDARY_COLORS,
   PLANETS,
   ORBIT_SEGMENTS,
+  GLOW_RADIUS,
+  SHELL_RADIUS,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -289,7 +291,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.currentSecondaryColor.current
           );
           // Show core group in State 1 for the central particle glow
-          if (refs.coreGroup.current) refs.coreGroup.current.visible = true;
+          if (refs.coreGroup.current) {
+            refs.coreGroup.current.visible = true;
+            refs.coreGroup.current.scale.set(1, 1, 1);
+            refs.coreGroup.current.children[1]?.scale.set(1, 1, 1);
+          }
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
           if (refs.trail.current) refs.trail.current.visible = false;
@@ -314,6 +320,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           );
 
           if (refs.coreGroup.current) refs.coreGroup.current.visible = true;
+          if (refs.coreGroup.current && currentState === 2) {
+            const [, glow] = refs.coreGroup.current.children;
+            const spreadScale = (SHELL_RADIUS / GLOW_RADIUS) * 1.08;
+            refs.coreGroup.current.scale.set(1, 1, 1);
+            glow?.scale.set(spreadScale, spreadScale, spreadScale);
+          }
           if (refs.orbitGroup.current)
             refs.orbitGroup.current.visible = currentState === 3;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
@@ -328,6 +340,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
               const cg = refs.coreGroup.current;
               const scale = 1 + Math.min(stateElapsed / 1000, 0.5);
               cg.scale.set(scale, scale, scale);
+              cg.children[1]?.scale.set(1, 1, 1);
             }
 
             if (refs.planets.current) {
@@ -381,7 +394,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Lerp core color towards primary state color
-      data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
+      if (currentState !== 2) {
+        data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
+      }
 
       // Lerp primary and secondary ambient colors
       data.currentPrimaryColor.current.lerp(targetPrimaryColor, ambientColorLerp);
