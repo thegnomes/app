@@ -6,7 +6,7 @@ import {
   initializeLighting,
   createParticleSystem,
   createCoreGroup,
-  createSolarVideoShell,
+  createSolarVideoCoreLayer,
   createPlanets,
   createOrbitGroup,
   createTrail,
@@ -15,7 +15,7 @@ import {
 import { initializeParticleData, initializeTrailHistory, initializeTrailPositions, getMigratorCount } from '@/lib/particles/particleData';
 import { TOTAL_MAIN, STATE_PRIMARY_COLORS, STATE_SECONDARY_COLORS, PLANETS } from '@/lib/particles/constants';
 
-const SOLAR_VIDEO_SHELL_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
+const SOLAR_VIDEO_CORE_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
 
 export interface SceneRefs {
   scene: React.MutableRefObject<THREE.Scene | null>;
@@ -23,8 +23,8 @@ export interface SceneRefs {
   renderer: React.MutableRefObject<THREE.WebGLRenderer | null>;
   particles: React.MutableRefObject<THREE.Points | null>;
   coreGroup: React.MutableRefObject<THREE.Group | null>;
-  solarVideoShell: React.MutableRefObject<THREE.Mesh | null>;
-  solarVideoShellVideo: React.MutableRefObject<HTMLVideoElement | null>;
+  solarVideoCoreLayer: React.MutableRefObject<THREE.Mesh | null>;
+  solarVideoCoreVideo: React.MutableRefObject<HTMLVideoElement | null>;
   orbitGroup: React.MutableRefObject<THREE.Group | null>;
   planets: React.MutableRefObject<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[] | null>;
   sunLight: React.MutableRefObject<THREE.PointLight | null>;
@@ -43,8 +43,8 @@ export interface AnimationData {
   currentCoreColor: React.MutableRefObject<THREE.Color>;
   currentPrimaryColor: React.MutableRefObject<THREE.Color>;
   currentSecondaryColor: React.MutableRefObject<THREE.Color>;
-  solarVideoShellMix: React.MutableRefObject<number>;
-  solarVideoShellGlowBoost: React.MutableRefObject<number>;
+  solarVideoCoreMix: React.MutableRefObject<number>;
+  solarVideoCoreGlowBoost: React.MutableRefObject<number>;
   shellAngle: React.MutableRefObject<number>;
   trailHistory: React.MutableRefObject<Float32Array>;
   particleData: React.MutableRefObject<ReturnType<typeof initializeParticleData>['data'] | null>;
@@ -67,9 +67,9 @@ export function useParticleScene(config: ParticleConfig) {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const coreGroupRef = useRef<THREE.Group | null>(null);
-  const solarVideoShellRef = useRef<THREE.Mesh | null>(null);
-  const solarVideoShellVideoRef = useRef<HTMLVideoElement | null>(null);
-  const solarVideoShellTextureRef = useRef<THREE.VideoTexture | null>(null);
+  const solarVideoCoreLayerRef = useRef<THREE.Mesh | null>(null);
+  const solarVideoCoreVideoRef = useRef<HTMLVideoElement | null>(null);
+  const solarVideoCoreTextureRef = useRef<THREE.VideoTexture | null>(null);
   const orbitGroupRef = useRef<THREE.Group | null>(null);
   const planetsRef = useRef<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[]>([]);
   const sunLightRef = useRef<THREE.PointLight | null>(null);
@@ -87,8 +87,8 @@ export function useParticleScene(config: ParticleConfig) {
   const currentCoreColorRef = useRef(new THREE.Color(config.centerColor));
   const currentPrimaryColorRef = useRef(STATE_PRIMARY_COLORS[0].clone());
   const currentSecondaryColorRef = useRef(STATE_SECONDARY_COLORS[0].clone());
-  const solarVideoShellMixRef = useRef(0);
-  const solarVideoShellGlowBoostRef = useRef(1);
+  const solarVideoCoreMixRef = useRef(0);
+  const solarVideoCoreGlowBoostRef = useRef(1);
   const shellAngleRef = useRef(0);
   const trailHistoryRef = useRef<Float32Array>(new Float32Array(0));
   const particleDataRef = useRef<ReturnType<typeof initializeParticleData>['data'] | null>(null);
@@ -133,29 +133,28 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup.add(coreGroup);
     coreGroupRef.current = coreGroup;
 
-    // Create the State 3 video sphere around the particle shell.
-    const solarVideoShellVideo = document.createElement('video');
-    solarVideoShellVideo.src = SOLAR_VIDEO_SHELL_SRC;
-    solarVideoShellVideo.loop = true;
-    solarVideoShellVideo.muted = true;
-    solarVideoShellVideo.playsInline = true;
-    solarVideoShellVideo.preload = 'metadata';
-    solarVideoShellVideo.crossOrigin = 'anonymous';
-    solarVideoShellVideoRef.current = solarVideoShellVideo;
+    // Create the State 3 front-biased emissive video layer.
+    const solarVideoCoreVideo = document.createElement('video');
+    solarVideoCoreVideo.src = SOLAR_VIDEO_CORE_SRC;
+    solarVideoCoreVideo.loop = true;
+    solarVideoCoreVideo.muted = true;
+    solarVideoCoreVideo.playsInline = true;
+    solarVideoCoreVideo.preload = 'metadata';
+    solarVideoCoreVideo.crossOrigin = 'anonymous';
+    solarVideoCoreVideoRef.current = solarVideoCoreVideo;
 
-    const solarVideoShellTexture = new THREE.VideoTexture(solarVideoShellVideo);
-    solarVideoShellTexture.colorSpace = THREE.SRGBColorSpace;
-    solarVideoShellTexture.minFilter = THREE.LinearFilter;
-    solarVideoShellTexture.magFilter = THREE.LinearFilter;
-    solarVideoShellTexture.generateMipmaps = false;
-    solarVideoShellTexture.wrapS = THREE.RepeatWrapping;
-    solarVideoShellTexture.wrapT = THREE.RepeatWrapping;
-    solarVideoShellTextureRef.current = solarVideoShellTexture;
+    const solarVideoCoreTexture = new THREE.VideoTexture(solarVideoCoreVideo);
+    solarVideoCoreTexture.colorSpace = THREE.SRGBColorSpace;
+    solarVideoCoreTexture.minFilter = THREE.LinearFilter;
+    solarVideoCoreTexture.magFilter = THREE.LinearFilter;
+    solarVideoCoreTexture.generateMipmaps = false;
+    solarVideoCoreTexture.wrapS = THREE.RepeatWrapping;
+    solarVideoCoreTexture.wrapT = THREE.RepeatWrapping;
+    solarVideoCoreTextureRef.current = solarVideoCoreTexture;
 
-    const solarVideoShell = createSolarVideoShell(solarVideoShellTexture);
-    solarVideoShell.rotation.set(0.12, -0.2, 0.05);
-    systemGroup.add(solarVideoShell);
-    solarVideoShellRef.current = solarVideoShell;
+    const solarVideoCoreLayer = createSolarVideoCoreLayer(solarVideoCoreTexture);
+    scene.add(solarVideoCoreLayer);
+    solarVideoCoreLayerRef.current = solarVideoCoreLayer;
 
     // Create planets with shared angles
     const angles = PLANETS.map(() => Math.random() * Math.PI * 2);
@@ -192,16 +191,16 @@ export function useParticleScene(config: ParticleConfig) {
         rendererRef.current.dispose();
       }
 
-      if (solarVideoShellVideoRef.current) {
-        solarVideoShellVideoRef.current.pause();
-        solarVideoShellVideoRef.current.removeAttribute('src');
-        solarVideoShellVideoRef.current.load();
-        solarVideoShellVideoRef.current = null;
+      if (solarVideoCoreVideoRef.current) {
+        solarVideoCoreVideoRef.current.pause();
+        solarVideoCoreVideoRef.current.removeAttribute('src');
+        solarVideoCoreVideoRef.current.load();
+        solarVideoCoreVideoRef.current = null;
       }
 
-      solarVideoShellTextureRef.current?.dispose();
-      solarVideoShellTextureRef.current = null;
-      solarVideoShellRef.current = null;
+      solarVideoCoreTextureRef.current?.dispose();
+      solarVideoCoreTextureRef.current = null;
+      solarVideoCoreLayerRef.current = null;
 
       if (particlesRef.current) {
         particlesRef.current.geometry.dispose();
@@ -223,8 +222,8 @@ export function useParticleScene(config: ParticleConfig) {
       renderer: rendererRef,
       particles: particlesRef,
       coreGroup: coreGroupRef,
-      solarVideoShell: solarVideoShellRef,
-      solarVideoShellVideo: solarVideoShellVideoRef,
+      solarVideoCoreLayer: solarVideoCoreLayerRef,
+      solarVideoCoreVideo: solarVideoCoreVideoRef,
       orbitGroup: orbitGroupRef,
       planets: planetsRef,
       sunLight: sunLightRef,
@@ -246,8 +245,8 @@ export function useParticleScene(config: ParticleConfig) {
       currentCoreColor: currentCoreColorRef,
       currentPrimaryColor: currentPrimaryColorRef,
       currentSecondaryColor: currentSecondaryColorRef,
-      solarVideoShellMix: solarVideoShellMixRef,
-      solarVideoShellGlowBoost: solarVideoShellGlowBoostRef,
+      solarVideoCoreMix: solarVideoCoreMixRef,
+      solarVideoCoreGlowBoost: solarVideoCoreGlowBoostRef,
       shellAngle: shellAngleRef,
       trailHistory: trailHistoryRef,
       particleData: particleDataRef,

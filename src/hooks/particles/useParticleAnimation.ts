@@ -26,9 +26,10 @@ import {
   GLOW_OPACITY,
   SHELL_RADIUS,
   PARTICLE_SIZE_MULTIPLIER,
-  SOLAR_VIDEO_SHELL_TRANSITION_DURATION,
-  SOLAR_VIDEO_SHELL_GLOW_BOOST,
-  SOLAR_VIDEO_SHELL_PROCEDURAL_FADE,
+  SOLAR_VIDEO_CORE_TRANSITION_DURATION,
+  SOLAR_VIDEO_CORE_GLOW_BOOST,
+  SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
+  SOLAR_VIDEO_CORE_FRONT_OFFSET,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -222,8 +223,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
       }
 
-      if (refs.solarVideoShell.current) {
-        const material = refs.solarVideoShell.current.material as THREE.ShaderMaterial;
+      if (refs.solarVideoCoreLayer.current) {
+        const material = refs.solarVideoCoreLayer.current.material as THREE.ShaderMaterial;
         if (material.uniforms?.uTime) {
           material.uniforms.uTime.value = data.time.current;
         }
@@ -282,13 +283,13 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Determine target colors for current state
       const targetPrimaryColor = STATE_PRIMARY_COLORS[currentState];
       const targetSecondaryColor = STATE_SECONDARY_COLORS[currentState];
-      const solarVideoShellMix =
+      const solarVideoCoreMix =
         currentState === 3
-          ? 0.08 + smoothstep01(stateElapsed / SOLAR_VIDEO_SHELL_TRANSITION_DURATION) * 0.92
+          ? 0.08 + smoothstep01(stateElapsed / SOLAR_VIDEO_CORE_TRANSITION_DURATION) * 0.92
           : 0;
-      data.solarVideoShellMix.current = solarVideoShellMix;
-      data.solarVideoShellGlowBoost.current =
-        1 + solarVideoShellMix * (SOLAR_VIDEO_SHELL_GLOW_BOOST - 1);
+      data.solarVideoCoreMix.current = solarVideoCoreMix;
+      data.solarVideoCoreGlowBoost.current =
+        1 + solarVideoCoreMix * (SOLAR_VIDEO_CORE_GLOW_BOOST - 1);
 
       // Animate based on state
       switch (currentState) {
@@ -369,12 +370,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
           // State 3: Animate planets
           if (currentState === 3) {
-            const proceduralCoreMix = 1 - solarVideoShellMix;
+            const proceduralCoreMix = 1 - solarVideoCoreMix;
             sizes[0] = (18 + Math.sin(data.time.current * 2.1) * 2) * proceduralCoreMix;
             alphas[0] = 0.34 * proceduralCoreMix;
-            colors[0] = targetPrimaryColor.r * (1.15 + solarVideoShellMix * 0.25);
-            colors[1] = targetPrimaryColor.g * (1.08 + solarVideoShellMix * 0.12);
-            colors[2] = targetPrimaryColor.b * (1 + solarVideoShellMix * 0.08);
+            colors[0] = targetPrimaryColor.r * (1.15 + solarVideoCoreMix * 0.25);
+            colors[1] = targetPrimaryColor.g * (1.08 + solarVideoCoreMix * 0.12);
+            colors[2] = targetPrimaryColor.b * (1 + solarVideoCoreMix * 0.08);
 
             if (refs.coreGroup.current) {
               const cg = refs.coreGroup.current;
@@ -388,7 +389,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
               animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, speed, frameScale);
             }
 
-            const coronaMix = solarVideoShellMix * 0.22;
+            const coronaMix = solarVideoCoreMix * 0.22;
             for (let i = 1; i < TOTAL_MAIN; i++) {
               if (!particleData.shellParticle[i]) continue;
 
@@ -396,7 +397,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
               colors[i3] += (targetPrimaryColor.r * 1.2 - colors[i3]) * coronaMix;
               colors[i3 + 1] += (targetPrimaryColor.g * 1.12 - colors[i3 + 1]) * coronaMix;
               colors[i3 + 2] += (targetSecondaryColor.b * 0.45 - colors[i3 + 2]) * coronaMix;
-              sizes[i] *= 1 + solarVideoShellMix * 0.08;
+              sizes[i] *= 1 + solarVideoCoreMix * 0.08;
             }
           }
           break;
@@ -467,28 +468,35 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         meshUniforms.uColor.value.copy(data.currentCoreColor.current);
         if (meshUniforms.uOpacity) {
           meshUniforms.uOpacity.value =
-            1 - data.solarVideoShellMix.current * SOLAR_VIDEO_SHELL_PROCEDURAL_FADE;
+            1 - data.solarVideoCoreMix.current * SOLAR_VIDEO_CORE_PROCEDURAL_FADE;
         }
         glowUniforms.uColor.value.copy(data.currentCoreColor.current);
-        glowUniforms.uOpacity.value = GLOW_OPACITY * (1 + data.solarVideoShellMix.current * 0.4);
+        glowUniforms.uOpacity.value = GLOW_OPACITY * (1 + data.solarVideoCoreMix.current * 0.4);
         if (glowUniforms.uGlowBoost) {
-          glowUniforms.uGlowBoost.value = data.solarVideoShellGlowBoost.current;
+          glowUniforms.uGlowBoost.value = data.solarVideoCoreGlowBoost.current;
         }
       }
 
-      if (refs.solarVideoShell.current) {
-        const solarVideoShell = refs.solarVideoShell.current;
-        const shellUniforms = (solarVideoShell.material as THREE.ShaderMaterial).uniforms;
-        const shouldShowSolarShell = currentState === 3 && data.solarVideoShellMix.current > 0.001;
-        solarVideoShell.visible = shouldShowSolarShell;
-        solarVideoShell.rotation.y += 0.0012 * speed * frameScale;
-        shellUniforms.uMix.value = shouldShowSolarShell ? data.solarVideoShellMix.current : 0;
+      if (refs.solarVideoCoreLayer.current) {
+        const solarVideoCoreLayer = refs.solarVideoCoreLayer.current;
+        const coreUniforms = (solarVideoCoreLayer.material as THREE.ShaderMaterial).uniforms;
+        const shouldShowSolarCore = currentState === 3 && data.solarVideoCoreMix.current > 0.001;
+        solarVideoCoreLayer.visible = shouldShowSolarCore;
+        coreUniforms.uMix.value = shouldShowSolarCore ? data.solarVideoCoreMix.current : 0;
 
-        if (refs.solarVideoShellVideo.current) {
-          if (shouldShowSolarShell && refs.solarVideoShellVideo.current.paused) {
-            void refs.solarVideoShellVideo.current.play();
-          } else if (!shouldShowSolarShell && !refs.solarVideoShellVideo.current.paused) {
-            refs.solarVideoShellVideo.current.pause();
+        if (refs.camera.current) {
+          solarVideoCoreLayer.quaternion.copy(refs.camera.current.quaternion);
+          solarVideoCoreLayer.position
+            .copy(refs.camera.current.position)
+            .normalize()
+            .multiplyScalar(SOLAR_VIDEO_CORE_FRONT_OFFSET);
+        }
+
+        if (refs.solarVideoCoreVideo.current) {
+          if (shouldShowSolarCore && refs.solarVideoCoreVideo.current.paused) {
+            void refs.solarVideoCoreVideo.current.play();
+          } else if (!shouldShowSolarCore && !refs.solarVideoCoreVideo.current.paused) {
+            refs.solarVideoCoreVideo.current.pause();
           }
         }
       }

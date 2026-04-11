@@ -177,23 +177,26 @@ export const GLOW_RADIUS = 6;
 /** Glow opacity */
 export const GLOW_OPACITY = 0.55;
 
-/** Duration for the State 3 outer video sphere to fade in */
-export const SOLAR_VIDEO_SHELL_TRANSITION_DURATION = 4200;
+/** Duration for the State 3 front video core layer to fade in */
+export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 4200;
 
-/** Maximum glow boost as the State 3 video sphere becomes visible */
-export const SOLAR_VIDEO_SHELL_GLOW_BOOST = 1.65;
+/** Maximum glow boost as the State 3 front video core layer becomes visible */
+export const SOLAR_VIDEO_CORE_GLOW_BOOST = 1.65;
 
-/** Share of procedural core intensity faded as the State 3 video sphere enters */
-export const SOLAR_VIDEO_SHELL_PROCEDURAL_FADE = 0.72;
+/** Share of procedural core intensity faded as the State 3 front video core layer enters */
+export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.72;
 
-/** Radius for the State 3 video sphere surrounding the particle shell */
-export const SOLAR_VIDEO_SHELL_RADIUS = SHELL_RADIUS * 0.92;
+/** Size for the State 3 front video core layer */
+export const SOLAR_VIDEO_CORE_SIZE = SHELL_RADIUS * 0.72;
 
-/** Geometry detail for the State 3 video sphere */
-export const SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL = 48;
+/** Segment count for the State 3 circular video core layer */
+export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 
-/** Peak opacity for the State 3 video sphere */
-export const SOLAR_VIDEO_SHELL_OPACITY = 0.58;
+/** Peak opacity for the State 3 front video core layer */
+export const SOLAR_VIDEO_CORE_OPACITY = 0.72;
+
+/** Forward offset toward the camera for the State 3 video core layer */
+export const SOLAR_VIDEO_CORE_FRONT_OFFSET = 3.5;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

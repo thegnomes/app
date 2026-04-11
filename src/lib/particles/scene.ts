@@ -17,9 +17,9 @@ import {
   PLANET_GLOW_MULTIPLIER,
   PLANET_GLOW_OPACITY,
   ORBIT_SEGMENTS,
-  SOLAR_VIDEO_SHELL_RADIUS,
-  SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL,
-  SOLAR_VIDEO_SHELL_OPACITY,
+  SOLAR_VIDEO_CORE_SIZE,
+  SOLAR_VIDEO_CORE_SEGMENTS,
+  SOLAR_VIDEO_CORE_OPACITY,
   SHARED_ROTATION,
   TRAIL_COLOR,
 } from './constants';
@@ -216,25 +216,16 @@ export function createCoreGroup(
 }
 
 /**
- * Create the State 3 video sphere that wraps the particle shell.
+ * Create the State 3 front-biased video layer for the solar core.
  */
-export function createSolarVideoShell(videoTexture: THREE.Texture): THREE.Mesh {
-  const geometry = new THREE.SphereGeometry(
-    SOLAR_VIDEO_SHELL_RADIUS,
-    SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL,
-    SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL
-  );
+export function createSolarVideoCoreLayer(videoTexture: THREE.Texture): THREE.Mesh {
+  const geometry = new THREE.CircleGeometry(SOLAR_VIDEO_CORE_SIZE, SOLAR_VIDEO_CORE_SEGMENTS);
   const material = new THREE.ShaderMaterial({
     vertexShader: `
       varying vec2 vUv;
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
       void main() {
         vUv = uv;
-        vNormal = normalize(normalMatrix * normal);
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        vViewPosition = -mvPosition.xyz;
-        gl_Position = projectionMatrix * mvPosition;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
@@ -243,31 +234,32 @@ export function createSolarVideoShell(videoTexture: THREE.Texture): THREE.Mesh {
       uniform float uOpacity;
       uniform float uTime;
       varying vec2 vUv;
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
       void main() {
         vec2 flowUv = vUv;
-        flowUv.x += uTime * 0.018;
-        flowUv.y += sin((vUv.x + uTime * 0.02) * 6.28318) * 0.01;
+        flowUv.x += sin((vUv.y + uTime * 0.02) * 6.28318) * 0.012;
+        flowUv.y += cos((vUv.x - uTime * 0.018) * 6.28318) * 0.01;
 
         vec3 videoColor = texture2D(uVideo, fract(flowUv)).rgb;
         float luminance = dot(videoColor, vec3(0.299, 0.587, 0.114));
-        float fresnel = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 1.4);
+        float dist = distance(vUv, vec2(0.5));
+        float radial = smoothstep(0.5, 0.08, dist);
+        float feather = smoothstep(0.5, 0.34, dist);
+        float hotCenter = smoothstep(0.42, 0.02, dist);
         vec3 warmColor = mix(videoColor, videoColor * vec3(1.0, 0.52, 0.18), 0.32);
-        float alpha = uMix * uOpacity * (0.24 + luminance * 0.34 + fresnel * 0.42);
-        gl_FragColor = vec4(warmColor * (1.05 + fresnel * 0.8), alpha);
+        float alpha = uMix * uOpacity * radial * (0.36 + luminance * 0.44 + feather * 0.2);
+        vec3 emissive = warmColor * (1.08 + luminance * 0.45 + hotCenter * 0.5);
+        gl_FragColor = vec4(emissive, alpha);
       }
     `,
     uniforms: {
       uVideo: { value: videoTexture },
       uMix: { value: 0 },
-      uOpacity: { value: SOLAR_VIDEO_SHELL_OPACITY },
+      uOpacity: { value: SOLAR_VIDEO_CORE_OPACITY },
       uTime: { value: 0 },
     },
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
-    side: THREE.DoubleSide,
   });
 
   const mesh = new THREE.Mesh(geometry, material);
