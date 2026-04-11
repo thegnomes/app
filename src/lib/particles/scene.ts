@@ -17,6 +17,7 @@ import {
   PLANET_GLOW_MULTIPLIER,
   PLANET_GLOW_OPACITY,
   ORBIT_SEGMENTS,
+  CORE_VIDEO_RADIUS,
   SHARED_ROTATION,
   TRAIL_COLOR,
 } from './constants';
@@ -103,14 +104,16 @@ export function createParticleSystem(
 }
 
 /**
- * Create core group with mesh and glow
+ * Create core group with procedural mesh, glow, and video star body
  */
 export function createCoreGroup(
-  config: ParticleConfig
+  config: ParticleConfig,
+  videoTexture: THREE.Texture
 ): {
   group: THREE.Group;
   mesh: THREE.Mesh;
   glow: THREE.Mesh;
+  videoMesh: THREE.Mesh;
 } {
   const group = new THREE.Group();
   group.visible = false;
@@ -135,6 +138,7 @@ export function createCoreGroup(
     fragmentShader: `
       uniform vec3 uColor;
       uniform float uTime;
+      uniform float uOpacity;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       void main() {
@@ -145,15 +149,76 @@ export function createCoreGroup(
         float detail = sin(normal.x * 10.0 + uTime * 1.5) * sin(normal.y * 10.0 + uTime * 1.2) * 0.5 + 0.5;
         vec3 base = uColor * (0.25 + diff * 0.55);
         vec3 rim = uColor * 1.4 * fresnel;
-        gl_FragColor = vec4(base + rim + detail * 0.08, 1.0);
+        gl_FragColor = vec4(base + rim + detail * 0.08, uOpacity);
       }
     `,
     uniforms: {
       uColor: { value: new THREE.Color(config.centerColor) },
       uTime: { value: 0 },
+      uOpacity: { value: 1 },
     },
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
+
+  const videoGeometry = new THREE.SphereGeometry(
+    CORE_VIDEO_RADIUS,
+    CORE_GEOMETRY_DETAIL,
+    CORE_GEOMETRY_DETAIL
+  );
+  const videoMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uVideo;
+      uniform float uMix;
+      uniform float uGlowBoost;
+      uniform float uTime;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vec2 flowUv = vUv;
+        flowUv.x += sin((vUv.y + uTime * 0.035) * 6.28318) * 0.015;
+        flowUv.y += cos((vUv.x - uTime * 0.025) * 6.28318) * 0.012;
+
+        vec3 videoColor = texture2D(uVideo, fract(flowUv)).rgb;
+        float luminance = dot(videoColor, vec3(0.299, 0.587, 0.114));
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+        float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 1.85);
+        float surfacePulse = 1.0 + sin(uTime * 1.6 + luminance * 3.0) * 0.08;
+        vec3 warmBias = vec3(1.0, 0.56, 0.22);
+        vec3 starColor = mix(videoColor, videoColor * warmBias, 0.35);
+        vec3 glowColor = starColor * (1.25 + fresnel * 1.15 + luminance * 0.45) * uGlowBoost * surfacePulse;
+        float alpha = uMix * (0.58 + fresnel * 0.42);
+
+        gl_FragColor = vec4(glowColor, alpha);
+      }
+    `,
+    uniforms: {
+      uVideo: { value: videoTexture },
+      uMix: { value: 0 },
+      uGlowBoost: { value: 1 },
+      uTime: { value: 0 },
+    },
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
   // Glow mesh
   const glowGeometry = new THREE.SphereGeometry(
@@ -176,13 +241,14 @@ export function createCoreGroup(
       uniform vec3 uColor;
       uniform float uOpacity;
       uniform float uTime;
+      uniform float uGlowBoost;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       void main() {
         float fresnel = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 1.6);
         float breathe = 1.0 + sin(uTime * 2.5) * 0.2;
-        float alpha = fresnel * uOpacity * breathe;
-        vec3 inner = uColor * 1.3;
+        float alpha = fresnel * uOpacity * breathe * uGlowBoost;
+        vec3 inner = uColor * (1.3 + uGlowBoost * 0.35);
         vec3 outer = uColor * 0.1;
         vec3 grad = mix(inner, outer, fresnel);
         gl_FragColor = vec4(grad, alpha);
@@ -192,6 +258,7 @@ export function createCoreGroup(
       uColor: { value: new THREE.Color(config.centerColor) },
       uOpacity: { value: GLOW_OPACITY },
       uTime: { value: 0 },
+      uGlowBoost: { value: 1 },
     },
     transparent: true,
     blending: THREE.AdditiveBlending,
@@ -201,8 +268,9 @@ export function createCoreGroup(
 
   group.add(mesh);
   group.add(glow);
+  group.add(videoMesh);
 
-  return { group, mesh, glow };
+  return { group, mesh, glow, videoMesh };
 }
 
 /**

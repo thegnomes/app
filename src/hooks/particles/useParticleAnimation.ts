@@ -23,7 +23,11 @@ import {
   PLANETS,
   ORBIT_SEGMENTS,
   GLOW_RADIUS,
+  GLOW_OPACITY,
   SHELL_RADIUS,
+  CORE_VIDEO_TRANSITION_DURATION,
+  CORE_VIDEO_GLOW_BOOST,
+  CORE_VIDEO_PROCEDURAL_FADE,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -38,6 +42,10 @@ import {
 import { createFlashMesh, createNovaMesh } from '@/lib/particles/scene';
 
 const scaleFrameLerp = (factor: number, frameScale: number) => 1 - Math.pow(1 - factor, frameScale);
+const smoothstep01 = (value: number) => {
+  const t = Math.min(1, Math.max(0, value));
+  return t * t * (3 - 2 * t);
+};
 
 interface CameraPanRef {
   isDragging: boolean;
@@ -205,11 +213,15 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       if (refs.coreGroup.current && refs.coreGroup.current.children.length >= 2) {
         const mesh = refs.coreGroup.current.children[0] as THREE.Mesh;
         const glow = refs.coreGroup.current.children[1] as THREE.Mesh;
+        const videoMesh = refs.coreVideoMesh.current;
         if (mesh && (mesh.material as THREE.ShaderMaterial).uniforms?.uTime) {
           (mesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
         }
         if (glow && (glow.material as THREE.ShaderMaterial).uniforms?.uTime) {
           (glow.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+        }
+        if (videoMesh && (videoMesh.material as THREE.ShaderMaterial).uniforms?.uTime) {
+          (videoMesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
         }
       }
 
@@ -266,6 +278,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Determine target colors for current state
       const targetPrimaryColor = STATE_PRIMARY_COLORS[currentState];
       const targetSecondaryColor = STATE_SECONDARY_COLORS[currentState];
+      const state3VideoMix =
+        currentState === 3 ? smoothstep01(stateElapsed / CORE_VIDEO_TRANSITION_DURATION) : 0;
+      data.coreVideoMix.current = state3VideoMix;
+      data.coreGlowBoost.current = 1 + state3VideoMix * (CORE_VIDEO_GLOW_BOOST - 1);
 
       // Animate based on state
       switch (currentState) {
@@ -346,8 +362,12 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
           // State 3: Animate planets
           if (currentState === 3) {
-            sizes[0] = 0;
-            alphas[0] = 0;
+            const proceduralCoreMix = 1 - state3VideoMix;
+            sizes[0] = (18 + Math.sin(data.time.current * 2.1) * 2) * proceduralCoreMix;
+            alphas[0] = 0.34 * proceduralCoreMix;
+            colors[0] = targetPrimaryColor.r * (1.15 + state3VideoMix * 0.25);
+            colors[1] = targetPrimaryColor.g * (1.08 + state3VideoMix * 0.12);
+            colors[2] = targetPrimaryColor.b * (1 + state3VideoMix * 0.08);
 
             if (refs.coreGroup.current) {
               const cg = refs.coreGroup.current;
@@ -359,6 +379,15 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
             if (refs.planets.current) {
               animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, speed, frameScale);
+            }
+
+            const coronaMix = state3VideoMix * 0.22;
+            for (let i = 1; i < TOTAL_MAIN; i++) {
+              const i3 = i * 3;
+              colors[i3] += (targetPrimaryColor.r * 1.2 - colors[i3]) * coronaMix;
+              colors[i3 + 1] += (targetPrimaryColor.g * 1.12 - colors[i3 + 1]) * coronaMix;
+              colors[i3 + 2] += (targetSecondaryColor.b * 0.45 - colors[i3 + 2]) * coronaMix;
+              sizes[i] *= 1 + state3VideoMix * 0.08;
             }
           }
           break;
@@ -424,12 +453,24 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         const cg = refs.coreGroup.current;
         const mesh = cg.children[0] as THREE.Mesh;
         const glow = cg.children[1] as THREE.Mesh;
-        (mesh.material as THREE.ShaderMaterial).uniforms.uColor.value.copy(
-          data.currentCoreColor.current
-        );
-        (glow.material as THREE.ShaderMaterial).uniforms.uColor.value.copy(
-          data.currentCoreColor.current
-        );
+        const videoMesh = refs.coreVideoMesh.current;
+        const meshUniforms = (mesh.material as THREE.ShaderMaterial).uniforms;
+        const glowUniforms = (glow.material as THREE.ShaderMaterial).uniforms;
+        meshUniforms.uColor.value.copy(data.currentCoreColor.current);
+        if (meshUniforms.uOpacity) {
+          meshUniforms.uOpacity.value = 1 - data.coreVideoMix.current * CORE_VIDEO_PROCEDURAL_FADE;
+        }
+        glowUniforms.uColor.value.copy(data.currentCoreColor.current);
+        glowUniforms.uOpacity.value = GLOW_OPACITY * (1 + data.coreVideoMix.current * 0.4);
+        if (glowUniforms.uGlowBoost) {
+          glowUniforms.uGlowBoost.value = data.coreGlowBoost.current;
+        }
+        if (videoMesh) {
+          const videoUniforms = (videoMesh.material as THREE.ShaderMaterial).uniforms;
+          videoMesh.visible = data.coreVideoMix.current > 0.001;
+          videoUniforms.uMix.value = data.coreVideoMix.current;
+          videoUniforms.uGlowBoost.value = data.coreGlowBoost.current;
+        }
       }
 
       // Update sun light color

@@ -14,6 +14,7 @@ import {
 import { initializeParticleData, initializeTrailHistory, initializeTrailPositions, getMigratorCount } from '@/lib/particles/particleData';
 import { TOTAL_MAIN, STATE_PRIMARY_COLORS, STATE_SECONDARY_COLORS, PLANETS } from '@/lib/particles/constants';
 
+const CORE_VIDEO_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
 
 export interface SceneRefs {
   scene: React.MutableRefObject<THREE.Scene | null>;
@@ -21,6 +22,7 @@ export interface SceneRefs {
   renderer: React.MutableRefObject<THREE.WebGLRenderer | null>;
   particles: React.MutableRefObject<THREE.Points | null>;
   coreGroup: React.MutableRefObject<THREE.Group | null>;
+  coreVideoMesh: React.MutableRefObject<THREE.Mesh | null>;
   orbitGroup: React.MutableRefObject<THREE.Group | null>;
   planets: React.MutableRefObject<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[] | null>;
   sunLight: React.MutableRefObject<THREE.PointLight | null>;
@@ -39,6 +41,8 @@ export interface AnimationData {
   currentCoreColor: React.MutableRefObject<THREE.Color>;
   currentPrimaryColor: React.MutableRefObject<THREE.Color>;
   currentSecondaryColor: React.MutableRefObject<THREE.Color>;
+  coreVideoMix: React.MutableRefObject<number>;
+  coreGlowBoost: React.MutableRefObject<number>;
   shellAngle: React.MutableRefObject<number>;
   trailHistory: React.MutableRefObject<Float32Array>;
   particleData: React.MutableRefObject<ReturnType<typeof initializeParticleData>['data'] | null>;
@@ -61,6 +65,9 @@ export function useParticleScene(config: ParticleConfig) {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const coreGroupRef = useRef<THREE.Group | null>(null);
+  const coreVideoMeshRef = useRef<THREE.Mesh | null>(null);
+  const coreVideoRef = useRef<HTMLVideoElement | null>(null);
+  const coreVideoTextureRef = useRef<THREE.VideoTexture | null>(null);
   const orbitGroupRef = useRef<THREE.Group | null>(null);
   const planetsRef = useRef<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[]>([]);
   const sunLightRef = useRef<THREE.PointLight | null>(null);
@@ -78,6 +85,8 @@ export function useParticleScene(config: ParticleConfig) {
   const currentCoreColorRef = useRef(new THREE.Color(config.centerColor));
   const currentPrimaryColorRef = useRef(STATE_PRIMARY_COLORS[0].clone());
   const currentSecondaryColorRef = useRef(STATE_SECONDARY_COLORS[0].clone());
+  const coreVideoMixRef = useRef(0);
+  const coreGlowBoostRef = useRef(1);
   const shellAngleRef = useRef(0);
   const trailHistoryRef = useRef<Float32Array>(new Float32Array(0));
   const particleDataRef = useRef<ReturnType<typeof initializeParticleData>['data'] | null>(null);
@@ -117,10 +126,31 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup.add(particles);
     particlesRef.current = particles;
 
+    // Create video texture for the State 3 star body.
+    const coreVideo = document.createElement('video');
+    coreVideo.src = CORE_VIDEO_SRC;
+    coreVideo.loop = true;
+    coreVideo.muted = true;
+    coreVideo.playsInline = true;
+    coreVideo.preload = 'auto';
+    coreVideo.crossOrigin = 'anonymous';
+    coreVideoRef.current = coreVideo;
+
+    const coreVideoTexture = new THREE.VideoTexture(coreVideo);
+    coreVideoTexture.colorSpace = THREE.SRGBColorSpace;
+    coreVideoTexture.minFilter = THREE.LinearFilter;
+    coreVideoTexture.magFilter = THREE.LinearFilter;
+    coreVideoTexture.generateMipmaps = false;
+    coreVideoTexture.wrapS = THREE.RepeatWrapping;
+    coreVideoTexture.wrapT = THREE.RepeatWrapping;
+    coreVideoTextureRef.current = coreVideoTexture;
+    void coreVideo.play();
+
     // Create core group
-    const { group: coreGroup } = createCoreGroup(config);
+    const { group: coreGroup, videoMesh } = createCoreGroup(config, coreVideoTexture);
     systemGroup.add(coreGroup);
     coreGroupRef.current = coreGroup;
+    coreVideoMeshRef.current = videoMesh;
 
     // Create planets with shared angles
     const angles = PLANETS.map(() => Math.random() * Math.PI * 2);
@@ -157,6 +187,17 @@ export function useParticleScene(config: ParticleConfig) {
         rendererRef.current.dispose();
       }
 
+      if (coreVideoRef.current) {
+        coreVideoRef.current.pause();
+        coreVideoRef.current.removeAttribute('src');
+        coreVideoRef.current.load();
+        coreVideoRef.current = null;
+      }
+
+      coreVideoTextureRef.current?.dispose();
+      coreVideoTextureRef.current = null;
+      coreVideoMeshRef.current = null;
+
       if (particlesRef.current) {
         particlesRef.current.geometry.dispose();
         (particlesRef.current.material as THREE.Material).dispose();
@@ -177,6 +218,7 @@ export function useParticleScene(config: ParticleConfig) {
       renderer: rendererRef,
       particles: particlesRef,
       coreGroup: coreGroupRef,
+      coreVideoMesh: coreVideoMeshRef,
       orbitGroup: orbitGroupRef,
       planets: planetsRef,
       sunLight: sunLightRef,
@@ -198,6 +240,8 @@ export function useParticleScene(config: ParticleConfig) {
       currentCoreColor: currentCoreColorRef,
       currentPrimaryColor: currentPrimaryColorRef,
       currentSecondaryColor: currentSecondaryColorRef,
+      coreVideoMix: coreVideoMixRef,
+      coreGlowBoost: coreGlowBoostRef,
       shellAngle: shellAngleRef,
       trailHistory: trailHistoryRef,
       particleData: particleDataRef,
