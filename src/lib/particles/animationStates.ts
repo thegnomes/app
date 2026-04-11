@@ -293,6 +293,9 @@ export function animateState2And3(
       const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
       const stabilizationEnd = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       const globalFormationProgress = Math.min(1, stateElapsed / stabilizationEnd);
+      const volatilityEnvelope =
+        easeOutCubic(drawInProgress) *
+        Math.pow(Math.max(0, 1 - globalFormationProgress), 0.9);
       const clusterWeight = state2ClusterWeight[i];
       const clusterPhase = state2ClusterPhase[i];
       const clusterPhaseLag = state2ClusterPhaseLag[i];
@@ -320,13 +323,10 @@ export function animateState2And3(
         const rz = cx * sinA + cz * cosA;
         const ry = cy;
         
-        const envelope =
-          easeOutCubic(drawInProgress) *
-          Math.pow(Math.max(0, 1 - globalFormationProgress), 0.9);
         const displacedRadius = getClusteredSpikeRadius(
           time,
           stableRadius,
-          envelope,
+          volatilityEnvelope,
           clusterWeight,
           clusterPhase,
           clusterPhaseLag
@@ -347,11 +347,7 @@ export function animateState2And3(
         const preFy = startY + (fibY - startY) * drawInEased;
         const preFz = startZ + (fibZ - startZ) * drawInEased;
 
-        // Bounce starts per-particle when this particle arrives at shell circumference,
-        // not at one global timestamp for all particles.
         const hasReachedShell = drawInProgress >= 1;
-        const arrivalElapsed = Math.max(0, drawInElapsed - drawInDuration);
-        const localBounceProgress = Math.min(1, arrivalElapsed / STATE2_STABILIZE_DURATION);
 
         // Before arrival, continue settling towards circumference.
         const settleToAnchor = hasReachedShell ? 1 : Math.min(1, s2Progress / 0.2);
@@ -372,15 +368,10 @@ export function animateState2And3(
           );
         }
         
-        const arrivalEnvelope = hasReachedShell
-          ? easeOutCubic(Math.min(1, localBounceProgress / 0.16))
-          : 0;
-        const decayEnvelope = Math.pow(Math.max(0, 1 - s2Progress), 1.45);
-        const envelope = arrivalEnvelope * decayEnvelope;
         const displacedRadius = getClusteredSpikeRadius(
           time,
           stableRadius,
-          envelope,
+          volatilityEnvelope,
           clusterWeight,
           clusterPhase,
           clusterPhaseLag
@@ -393,9 +384,9 @@ export function animateState2And3(
         const displacedY = stableUnitY * displacedRadius;
         const displacedZ = stableUnitZ * displacedRadius;
         
-        positions[i3] = baseX + (displacedX - baseX) * arrivalEnvelope;
-        positions[i3 + 1] = baseY + (displacedY - baseY) * arrivalEnvelope;
-        positions[i3 + 2] = baseZ + (displacedZ - baseZ) * arrivalEnvelope;
+        positions[i3] = baseX + (displacedX - baseX) * drawInEased;
+        positions[i3 + 1] = baseY + (displacedY - baseY) * drawInEased;
+        positions[i3 + 2] = baseZ + (displacedZ - baseZ) * drawInEased;
         
       } else {
         // Substate 3: Stable Fibonacci sphere with compression + color
