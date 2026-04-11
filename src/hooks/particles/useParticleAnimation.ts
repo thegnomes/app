@@ -4,6 +4,8 @@ import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
 import {
   STATE4_CONCENTRATE,
+  STATE2_ABSORPTION_DURATION,
+  STATE2_STABILIZE_DURATION,
   TARGET_FRAME_MS,
   MAX_FRAME_DELTA_MS,
   TOTAL_MAIN,
@@ -319,11 +321,14 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.currentSecondaryColor.current
           );
 
-          if (refs.coreGroup.current) refs.coreGroup.current.visible = true;
-          if (refs.coreGroup.current && currentState === 2) {
+          if (refs.coreGroup.current) {
+            refs.coreGroup.current.visible = true;
             const [, glow] = refs.coreGroup.current.children;
-            const spreadScale = (SHELL_RADIUS / GLOW_RADIUS) * 1.08;
             refs.coreGroup.current.scale.set(1, 1, 1);
+            const isState2Substate3 =
+              currentState === 2 &&
+              stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+            const spreadScale = isState2Substate3 ? (SHELL_RADIUS / GLOW_RADIUS) * 1.08 : 1;
             glow?.scale.set(spreadScale, spreadScale, spreadScale);
           }
           if (refs.orbitGroup.current)
@@ -394,7 +399,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Lerp core color towards primary state color
-      if (currentState !== 2) {
+      const state2CoreGlowActive =
+        currentState === 2 &&
+        stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      if (!state2CoreGlowActive) {
         data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
       }
 

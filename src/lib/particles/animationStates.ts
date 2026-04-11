@@ -299,6 +299,8 @@ export function animateState2And3(
       const transitionT = Math.min(1, Math.max(0, (stateElapsed - transitionStart) / transitionDuration));
       const colorT = transitionT;
       const transitionEased = easeOutCubic(transitionT);
+      const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+      const substate3T = Math.min(1, Math.max(0, (stateElapsed - substate3Start) / (STATE2_DURATION - substate3Start)));
       const bounceDecayProgress = Math.min(
         1,
         Math.max(0, (stateElapsed - transitionStart) / (stabilizationEnd - transitionStart))
@@ -313,10 +315,10 @@ export function animateState2And3(
       const clusterPhaseLag = state2ClusterPhaseLag[i];
       // Faster early pull-in to avoid sluggish start.
       const drawInEased = easeOutCubic(drawInProgress);
-      if (i === 1) {
-        const coreColorT = transitionEased;
-        const orangePulse = transitionT > 0 ? Math.sin(time * 4.4) * 0.5 + 0.5 : 0;
-        const glowBoost = 1 + orangePulse * (0.85 + transitionEased * 0.65);
+      if (i === 1 && substate3T > 0) {
+        const coreColorT = easeOutCubic(substate3T);
+        const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
+        const glowBoost = 1 + orangePulse * (0.85 + coreColorT * 0.65);
         const coreR = (CORE_WHITE_R + CORE_WHITE_TO_ORANGE_R * coreColorT) * glowBoost;
         const coreG = (CORE_WHITE_G + CORE_WHITE_TO_ORANGE_G * coreColorT) * glowBoost;
         const coreB = (CORE_WHITE_B + CORE_WHITE_TO_ORANGE_B * coreColorT) * glowBoost;
@@ -325,7 +327,7 @@ export function animateState2And3(
         colors[0] = coreR;
         colors[1] = coreG;
         colors[2] = coreB;
-        sizes[0] = 42 + orangePulse * 18;
+        sizes[0] = 42 + orangePulse * 18 * coreColorT;
         alphas[0] = 1;
       }
       
