@@ -3,6 +3,7 @@ import type { AppState, ParticleData, ParticleAttributes } from '@/types';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
+  STATE2_DURATION,
   STATE4_CONCENTRATE,
   BURST_DURATION,
   BURST_DAMPING,
