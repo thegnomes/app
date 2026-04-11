@@ -317,8 +317,9 @@ export function animateState2And3(
       const drawInEased = easeOutCubic(drawInProgress);
       if (i === 1 && substate3T > 0) {
         const coreColorT = easeOutCubic(substate3T);
+        const glowEntrance = easeInOutCubic(substate3T);
         const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
-        const glowBoost = 1 + orangePulse * (0.85 + coreColorT * 0.65);
+        const glowBoost = 1 + orangePulse * 1.5 * glowEntrance;
         const coreR = (CORE_WHITE_R + CORE_WHITE_TO_ORANGE_R * coreColorT) * glowBoost;
         const coreG = (CORE_WHITE_G + CORE_WHITE_TO_ORANGE_G * coreColorT) * glowBoost;
         const coreB = (CORE_WHITE_B + CORE_WHITE_TO_ORANGE_B * coreColorT) * glowBoost;
@@ -327,8 +328,8 @@ export function animateState2And3(
         colors[0] = coreR;
         colors[1] = coreG;
         colors[2] = coreB;
-        sizes[0] = 42 + orangePulse * 18 * coreColorT;
-        alphas[0] = 1;
+        sizes[0] = 4.2 + glowEntrance * (38 + orangePulse * 18);
+        alphas[0] = 0.95 + glowEntrance * 0.05;
       }
       
       // Calculate progress and base position based on substate
@@ -426,15 +427,17 @@ export function animateState2And3(
       
       // Color interpolation begins when the bounce decay starts.
       const colorEased = easeOutCubic(colorT);
+      const shellGlow = easeInOutCubic(substate3T);
+      const shellPulse = Math.sin(time * 3.1 + rnd * 2.4) * 0.5 + 0.5;
       const flicker = (1 - colorT) * Math.sin(time * 0.7 + rnd * 5) * 0.04;
-      const brightness = 0.88 + flicker;
+      const brightness = 0.88 + flicker + shellGlow * (0.32 + shellPulse * 0.14);
       colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
       colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
       colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
       
       // Size with variation
-      sizes[i] = 1.6 + rnd * 0.4;
-      alphas[i] = 0.9;
+      sizes[i] = 1.6 + rnd * 0.4 + shellGlow * (0.7 + shellPulse * 0.35);
+      alphas[i] = 0.9 + shellGlow * 0.08;
       
     } else {
       // STATE 3: SOLAR SYSTEM - stable Fibonacci sphere with 20% compression
@@ -455,13 +458,14 @@ export function animateState2And3(
       positions[i3 + 1] = fy * breatheScale;
       positions[i3 + 2] = rz * breatheScale;
 
-      const brightness = 0.9 + Math.sin(stateElapsed * 0.001 + rnd * 3) * 0.08;
+      const shellPulse = Math.sin(stateElapsed * 0.0031 + rnd * 2.4) * 0.5 + 0.5;
+      const brightness = 1.18 + shellPulse * 0.12;
       colors[i3] = ORANGE_R * brightness;
       colors[i3 + 1] = ORANGE_G * brightness;
       colors[i3 + 2] = ORANGE_B * brightness;
 
-      sizes[i] = 1.8 + rnd * 0.3;
-      alphas[i] = 0.9;
+      sizes[i] = 2.3 + rnd * 0.3 + shellPulse * 0.25;
+      alphas[i] = 0.98;
     }
   }
 }

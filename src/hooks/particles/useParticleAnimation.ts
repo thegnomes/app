@@ -6,6 +6,7 @@ import {
   STATE4_CONCENTRATE,
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
+  STATE2_DURATION,
   TARGET_FRAME_MS,
   MAX_FRAME_DELTA_MS,
   TOTAL_MAIN,
@@ -325,10 +326,17 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             refs.coreGroup.current.visible = true;
             const [, glow] = refs.coreGroup.current.children;
             refs.coreGroup.current.scale.set(1, 1, 1);
+            const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
             const isState2Substate3 =
               currentState === 2 &&
-              stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-            const spreadScale = isState2Substate3 ? (SHELL_RADIUS / GLOW_RADIUS) * 1.08 : 1;
+              stateElapsed >= substate3Start;
+            const substate3T = isState2Substate3
+              ? Math.min(1, (stateElapsed - substate3Start) / (STATE2_DURATION - substate3Start))
+              : 0;
+            const easedSubstate3T = substate3T * substate3T * (3 - 2 * substate3T);
+            const state3Continuity = currentState === 3 ? 1 : 0;
+            const glowEntrance = Math.max(state3Continuity, easedSubstate3T);
+            const spreadScale = 1 + ((SHELL_RADIUS / GLOW_RADIUS) * 1.08 - 1) * glowEntrance;
             glow?.scale.set(spreadScale, spreadScale, spreadScale);
           }
           if (refs.orbitGroup.current)
@@ -344,8 +352,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             if (refs.coreGroup.current) {
               const cg = refs.coreGroup.current;
               const scale = 1 + Math.min(stateElapsed / 1000, 0.5);
+              const spreadScale = ((SHELL_RADIUS / GLOW_RADIUS) * 1.08) / scale;
               cg.scale.set(scale, scale, scale);
-              cg.children[1]?.scale.set(1, 1, 1);
+              cg.children[1]?.scale.set(spreadScale, spreadScale, spreadScale);
             }
 
             if (refs.planets.current) {
