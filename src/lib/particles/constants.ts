@@ -55,6 +55,9 @@ export const TRAIL_LENGTH = 5;
 /** Share of particles that migrate into shells and collapse trails */
 export const MIGRATOR_RATIO = 0.25;
 
+/** Share of non-core particles used to form the State 2/3 sphere shell */
+export const SHELL_PARTICLE_RATIO = 0.5;
+
 /** Share of shell particles that lead State 2 spike clusters */
 export const STATE2_SPIKE_CLUSTER_LEADER_RATIO = 0.1;
 

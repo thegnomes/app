@@ -5,6 +5,7 @@ import {
   TRAIL_LENGTH,
   SHELL_RADIUS,
   MIGRATOR_RATIO,
+  SHELL_PARTICLE_RATIO,
   STATE2_SPIKE_CLUSTER_LEADER_RATIO,
   STATE2_SPIKE_LEADER_WEIGHT,
   STATE2_SPIKE_RING1_WEIGHT,
@@ -45,12 +46,19 @@ function assignClusterParticle(
 }
 
 function initializeState2SpikeClusters(data: ParticleData): void {
-  const shellCount = TOTAL_MAIN - 1;
+  const shellIndices: number[] = [];
+  for (let i = 1; i < TOTAL_MAIN; i++) {
+    if (data.shellParticle[i]) {
+      shellIndices.push(i);
+    }
+  }
+
+  const shellCount = shellIndices.length;
   const leaderCount = Math.max(1, Math.round(shellCount * STATE2_SPIKE_CLUSTER_LEADER_RATIO));
   const leaderStride = shellCount / leaderCount;
 
   for (let leaderSlot = 0; leaderSlot < leaderCount; leaderSlot++) {
-    const leaderIndex = 1 + (Math.floor(leaderSlot * leaderStride + leaderStride * 0.37) % shellCount);
+    const leaderIndex = shellIndices[Math.floor(leaderSlot * leaderStride + leaderStride * 0.37) % shellCount];
     const leaderI3 = leaderIndex * 3;
     const leaderX = data.fibonacciPositions[leaderI3];
     const leaderY = data.fibonacciPositions[leaderI3 + 1];
@@ -58,7 +66,7 @@ function initializeState2SpikeClusters(data: ParticleData): void {
     const phase = deterministicUnit(leaderIndex + leaderSlot * 101) * Math.PI * 2;
     const nearest: { index: number; distSq: number }[] = [];
 
-    for (let i = 1; i < TOTAL_MAIN; i++) {
+    for (const i of shellIndices) {
       if (i === leaderIndex) continue;
 
       const i3 = i * 3;
@@ -79,7 +87,7 @@ function initializeState2SpikeClusters(data: ParticleData): void {
       data.state2ClusterPhaseLag
     );
 
-    for (let n = 0; n < STATE2_SPIKE_RING1_COUNT; n++) {
+    for (let n = 0; n < STATE2_SPIKE_RING1_COUNT && n < nearest.length; n++) {
       assignClusterParticle(
         nearest[n].index,
         STATE2_SPIKE_RING1_WEIGHT,
@@ -91,7 +99,11 @@ function initializeState2SpikeClusters(data: ParticleData): void {
       );
     }
 
-    for (let n = STATE2_SPIKE_RING1_COUNT; n < STATE2_SPIKE_RING1_COUNT + STATE2_SPIKE_RING2_COUNT; n++) {
+    for (
+      let n = STATE2_SPIKE_RING1_COUNT;
+      n < STATE2_SPIKE_RING1_COUNT + STATE2_SPIKE_RING2_COUNT && n < nearest.length;
+      n++
+    ) {
       assignClusterParticle(
         nearest[n].index,
         STATE2_SPIKE_RING2_WEIGHT,
@@ -120,6 +132,7 @@ export function initializeParticleData(): {
     directions: new Float32Array(TOTAL_MAIN * 3),
     random: new Float32Array(TOTAL_MAIN),
     migrator: new Uint8Array(TOTAL_MAIN),
+    shellParticle: new Uint8Array(TOTAL_MAIN),
     migratorDelay: new Float32Array(TOTAL_MAIN),
     nonMigratorDelay: new Float32Array(TOTAL_MAIN),
     burstVelocity: new Float32Array(TOTAL_MAIN * 3),
@@ -155,6 +168,17 @@ export function initializeParticleData(): {
     data.random[i] = Math.random();
     data.state2Radius[i] = calculateState2Radius(SHELL_RADIUS, data.random[i]);
     data.migratorIndexMap[i] = -1;
+  }
+
+  const shellParticleCount = Math.round((TOTAL_MAIN - 1) * SHELL_PARTICLE_RATIO);
+  let assignedShellParticles = 0;
+  for (let i = 1; i < TOTAL_MAIN && assignedShellParticles < shellParticleCount; i += 2) {
+    data.shellParticle[i] = 1;
+    assignedShellParticles++;
+  }
+  for (let i = 2; i < TOTAL_MAIN && assignedShellParticles < shellParticleCount; i += 2) {
+    data.shellParticle[i] = 1;
+    assignedShellParticles++;
   }
 
   initializeState2SpikeClusters(data);

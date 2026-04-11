@@ -213,6 +213,43 @@ function getClusteredSpikeRadius(
   return Math.max(minRadius, stableRadius + signedOffset);
 }
 
+function animateBackgroundStarfieldParticle(
+  attributes: ParticleAttributes,
+  data: ParticleData,
+  index: number,
+  stateElapsed: number,
+  snapshotPositions: Float32Array,
+  time: number,
+  state: AppState
+): void {
+  const { positions, colors, sizes, alphas } = attributes;
+  const { homePositions, random } = data;
+  const i3 = index * 3;
+  const rnd = random[index];
+  const settleT = easeOutCubic(Math.min(1, stateElapsed / 1400));
+  const drift = state === 3 ? 0.42 : 0.28;
+  const phase = rnd * 6.283 + index * 0.07;
+  const hx = homePositions[i3];
+  const hy = homePositions[i3 + 1];
+  const hz = homePositions[i3 + 2];
+  const sx = snapshotPositions[i3];
+  const sy = snapshotPositions[i3 + 1];
+  const sz = snapshotPositions[i3 + 2];
+
+  positions[i3] = sx + (hx - sx) * settleT + Math.sin(time * 0.22 + phase) * drift;
+  positions[i3 + 1] = sy + (hy - sy) * settleT + Math.cos(time * 0.18 + phase) * drift;
+  positions[i3 + 2] = sz + (hz - sz) * settleT + Math.sin(time * 0.16 + phase * 0.7) * drift;
+
+  const twinkle = Math.sin(time * (0.22 + rnd * 0.35) + phase) * 0.5 + 0.5;
+  const warmth = state === 3 ? 0.12 : 0;
+  const brightness = 0.52 + twinkle * 0.12 + rnd * 0.1;
+  colors[i3] = (STAR_COLOR_R + warmth * (ORANGE_R - STAR_COLOR_R)) * brightness;
+  colors[i3 + 1] = (STAR_COLOR_G + warmth * (ORANGE_G - STAR_COLOR_G)) * brightness;
+  colors[i3 + 2] = (STAR_COLOR_B + warmth * (ORANGE_B - STAR_COLOR_B)) * brightness;
+  sizes[index] = 0.75 + rnd * 0.45 + twinkle * 0.12;
+  alphas[index] = 0.42 + rnd * 0.28 + twinkle * 0.08;
+}
+
 export function animateState2And3(
   attributes: ParticleAttributes,
   data: ParticleData,
@@ -232,6 +269,7 @@ export function animateState2And3(
   const { positions, colors, sizes, alphas } = attributes;
   const {
     random,
+    shellParticle,
     fibonacciPositions,
     state2ClusterWeight,
     state2ClusterPhase,
@@ -247,6 +285,19 @@ export function animateState2And3(
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
     const rnd = random[i];
+
+    if (!shellParticle[i]) {
+      animateBackgroundStarfieldParticle(
+        attributes,
+        data,
+        i,
+        stateElapsed,
+        snapshotPositions,
+        time,
+        state
+      );
+      continue;
+    }
 
     // Rotation for shell positioning
     const cosA = Math.cos(shellAngle);

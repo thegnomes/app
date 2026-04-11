@@ -37,6 +37,7 @@ export interface ParticleData {
   directions: Float32Array;
   random: Float32Array;
   migrator: Uint8Array;
+  shellParticle: Uint8Array;
   migratorDelay: Float32Array;
   nonMigratorDelay: Float32Array;
   burstVelocity: Float32Array;

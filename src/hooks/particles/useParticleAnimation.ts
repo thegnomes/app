@@ -385,6 +385,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
             const coronaMix = state3VideoMix * 0.22;
             for (let i = 1; i < TOTAL_MAIN; i++) {
+              if (!particleData.shellParticle[i]) continue;
+
               const i3 = i * 3;
               colors[i3] += (targetPrimaryColor.r * 1.2 - colors[i3]) * coronaMix;
               colors[i3 + 1] += (targetPrimaryColor.g * 1.12 - colors[i3 + 1]) * coronaMix;
