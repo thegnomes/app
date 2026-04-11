@@ -2,296 +2,148 @@
 
 ## Project Overview
 
-**NebulaHero** is an interactive WebGL experience that tells a metaphorical story about ideas forming in the mind. It combines video transitions with a sophisticated particle system to create an immersive visual narrative with 5 distinct states:
+NebulaHero is a React, TypeScript, and vanilla Three.js WebGL experience about ideas forming in the mind. It pairs video transitions with a modular particle system, a debug/control panel, and poetic text overlays.
 
-- **State 0 (Neural Brain)**: A 3D brain video with subtle neural network visualization. Clicking triggers a zoom transition.
-- **State 1 (Starfield)**: Particles expand from the brain into a vast starfield, representing thoughts and ideas spreading.
-- **State 2 (Charging Shell)**: A 13-second "hold to charge" interaction where particles form a rotating shell with 3 substages:
-  - Substate 1 (0-6s): Particles flow from starfield to Fibonacci sphere positions
-  - Substate 2 (6-10s): Spike/thorn bounce effect with continuous oscillation
-  - Substate 3 (10-13s): Stable sphere with compression and blue-to-orange color shift
-- **State 3 (Solar System)**: Shell stabilizes, 8 planets enter orbit with progressive orbit line drawing
-- **State 4 (Collapse)**: Early release during charging causes particles to burst outward with trails, then auto-returns to State 1
+The particle system is not a generic preset-based demo. It is a state-driven cinematic sequence implemented through `ParticleCanvas` plus particle-specific hooks and library modules.
 
-The application features a glassmorphism control panel for debugging/state control and poetic text overlays that type out during state transitions.
+## Core Stack
 
-## Technology Stack
+| Category | Technology |
+| --- | --- |
+| Framework | React 19 |
+| Language | TypeScript 5.9 |
+| Build Tool | Vite 7 |
+| 3D Graphics | Three.js 0.183 |
+| Styling | Tailwind CSS 3.4 |
+| UI Components | shadcn/ui, Radix UI |
+| Icons | Lucide React |
+| Forms | React Hook Form + Zod |
 
-| Category | Technology | Version |
-|----------|------------|---------|
-| Framework | React | 19.2.0 |
-| Language | TypeScript | 5.9.3 |
-| Build Tool | Vite | 7.2.4 |
-| 3D Graphics | Three.js | 0.183.2 |
-| Styling | Tailwind CSS | 3.4.19 |
-| UI Components | shadcn/ui | New York style |
-| Icons | Lucide React | 0.562.0 |
-| Forms | React Hook Form + Zod | 7.70.0 / 4.3.5 |
-
-## Project Structure
-
-```
-app/
-├── src/
-│   ├── components/
-│   │   ├── ui/                    # 50+ shadcn/ui components (accordion, dialog, slider, etc.)
-│   │   ├── ParticleCanvas.tsx     # Main WebGL particle renderer - thin wrapper
-│   │   ├── ControlPanel.tsx       # Settings panel with state toggles, speed slider, color pickers
-│   │   ├── StateText.tsx          # Animated typewriter text overlay for each state
-│   │   ├── VideoBackground.tsx    # Handles idle brain video and zoom transition
-│   │   └── Footer.tsx             # Framer attribution link
-│   ├── hooks/
-│   │   ├── particles/
-│   │   │   ├── useParticleScene.ts      # Scene initialization, refs, cleanup
-│   │   │   └── useParticleAnimation.ts  # Main animation loop, state handlers
-│   │   └── use-mobile.ts          # Mobile breakpoint detection (768px)
-│   ├── lib/
-│   │   ├── particles/
-│   │   │   ├── constants.ts       # Timing, counts, colors, planet configs
-│   │   │   ├── geometry.ts        # Position generators, easing functions, SDF brain shape
-│   │   │   ├── shaders.ts         # GLSL vertex/fragment shaders
-│   │   │   ├── scene.ts           # Three.js scene creation (core, planets, trails, novas)
-│   │   │   ├── particleData.ts    # Particle buffer initialization
-│   │   │   └── animationStates.ts # State-specific animation logic (750+ lines)
-│   │   └── utils.ts               # cn() helper for Tailwind class merging
-│   ├── types/
-│   │   └── index.ts               # TypeScript interfaces and constants
-│   ├── App.tsx                    # Root component, state machine, mouse handlers
-│   ├── App.css                    # Component-specific styles
-│   ├── index.css                  # Global styles, CSS variables, custom scrollbar
-│   └── main.tsx                   # React entry point
-├── public/                        # Static assets (videos referenced but not in repo)
-├── dist/                          # Production build output
-├── index.html                     # HTML entry point
-├── components.json                # shadcn/ui configuration
-├── tailwind.config.js             # Tailwind + theme configuration
-├── vite.config.ts                 # Vite configuration with @/ alias
-├── tsconfig.app.json              # TypeScript config (app) - strict mode
-├── tsconfig.node.json             # TypeScript config (node)
-├── vercel.json                    # Vercel deployment configuration
-└── package.json
-```
+Path alias: `@/` maps to `./src/` through Vite and TypeScript config.
 
 ## Build Commands
 
 ```bash
-# Start development server
 npm run dev
-
-# Build for production
 npm run build
-
-# Preview production build locally
 npm run preview
-
-# Run ESLint
 npm run lint
 ```
 
-## Code Style Guidelines
+## Current State Flow
 
-### TypeScript Configuration
-- **Strict mode enabled** (`strict: true` in tsconfig.app.json)
-- No unused locals or parameters allowed (`noUnusedLocals: true`, `noUnusedParameters: true`)
-- ES2022 target with modern module resolution
-- Path alias `@/` maps to `./src/` (configured in vite.config.ts and tsconfig.json)
+`ParticleCanvas` renders the WebGL layer for five app states:
 
-### React Patterns
-- Uses React 19 with StrictMode
-- Functional components with hooks
-- Custom hooks in `src/hooks/` with clear separation of concerns
-- Props interfaces defined inline or in types file
-- Refs used extensively for animation state to avoid closure issues
+- State 0: Hidden. The particle canvas is transparent/disabled while the video brain handles the visual.
+- State 1: Star Field. Particles spread into starfield/home positions and support subtle camera panning.
+- State 2: Charging Shell. Holding interaction drives migrators into a shell with staged absorption, bounce/stabilization, and color shift.
+- State 3: Solar System. The shell stabilizes while planets enter, orbit, and draw orbit lines progressively.
+- State 4: Collapse. Early release during charging drives burst/collapse motion with migrator trails, then returns to State 1.
 
-### Styling Conventions
-- Tailwind CSS for all styling
-- CSS variables for theming (HSL color format in index.css)
-- Dark theme as default (deep purple/violet palette)
-- Custom utility `cn()` from `@/lib/utils` for conditional classes
-- Glassmorphism effects: `bg-[#1a1625]/95 backdrop-blur-xl`
-- Custom scrollbar styling in `index.css`
+`App.tsx` owns the high-level state machine and mouse interaction. Particle state changes are consumed by the particle hooks and animation modules.
 
-### Component Patterns
+## Particle Architecture
 
-**UI Components** (shadcn/ui style):
-```typescript
-import { cn } from "@/lib/utils"
-import { cva, type VariantProps } from "class-variance-authority"
+The particle system is intentionally split across a thin React wrapper, hooks, and pure-ish Three.js helpers:
 
-const buttonVariants = cva("base-classes", {
-  variants: { /* ... */ },
-  defaultVariants: { /* ... */ }
-})
-```
+- `src/components/ParticleCanvas.tsx`: Orchestration wrapper. It wires React props into `useParticleScene` and `useParticleAnimation`, owns the container element, and sets canvas-level cursor/opacity/pointer behavior. Do not treat this as the sole renderer.
+- `src/hooks/particles/useParticleScene.ts`: Scene, renderer, camera, refs, object creation, resize handling, buffer setup, and cleanup.
+- `src/hooks/particles/useParticleAnimation.ts`: `requestAnimationFrame` loop, state transition handling, shader uniform updates, camera drift/panning, novas, flash cleanup, planets, trails, and calls into state animation functions.
+- `src/lib/particles/constants.ts`: Timing, particle counts, trail length, orbit segment counts, renderer limits, camera values, colors, planet config, and animation tuning constants.
+- `src/lib/particles/particleData.ts`: Particle data initialization, migrator selection/indexing, typed arrays, buffers, trail sizing, shell/home positions, and burst data.
+- `src/lib/particles/animationStates.ts`: State-specific motion logic for hidden/starfield/charging shell/solar system/collapse behavior, including trail updates and burst velocity initialization.
+- `src/lib/particles/geometry.ts`: Position generation, easing helpers, and orbit geometry helpers.
+- `src/lib/particles/shaders.ts`: GLSL shaders for particles, core/glow, and related visual treatments.
+- `src/lib/particles/scene.ts`: Three.js object creation for particles, core/glow, planets, trails, flashes, and novas.
 
-**Custom Components**:
-- Props interfaces defined at top of file
-- Export both component and type definitions
-- Use `type` keyword for TypeScript types
+## Source Of Truth For Motion And Performance
 
-## Key Architecture Details
+Use the module that owns the behavior you are changing:
 
-### State Machine
-The application uses a 5-state system managed in `App.tsx`:
-- State transitions triggered by mouse events (click/hold/release)
-- Custom events dispatched for substate notifications (`particle:state2-substate-change`, `particle:state3-release-trigger`)
-- Auto-return from State 4 to State 1 after 2.5 seconds
+- Counts, timing constants, renderer limits, trail length, orbit segment count, camera constants, colors, and planet config belong in `src/lib/particles/constants.ts`.
+- Migrator ratios, generated particle buffers, trail buffer sizing, and per-particle initialization belong in `src/lib/particles/particleData.ts`.
+- Frame progression, shader uniform time updates, transition hooks, camera drift/panning, planet/orbit frame work, nova cleanup, and render-loop concerns belong in `src/hooks/particles/useParticleAnimation.ts`.
+- Per-state motion curves, easing, shell formation, State 2 bounce/stabilization, State 3 shell/planet behavior, State 4 burst/trails, and particle position/color/alpha/size updates belong in `src/lib/particles/animationStates.ts`.
+- Scene object construction and disposal behavior belong in `src/lib/particles/scene.ts` or `src/hooks/particles/useParticleScene.ts`, depending on whether the change creates objects or wires lifecycle.
+- Canvas DOM wiring, container style, and hook orchestration belong in `src/components/ParticleCanvas.tsx`.
 
-### WebGL Particle System
+Prefer changing the narrowest owner rather than pushing new logic up into `ParticleCanvas`.
 
-**Initialization** (`useParticleScene.ts`):
-- 4000 particles total
-- 50% are "migrators" that move to form shells
-- Particle 0 is special (core particle, larger, center)
-- BufferGeometry with custom attributes: position, color, size, alpha, random, migrator
+## Quality Direction For Future Particle Work
 
-**Animation Loop** (`useParticleAnimation.ts`):
-- Runs at 60fps via requestAnimationFrame
-- Updates shader uniforms (uTime) each frame
-- Handles mouse-based camera drift and panning
-- Nova effect (shockwave rings) on most state transitions
-- Color interpolation between state colors
+For cinematic smoothness, favor calm motion over raw particle density:
 
-**State Animations** (`animationStates.ts`):
-- State 0: All particles at origin, hidden (video handles visuals)
-- State 1: Two-phase entry (background first, then core particle)
-- State 2: Complex 3-substage animation with Fibonacci sphere formation
-- State 3: Stable shell + 8 orbiting planets with progressive orbit drawing
-- State 4: Concentration then burst with trails
+- Prefer fewer particles with smoother motion over denser noisy visuals.
+- Prefer controlled easing and lower-frequency movement.
+- Treat softness/glow as a shader or post-process problem, not a density problem.
+- Reduce motion aggressiveness before increasing particle count.
+- Keep State 2 especially restrained; high-frequency shell bounce reads as jitter before it reads as energy.
+- Keep twinkle subtle. It should add life, not fight the main motion.
 
-### Custom GLSL Shaders
+## Preferred Optimisation Targets
 
-**Particle Shader** (`shaders.ts`):
-- Vertex shader handles size attenuation and pulsing
-- Fragment shader creates soft-edged circular particles with twinkling
+These are recommended starting points for future patches, not a description of the current implementation:
 
-**Core/Glow Shaders**:
-- Fresnel rim effects for glow
-- Breathing animation via sine waves
-- Detail noise for surface texture
+- `TOTAL_MAIN` target: 1200-1600.
+- `TRAIL_LENGTH` target: 4-6.
+- `ORBIT_SEGMENTS` target: 72-96.
+- Migrator ratio target: 20-30%.
+- Prefer delta-time animation over fixed-step time progression.
+- Reduce State 2 bounce frequency and amplitude substantially.
+- Reduce twinkle intensity to subtle levels.
 
-**Planet Glow Shader**:
-- Enhanced fresnel for visibility
-- Per-planet phase offset for varied pulsing
+Current values may differ. Check `src/lib/particles/constants.ts`, `src/lib/particles/particleData.ts`, and `src/lib/particles/shaders.ts` before editing.
 
-### Video System
+## Agent Editing Rules
 
-**VideoBackground Component**:
-- Idle video: `idle_brain.webm` (slow rotation, looping)
-- Zoom video: `brain_zoom.webm` (click triggers, alpha transparency)
-- Videos play from `/public/` directory
-- Transition happens at time=0 (immediate on click)
+- Avoid making motion-quality edits in `src/components/ParticleCanvas.tsx` unless you are changing React wiring, canvas visibility, pointer behavior, or hook orchestration.
+- Prefer motion and performance edits in `src/lib/particles/constants.ts`, `src/lib/particles/particleData.ts`, `src/hooks/particles/useParticleAnimation.ts`, and `src/lib/particles/animationStates.ts`.
+- Preserve renderer, geometry, material, event listener, and animation-frame cleanup behavior.
+- Preserve strict TypeScript style: no unused locals/parameters, explicit types where local patterns expect them, and no loose `any` unless the surrounding code already requires it.
+- Distinguish current facts from recommended guidance in docs and comments. If a value is a target, label it as a target.
+- Keep particle changes measurable. When possible, run `npm run build` after behavior changes and inspect the visual result with the dev server.
+- Do not edit generated `dist/` output unless the user explicitly asks for it.
 
-### Camera System
-- Perspective camera at Z=130
-- Mouse-based drift (subtle parallax)
-- Click-and-drag panning in State 1 (50px limit each direction)
-- Smooth interpolation for all movements
+## Code Style Notes
 
-### Text Animation System
+- React components are functional and hook-based.
+- Refs are used heavily for animation state to avoid stale closures and unnecessary React renders.
+- Tailwind CSS is the default styling approach.
+- Use `cn()` from `@/lib/utils` for conditional class merging.
+- shadcn/ui components live in `src/components/ui/` and follow the local component patterns.
+- Keep comments short and useful; prefer naming and local structure over narration.
 
-**StateText Component**:
-- Typewriter effect with cursor blinking
-- Supports `<br>` tags in text
-- Smooth transitions (old text shifts up and fades, new text types in)
-- 12ms per character typing speed
+## Video And UI Layers
 
-## Dependencies Notes
+- `src/components/VideoBackground.tsx` handles the idle brain video and zoom transition video.
+- Expected video assets live in `public/`: `idle_brain.webm` and `brain_zoom.webm`.
+- `src/components/StateText.tsx` handles the typewriter text overlay.
+- `src/components/ControlPanel.tsx` handles debug/state controls.
+- `src/components/Footer.tsx` handles the attribution link.
 
-**Important runtime dependencies:**
-- `@react-three/fiber` - Available but not currently used (using vanilla Three.js)
-- `three` - Core 3D library with custom shaders
-- `@radix-ui/*` - 20+ headless UI primitives for shadcn/ui
-- `zod` - Schema validation (used with React Hook Form)
-- `lucide-react` - Icon library
-- `class-variance-authority` - Component variant management
+## Adding A Particle State
 
-**Key dev dependencies:**
-- `kimi-plugin-inspect-react` - Vite plugin for React inspection
-- `tailwindcss-animate` - Animation utilities
-- `typescript-eslint` - TypeScript linting
+1. Add the state number to the `AppState` type in `src/types/index.ts`.
+2. Add state labels or UI mappings where needed.
+3. Add colors/timing constants in `src/lib/particles/constants.ts`.
+4. Add or update state-specific logic in `src/lib/particles/animationStates.ts`.
+5. Wire the state into the animation switch in `src/hooks/particles/useParticleAnimation.ts`.
+6. Update `StateText.tsx` and `ControlPanel.tsx` if the state should be visible in UI.
 
-## Performance Considerations
+## Deployment And Testing
 
-- WebGL renderer limits pixel ratio to 2 (retina displays)
-- Animation frame properly canceled on cleanup
-- Geometry and materials disposed to prevent memory leaks
-- Pre-allocated arrays to minimize GC pressure in animation loop
-- Spatial hashing for brain connection generation
-- Nova meshes cleaned up after animation completes
+Vercel deployment is configured in `vercel.json`:
 
-## Deployment
+- Framework: Vite.
+- Build command: `node ./node_modules/vite/bin/vite.js build`.
+- Output directory: `dist`.
+- Install command: `npm ci --prefer-offline --no-audit`.
 
-Configured for Vercel deployment (`vercel.json`):
-- **Framework**: Vite
-- **Build Command**: `node ./node_modules/vite/bin/vite.js build`
-- **Output Directory**: `dist`
-- **Install Command**: `npm ci --prefer-offline --no-audit`
-
-Static assets (videos) should be placed in `public/` directory:
-- `idle_brain.webm` - Idle brain rotation
-- `brain_zoom.webm` - Zoom transition with alpha
-
-See `DEPLOY.md` for detailed deployment instructions including GitHub integration.
-
-## Testing
-
-No test framework is currently configured. To add testing:
-- Consider Vitest (works well with Vite)
-- React Testing Library for component tests
-- Add test scripts to package.json
-
-## Security Considerations
-
-- No authentication or sensitive data handling
-- External links use `target="_blank"` with `rel="noopener noreferrer"`
-- All user input is through controlled sliders/color pickers (safe)
-- Video files should be served with proper CORS headers if on CDN
-
-## Adding New Features
-
-### Adding a New shadcn/ui Component
-```bash
-npx shadcn add <component-name>
-```
-Components are installed to `src/components/ui/` with proper imports.
-
-### Adding a New Particle State
-1. Add state number to `AppState` type in `types/index.ts`
-2. Add state label to `STATE_LABELS`
-3. Add colors to `STATE_PRIMARY_COLORS` and `STATE_SECONDARY_COLORS` in `constants.ts`
-4. Implement animation function in `animationStates.ts`
-5. Add case to animation switch in `useParticleAnimation.ts`
-6. Update `StateText.tsx` with new state content
-7. Add state button to `ControlPanel.tsx`
-
-### Modifying Planet Configuration
-Edit `PLANETS` array in `src/lib/particles/constants.ts`:
-```typescript
-export const PLANETS: PlanetConfig[] = [
-  { radius: 34, size: 3.2, speed: 1.1, color: '#60a5fa' },
-  // ...
-];
-```
+No dedicated test framework is currently configured. For code changes, use `npm run build` and `npm run lint` as the baseline checks unless the task calls for a narrower verification.
 
 ## Troubleshooting
 
-### Video not playing
-- Ensure `.webm` files are in `public/` directory
-- Check browser console for 404 errors
-- Verify video codecs (VP9 with alpha for brain_zoom)
-
-### Performance issues
-- Reduce `TOTAL_MAIN` in `constants.ts` (default: 4000)
-- Lower `MAX_PIXEL_RATIO` (default: 2)
-- Disable shadows in `scene.ts`
-
-### Build errors
-- Check Node.js version (should be 18+)
-- Delete `node_modules` and `package-lock.json`, then `npm install`
-- Ensure all TypeScript strict mode rules are satisfied
-
-## Environment Variables
-
-No environment variables are required for basic operation. Optional variables for deployment:
-- `VERCEL_TOKEN` - For CLI deployments
+- Video 404s: confirm `.webm` files are present in `public/`.
+- Strict TypeScript errors: check unused imports, locals, and parameters first.
+- Particle performance issues: start with counts, trail length, orbit segment count, migrator ratio, fixed-step time progression, State 2 bounce tuning, and shader twinkle/glow intensity.
+- Visual cleanup or memory issues: inspect object disposal in `useParticleScene.ts`, `useParticleAnimation.ts`, and `scene.ts`.
