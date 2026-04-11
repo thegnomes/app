@@ -141,8 +141,10 @@ function App() {
       
       // Only work in State 1
       if (stateRef.current !== 1) return;
+      if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
       
       // Start charging (hold to charge shell) - 7000ms for 3 substages
+      stateRef.current = 2;
       setState(2);
       inState2Ref.current = true;
 
