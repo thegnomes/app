@@ -308,6 +308,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.time.current,
             speed,
             data.shellAngle.current,
+            data.currentCoreColor.current,
             data.currentPrimaryColor.current,
             data.currentSecondaryColor.current
           );

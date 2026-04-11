@@ -3,7 +3,6 @@ import type { AppState, ParticleData, ParticleAttributes } from '@/types';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
-  STATE2_COLOR_SHIFT_DURATION,
   STATE4_CONCENTRATE,
   BURST_DURATION,
   BURST_DAMPING,
@@ -178,6 +177,12 @@ const ORANGE_B = 0.086; // Orange
 const BLUE_TO_ORANGE_R = ORANGE_R - BLUE_R;
 const BLUE_TO_ORANGE_G = ORANGE_G - BLUE_G;
 const BLUE_TO_ORANGE_B = ORANGE_B - BLUE_B;
+const CORE_GREEN_R = 0.133;
+const CORE_GREEN_G = 0.933;
+const CORE_GREEN_B = 0.42;
+const CORE_BLUE_TO_GREEN_R = CORE_GREEN_R - BLUE_R;
+const CORE_BLUE_TO_GREEN_G = CORE_GREEN_G - BLUE_G;
+const CORE_BLUE_TO_GREEN_B = CORE_GREEN_B - BLUE_B;
 
 // Event milestone tracking for State 2 text animations
 export const STATE2_MILESTONES = {
@@ -216,6 +221,7 @@ export function animateState2And3(
   time: number,
   _speed: number,
   shellAngle: number,
+  coreColor: THREE.Color,
   _primaryColor: THREE.Color,
   _secondaryColor: THREE.Color
 ): void {
@@ -274,13 +280,10 @@ export function animateState2And3(
       const fibY = fibTargetY;
       const fibZ = fibTargetZ;
       
-      let colorT = 0;
       // Substate 1 draw-in duration (0-6000ms)
       const drawInDuration = STATE2_ABSORPTION_DURATION;
-      const colorInterpolationStart =
-        STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.6;
-      const colorInterpolationDuration =
-        STATE2_STABILIZE_DURATION * 0.4 + STATE2_COLOR_SHIFT_DURATION;
+      const transitionStart = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.35;
+      const transitionDuration = STATE2_DURATION - transitionStart;
       
       // Keep a small stagger for texture, but ensure everyone moves early enough
       // to avoid a late jump right before substate 2.
@@ -292,15 +295,42 @@ export function animateState2And3(
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
       const stabilizationEnd = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-      const globalFormationProgress = Math.min(1, stateElapsed / stabilizationEnd);
+      const transitionT = Math.min(1, Math.max(0, (stateElapsed - transitionStart) / transitionDuration));
+      const colorT = transitionT;
+      const transitionEased = easeOutCubic(transitionT);
+      const bounceDecayProgress = Math.min(
+        1,
+        Math.max(0, (stateElapsed - transitionStart) / (stabilizationEnd - transitionStart))
+      );
+      const compressionFactor = 1 - transitionEased * 0.2;
+      const compressedStableRadius = stableRadius * compressionFactor;
       const volatilityEnvelope =
         easeOutCubic(drawInProgress) *
-        Math.pow(Math.max(0, 1 - globalFormationProgress), 0.9);
+        Math.pow(Math.max(0, 1 - bounceDecayProgress), 0.9);
       const clusterWeight = state2ClusterWeight[i];
       const clusterPhase = state2ClusterPhase[i];
       const clusterPhaseLag = state2ClusterPhaseLag[i];
       // Faster early pull-in to avoid sluggish start.
       const drawInEased = easeOutCubic(drawInProgress);
+      if (i === 1) {
+        const coreColorT = transitionEased;
+        const orangePulse = transitionT > 0 ? Math.sin(time * 4.2) * 0.5 + 0.5 : 0;
+        const orangeGlow = orangePulse * transitionEased * 0.65;
+        const coreR = BLUE_R + CORE_BLUE_TO_GREEN_R * coreColorT;
+        const coreG = BLUE_G + CORE_BLUE_TO_GREEN_G * coreColorT;
+        const coreB = BLUE_B + CORE_BLUE_TO_GREEN_B * coreColorT;
+
+        coreColor.setRGB(
+          coreR + (ORANGE_R - coreR) * orangeGlow,
+          coreG + (ORANGE_G - coreG) * orangeGlow,
+          coreB + (ORANGE_B - coreB) * orangeGlow
+        );
+        colors[0] = coreR + (ORANGE_R - coreR) * orangeGlow;
+        colors[1] = coreG + (ORANGE_G - coreG) * orangeGlow;
+        colors[2] = coreB + (ORANGE_B - coreB) * orangeGlow;
+        sizes[0] = (4.2 + orangePulse * 4.8 * transitionEased) * (0.9 + transitionEased * 0.4);
+        alphas[0] = 0.95;
+      }
       
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
@@ -325,7 +355,7 @@ export function animateState2And3(
         
         const displacedRadius = getClusteredSpikeRadius(
           time,
-          stableRadius,
+          compressedStableRadius,
           volatilityEnvelope,
           clusterWeight,
           clusterPhase,
@@ -360,26 +390,18 @@ export function animateState2And3(
         const fz = anchorX * sinA + anchorZ * cosA;
         const fy = anchorY;
         
-        // Color interpolation starts exactly when bounce decay starts (global look preserved).
-        if (s2Progress >= 0.6) {
-          colorT = Math.min(
-            1,
-            Math.max(0, (stateElapsed - colorInterpolationStart) / colorInterpolationDuration)
-          );
-        }
-        
         const displacedRadius = getClusteredSpikeRadius(
           time,
-          stableRadius,
+          compressedStableRadius,
           volatilityEnvelope,
           clusterWeight,
           clusterPhase,
           clusterPhaseLag
         );
         const settleMix = Math.min(1, s2Progress / 0.18);
-        const baseX = fx + (stableUnitX * stableRadius - fx) * settleMix;
-        const baseY = fy + (stableUnitY * stableRadius - fy) * settleMix;
-        const baseZ = fz + (stableUnitZ * stableRadius - fz) * settleMix;
+        const baseX = fx + (stableUnitX * compressedStableRadius - fx) * settleMix;
+        const baseY = fy + (stableUnitY * compressedStableRadius - fy) * settleMix;
+        const baseZ = fz + (stableUnitZ * compressedStableRadius - fz) * settleMix;
         const displacedX = stableUnitX * displacedRadius;
         const displacedY = stableUnitY * displacedRadius;
         const displacedZ = stableUnitZ * displacedRadius;
@@ -390,19 +412,6 @@ export function animateState2And3(
         
       } else {
         // Substate 3: Stable Fibonacci sphere with compression + color
-        const s3Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION - STATE2_STABILIZE_DURATION;
-        const s3Progress = Math.min(1, s3Elapsed / STATE2_COLOR_SHIFT_DURATION);
-        const s3Eased = easeOutCubic(s3Progress);
-        
-        // Compression: 100% -> 80%
-        const compressionFactor = 1 - (s3Eased * 0.2);
-        
-        // Continue color shift that started in substate 2 decay
-        colorT = Math.min(
-          1,
-          Math.max(0, (stateElapsed - colorInterpolationStart) / colorInterpolationDuration)
-        );
-        
         // Final Fibonacci position with compression
         const fx = fibX * compressionFactor;
         const fy = fibY * compressionFactor;
@@ -416,7 +425,7 @@ export function animateState2And3(
         positions[i3 + 2] = rz;
       }
       
-      // Color interpolation (blue -> orange, only in substate 3)
+      // Color interpolation begins when the bounce decay starts.
       const colorEased = easeOutCubic(colorT);
       const flicker = (1 - colorT) * Math.sin(time * 0.7 + rnd * 5) * 0.04;
       const brightness = 0.88 + flicker;
