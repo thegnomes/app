@@ -58,6 +58,9 @@ export const MIGRATOR_RATIO = 0.25;
 /** Share of non-core particles used to form the State 2/3 sphere shell */
 export const SHELL_PARTICLE_RATIO = 0.5;
 
+/** Global multiplier for particle point sizes */
+export const PARTICLE_SIZE_MULTIPLIER = 1.5;
+
 /** Share of shell particles that lead State 2 spike clusters */
 export const STATE2_SPIKE_CLUSTER_LEADER_RATIO = 0.1;
 
@@ -188,6 +191,15 @@ export const CORE_VIDEO_GLOW_BOOST = 1.65;
 
 /** Share of procedural core intensity faded as the video core takes over */
 export const CORE_VIDEO_PROCEDURAL_FADE = 0.72;
+
+/** Radius for the State 3 video sphere surrounding the particle shell */
+export const SOLAR_VIDEO_SHELL_RADIUS = SHELL_RADIUS * 0.92;
+
+/** Geometry detail for the State 3 video sphere */
+export const SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL = 48;
+
+/** Peak opacity for the State 3 video sphere */
+export const SOLAR_VIDEO_SHELL_OPACITY = 0.58;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

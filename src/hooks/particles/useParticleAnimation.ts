@@ -25,6 +25,7 @@ import {
   GLOW_RADIUS,
   GLOW_OPACITY,
   SHELL_RADIUS,
+  PARTICLE_SIZE_MULTIPLIER,
   CORE_VIDEO_TRANSITION_DURATION,
   CORE_VIDEO_GLOW_BOOST,
   CORE_VIDEO_PROCEDURAL_FADE,
@@ -222,6 +223,13 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
         if (videoMesh && (videoMesh.material as THREE.ShaderMaterial).uniforms?.uTime) {
           (videoMesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+        }
+      }
+
+      if (refs.solarVideoShell.current) {
+        const material = refs.solarVideoShell.current.material as THREE.ShaderMaterial;
+        if (material.uniforms?.uTime) {
+          material.uniforms.uTime.value = data.time.current;
         }
       }
 
@@ -485,9 +493,30 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
       }
 
+      if (refs.solarVideoShell.current) {
+        const solarVideoShell = refs.solarVideoShell.current;
+        const shellUniforms = (solarVideoShell.material as THREE.ShaderMaterial).uniforms;
+        const shouldShowSolarShell = currentState === 3 && data.coreVideoMix.current > 0.001;
+        solarVideoShell.visible = shouldShowSolarShell;
+        solarVideoShell.rotation.y += 0.0012 * speed * frameScale;
+        shellUniforms.uMix.value = shouldShowSolarShell ? data.coreVideoMix.current : 0;
+
+        if (refs.solarVideoShellVideo.current) {
+          if (shouldShowSolarShell && refs.solarVideoShellVideo.current.paused) {
+            void refs.solarVideoShellVideo.current.play();
+          } else if (!shouldShowSolarShell && !refs.solarVideoShellVideo.current.paused) {
+            refs.solarVideoShellVideo.current.pause();
+          }
+        }
+      }
+
       // Update sun light color
       if (refs.sunLight.current) {
         refs.sunLight.current.color.copy(data.currentCoreColor.current);
+      }
+
+      for (let i = 0; i < TOTAL_MAIN; i++) {
+        sizes[i] *= PARTICLE_SIZE_MULTIPLIER;
       }
 
       // Mark attributes as needing update

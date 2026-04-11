@@ -6,6 +6,7 @@ import {
   initializeLighting,
   createParticleSystem,
   createCoreGroup,
+  createSolarVideoShell,
   createPlanets,
   createOrbitGroup,
   createTrail,
@@ -15,6 +16,7 @@ import { initializeParticleData, initializeTrailHistory, initializeTrailPosition
 import { TOTAL_MAIN, STATE_PRIMARY_COLORS, STATE_SECONDARY_COLORS, PLANETS } from '@/lib/particles/constants';
 
 const CORE_VIDEO_SRC = new URL('../../../orange-star-web.webm', import.meta.url).href;
+const SOLAR_VIDEO_SHELL_SRC = new URL('../../../orange-star-web.mp4', import.meta.url).href;
 
 export interface SceneRefs {
   scene: React.MutableRefObject<THREE.Scene | null>;
@@ -24,6 +26,8 @@ export interface SceneRefs {
   coreGroup: React.MutableRefObject<THREE.Group | null>;
   coreVideoMesh: React.MutableRefObject<THREE.Mesh | null>;
   coreVideo: React.MutableRefObject<HTMLVideoElement | null>;
+  solarVideoShell: React.MutableRefObject<THREE.Mesh | null>;
+  solarVideoShellVideo: React.MutableRefObject<HTMLVideoElement | null>;
   orbitGroup: React.MutableRefObject<THREE.Group | null>;
   planets: React.MutableRefObject<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[] | null>;
   sunLight: React.MutableRefObject<THREE.PointLight | null>;
@@ -69,6 +73,9 @@ export function useParticleScene(config: ParticleConfig) {
   const coreVideoMeshRef = useRef<THREE.Mesh | null>(null);
   const coreVideoRef = useRef<HTMLVideoElement | null>(null);
   const coreVideoTextureRef = useRef<THREE.VideoTexture | null>(null);
+  const solarVideoShellRef = useRef<THREE.Mesh | null>(null);
+  const solarVideoShellVideoRef = useRef<HTMLVideoElement | null>(null);
+  const solarVideoShellTextureRef = useRef<THREE.VideoTexture | null>(null);
   const orbitGroupRef = useRef<THREE.Group | null>(null);
   const planetsRef = useRef<{ group: THREE.Group; radius: number; speed: number; angle: number; startAngle: number; angleTraveled: number; hasCompletedFirstOrbit: boolean }[]>([]);
   const sunLightRef = useRef<THREE.PointLight | null>(null);
@@ -152,6 +159,30 @@ export function useParticleScene(config: ParticleConfig) {
     coreGroupRef.current = coreGroup;
     coreVideoMeshRef.current = videoMesh;
 
+    // Create the State 3 video sphere around the particle shell.
+    const solarVideoShellVideo = document.createElement('video');
+    solarVideoShellVideo.src = SOLAR_VIDEO_SHELL_SRC;
+    solarVideoShellVideo.loop = true;
+    solarVideoShellVideo.muted = true;
+    solarVideoShellVideo.playsInline = true;
+    solarVideoShellVideo.preload = 'metadata';
+    solarVideoShellVideo.crossOrigin = 'anonymous';
+    solarVideoShellVideoRef.current = solarVideoShellVideo;
+
+    const solarVideoShellTexture = new THREE.VideoTexture(solarVideoShellVideo);
+    solarVideoShellTexture.colorSpace = THREE.SRGBColorSpace;
+    solarVideoShellTexture.minFilter = THREE.LinearFilter;
+    solarVideoShellTexture.magFilter = THREE.LinearFilter;
+    solarVideoShellTexture.generateMipmaps = false;
+    solarVideoShellTexture.wrapS = THREE.RepeatWrapping;
+    solarVideoShellTexture.wrapT = THREE.RepeatWrapping;
+    solarVideoShellTextureRef.current = solarVideoShellTexture;
+
+    const solarVideoShell = createSolarVideoShell(solarVideoShellTexture);
+    solarVideoShell.rotation.set(0.12, -0.2, 0.05);
+    systemGroup.add(solarVideoShell);
+    solarVideoShellRef.current = solarVideoShell;
+
     // Create planets with shared angles
     const angles = PLANETS.map(() => Math.random() * Math.PI * 2);
     planetsRef.current = createPlanets(systemGroup, angles);
@@ -198,6 +229,17 @@ export function useParticleScene(config: ParticleConfig) {
       coreVideoTextureRef.current = null;
       coreVideoMeshRef.current = null;
 
+      if (solarVideoShellVideoRef.current) {
+        solarVideoShellVideoRef.current.pause();
+        solarVideoShellVideoRef.current.removeAttribute('src');
+        solarVideoShellVideoRef.current.load();
+        solarVideoShellVideoRef.current = null;
+      }
+
+      solarVideoShellTextureRef.current?.dispose();
+      solarVideoShellTextureRef.current = null;
+      solarVideoShellRef.current = null;
+
       if (particlesRef.current) {
         particlesRef.current.geometry.dispose();
         (particlesRef.current.material as THREE.Material).dispose();
@@ -220,6 +262,8 @@ export function useParticleScene(config: ParticleConfig) {
       coreGroup: coreGroupRef,
       coreVideoMesh: coreVideoMeshRef,
       coreVideo: coreVideoRef,
+      solarVideoShell: solarVideoShellRef,
+      solarVideoShellVideo: solarVideoShellVideoRef,
       orbitGroup: orbitGroupRef,
       planets: planetsRef,
       sunLight: sunLightRef,
