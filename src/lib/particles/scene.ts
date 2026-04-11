@@ -17,8 +17,6 @@ import {
   PLANET_GLOW_MULTIPLIER,
   PLANET_GLOW_OPACITY,
   ORBIT_SEGMENTS,
-  CORE_VIDEO_RADIUS,
-  CORE_VIDEO_GEOMETRY_DETAIL,
   SOLAR_VIDEO_SHELL_RADIUS,
   SOLAR_VIDEO_SHELL_GEOMETRY_DETAIL,
   SOLAR_VIDEO_SHELL_OPACITY,
@@ -108,16 +106,14 @@ export function createParticleSystem(
 }
 
 /**
- * Create core group with procedural mesh, glow, and video star body
+ * Create core group with procedural mesh and glow.
  */
 export function createCoreGroup(
-  config: ParticleConfig,
-  videoTexture: THREE.Texture
+  config: ParticleConfig
 ): {
   group: THREE.Group;
   mesh: THREE.Mesh;
   glow: THREE.Mesh;
-  videoMesh: THREE.Mesh;
 } {
   const group = new THREE.Group();
   group.visible = false;
@@ -167,64 +163,6 @@ export function createCoreGroup(
   });
   const mesh = new THREE.Mesh(meshGeometry, meshMaterial);
 
-  const videoGeometry = new THREE.SphereGeometry(
-    CORE_VIDEO_RADIUS,
-    CORE_VIDEO_GEOMETRY_DETAIL,
-    CORE_VIDEO_GEOMETRY_DETAIL
-  );
-  const videoMaterial = new THREE.ShaderMaterial({
-    vertexShader: `
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
-      void main() {
-        vUv = uv;
-        vNormal = normalize(normalMatrix * normal);
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        vViewPosition = -mvPosition.xyz;
-        gl_Position = projectionMatrix * mvPosition;
-      }
-    `,
-    fragmentShader: `
-      uniform sampler2D uVideo;
-      uniform float uMix;
-      uniform float uGlowBoost;
-      uniform float uTime;
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
-      void main() {
-        vec2 flowUv = vUv;
-        flowUv.x += sin((vUv.y + uTime * 0.035) * 6.28318) * 0.015;
-        flowUv.y += cos((vUv.x - uTime * 0.025) * 6.28318) * 0.012;
-
-        vec3 videoColor = texture2D(uVideo, fract(flowUv)).rgb;
-        float luminance = dot(videoColor, vec3(0.299, 0.587, 0.114));
-        vec3 normal = normalize(vNormal);
-        vec3 viewDir = normalize(vViewPosition);
-        float fresnel = pow(1.0 - abs(dot(normal, viewDir)), 1.85);
-        float surfacePulse = 1.0 + sin(uTime * 1.6 + luminance * 3.0) * 0.08;
-        vec3 warmBias = vec3(1.0, 0.56, 0.22);
-        vec3 starColor = mix(videoColor, videoColor * warmBias, 0.35);
-        vec3 glowColor = starColor * (1.25 + fresnel * 1.15 + luminance * 0.45) * uGlowBoost * surfacePulse;
-        float alpha = uMix * (0.58 + fresnel * 0.42);
-
-        gl_FragColor = vec4(glowColor, alpha);
-      }
-    `,
-    uniforms: {
-      uVideo: { value: videoTexture },
-      uMix: { value: 0 },
-      uGlowBoost: { value: 1 },
-      uTime: { value: 0 },
-    },
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
-  videoMesh.visible = false;
-
   // Glow mesh
   const glowGeometry = new THREE.SphereGeometry(
     GLOW_RADIUS,
@@ -273,9 +211,8 @@ export function createCoreGroup(
 
   group.add(mesh);
   group.add(glow);
-  group.add(videoMesh);
 
-  return { group, mesh, glow, videoMesh };
+  return { group, mesh, glow };
 }
 
 /**

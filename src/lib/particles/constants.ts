@@ -171,26 +171,20 @@ export const CORE_GEOMETRY_DETAIL = 64;
 /** Core sphere radius */
 export const CORE_RADIUS = 1.5;
 
-/** Video star body radius inside the particle atmosphere */
-export const CORE_VIDEO_RADIUS = CORE_RADIUS * 3.4;
-
-/** Geometry detail for the video star surface */
-export const CORE_VIDEO_GEOMETRY_DETAIL = 40;
-
 /** Glow sphere radius */
 export const GLOW_RADIUS = 6;
 
 /** Glow opacity */
 export const GLOW_OPACITY = 0.55;
 
-/** Duration for the procedural core to hand authority to the video star in State 3 */
-export const CORE_VIDEO_TRANSITION_DURATION = 4200;
+/** Duration for the State 3 outer video sphere to fade in */
+export const SOLAR_VIDEO_SHELL_TRANSITION_DURATION = 4200;
 
-/** Maximum glow boost as the video star becomes the core anchor */
-export const CORE_VIDEO_GLOW_BOOST = 1.65;
+/** Maximum glow boost as the State 3 video sphere becomes visible */
+export const SOLAR_VIDEO_SHELL_GLOW_BOOST = 1.65;
 
-/** Share of procedural core intensity faded as the video core takes over */
-export const CORE_VIDEO_PROCEDURAL_FADE = 0.72;
+/** Share of procedural core intensity faded as the State 3 video sphere enters */
+export const SOLAR_VIDEO_SHELL_PROCEDURAL_FADE = 0.72;
 
 /** Radius for the State 3 video sphere surrounding the particle shell */
 export const SOLAR_VIDEO_SHELL_RADIUS = SHELL_RADIUS * 0.92;
