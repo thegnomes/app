@@ -177,26 +177,20 @@ export const GLOW_RADIUS = 6;
 /** Glow opacity */
 export const GLOW_OPACITY = 0.55;
 
-/** Duration for the State 3 front video core layer to fade in */
+/** Duration for the State 3 video-driven outer star layer to fade in */
 export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 4200;
 
-/** Maximum glow boost as the State 3 front video core layer becomes visible */
-export const SOLAR_VIDEO_CORE_GLOW_BOOST = 1.65;
+/** Share of procedural core intensity faded as the State 3 video surface enters */
+export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.86;
 
-/** Share of procedural core intensity faded as the State 3 front video core layer enters */
-export const SOLAR_VIDEO_CORE_PROCEDURAL_FADE = 0.72;
+/** Radius for the State 3 video-driven outer star surface */
+export const SOLAR_VIDEO_CORE_RADIUS = SHELL_RADIUS * 0.92;
 
-/** Size for the State 3 front video core layer */
-export const SOLAR_VIDEO_CORE_SIZE = SHELL_RADIUS * 0.72;
-
-/** Segment count for the State 3 circular video core layer */
+/** Segment count for the State 3 video-driven outer star surface */
 export const SOLAR_VIDEO_CORE_SEGMENTS = 96;
 
-/** Peak opacity for the State 3 front video core layer */
-export const SOLAR_VIDEO_CORE_OPACITY = 0.72;
-
-/** Forward offset toward the camera for the State 3 video core layer */
-export const SOLAR_VIDEO_CORE_FRONT_OFFSET = SHELL_RADIUS * 0.92;
+/** Peak opacity for the State 3 video-driven outer star surface */
+export const SOLAR_VIDEO_CORE_OPACITY = 0.58;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

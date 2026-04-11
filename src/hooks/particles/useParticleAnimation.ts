@@ -27,9 +27,7 @@ import {
   SHELL_RADIUS,
   PARTICLE_SIZE_MULTIPLIER,
   SOLAR_VIDEO_CORE_TRANSITION_DURATION,
-  SOLAR_VIDEO_CORE_GLOW_BOOST,
   SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
-  SOLAR_VIDEO_CORE_FRONT_OFFSET,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -288,8 +286,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           ? 0.08 + smoothstep01(stateElapsed / SOLAR_VIDEO_CORE_TRANSITION_DURATION) * 0.92
           : 0;
       data.solarVideoCoreMix.current = solarVideoCoreMix;
-      data.solarVideoCoreGlowBoost.current =
-        1 + solarVideoCoreMix * (SOLAR_VIDEO_CORE_GLOW_BOOST - 1);
 
       // Animate based on state
       switch (currentState) {
@@ -361,7 +357,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             const state3Continuity = currentState === 3 ? 1 : 0;
             const glowEntrance = Math.max(state3Continuity, easedSubstate3T);
             const spreadScale = 1 + ((SHELL_RADIUS / GLOW_RADIUS) * 1.08 - 1) * glowEntrance;
-            glow?.scale.set(spreadScale, spreadScale, spreadScale);
+            glow.visible = currentState !== 3;
+            glow.scale.set(spreadScale, spreadScale, spreadScale);
           }
           if (refs.orbitGroup.current)
             refs.orbitGroup.current.visible = currentState === 3;
@@ -382,7 +379,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
               const scale = 1 + Math.min(stateElapsed / 1000, 0.5);
               const spreadScale = ((SHELL_RADIUS / GLOW_RADIUS) * 1.08) / scale;
               cg.scale.set(scale, scale, scale);
-              cg.children[1]?.scale.set(spreadScale, spreadScale, spreadScale);
+              const glow = cg.children[1];
+              glow.visible = false;
+              glow.scale.set(spreadScale, spreadScale, spreadScale);
             }
 
             if (refs.planets.current) {
@@ -471,9 +470,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             1 - data.solarVideoCoreMix.current * SOLAR_VIDEO_CORE_PROCEDURAL_FADE;
         }
         glowUniforms.uColor.value.copy(data.currentCoreColor.current);
-        glowUniforms.uOpacity.value = GLOW_OPACITY * (1 + data.solarVideoCoreMix.current * 0.4);
+        glow.visible = currentState !== 3;
+        glowUniforms.uOpacity.value = currentState === 3 ? 0 : GLOW_OPACITY;
         if (glowUniforms.uGlowBoost) {
-          glowUniforms.uGlowBoost.value = data.solarVideoCoreGlowBoost.current;
+          glowUniforms.uGlowBoost.value = 1;
         }
       }
 
@@ -484,13 +484,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         solarVideoCoreLayer.visible = shouldShowSolarCore;
         coreUniforms.uMix.value = shouldShowSolarCore ? data.solarVideoCoreMix.current : 0;
 
-        if (refs.camera.current) {
-          solarVideoCoreLayer.quaternion.copy(refs.camera.current.quaternion);
-          solarVideoCoreLayer.position
-            .copy(refs.camera.current.position)
-            .normalize()
-            .multiplyScalar(SOLAR_VIDEO_CORE_FRONT_OFFSET);
-        }
+        solarVideoCoreLayer.position.set(0, 0, 0);
+        solarVideoCoreLayer.rotation.y += 0.0009 * speed * frameScale;
+        solarVideoCoreLayer.rotation.x = Math.sin(data.time.current * 0.08) * 0.025;
 
         if (refs.solarVideoCoreVideo.current) {
           if (shouldShowSolarCore && refs.solarVideoCoreVideo.current.paused) {

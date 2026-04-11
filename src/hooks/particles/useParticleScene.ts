@@ -44,7 +44,6 @@ export interface AnimationData {
   currentPrimaryColor: React.MutableRefObject<THREE.Color>;
   currentSecondaryColor: React.MutableRefObject<THREE.Color>;
   solarVideoCoreMix: React.MutableRefObject<number>;
-  solarVideoCoreGlowBoost: React.MutableRefObject<number>;
   shellAngle: React.MutableRefObject<number>;
   trailHistory: React.MutableRefObject<Float32Array>;
   particleData: React.MutableRefObject<ReturnType<typeof initializeParticleData>['data'] | null>;
@@ -88,7 +87,6 @@ export function useParticleScene(config: ParticleConfig) {
   const currentPrimaryColorRef = useRef(STATE_PRIMARY_COLORS[0].clone());
   const currentSecondaryColorRef = useRef(STATE_SECONDARY_COLORS[0].clone());
   const solarVideoCoreMixRef = useRef(0);
-  const solarVideoCoreGlowBoostRef = useRef(1);
   const shellAngleRef = useRef(0);
   const trailHistoryRef = useRef<Float32Array>(new Float32Array(0));
   const particleDataRef = useRef<ReturnType<typeof initializeParticleData>['data'] | null>(null);
@@ -133,7 +131,7 @@ export function useParticleScene(config: ParticleConfig) {
     systemGroup.add(coreGroup);
     coreGroupRef.current = coreGroup;
 
-    // Create the State 3 front-biased emissive video layer.
+    // Create the State 3 video-driven outer star surface.
     const solarVideoCoreVideo = document.createElement('video');
     solarVideoCoreVideo.src = SOLAR_VIDEO_CORE_SRC;
     solarVideoCoreVideo.loop = true;
@@ -246,7 +244,6 @@ export function useParticleScene(config: ParticleConfig) {
       currentPrimaryColor: currentPrimaryColorRef,
       currentSecondaryColor: currentSecondaryColorRef,
       solarVideoCoreMix: solarVideoCoreMixRef,
-      solarVideoCoreGlowBoost: solarVideoCoreGlowBoostRef,
       shellAngle: shellAngleRef,
       trailHistory: trailHistoryRef,
       particleData: particleDataRef,
