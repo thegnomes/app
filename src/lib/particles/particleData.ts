@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { ParticleAttributes, ParticleData } from '@/types';
-import { TOTAL_MAIN, TRAIL_LENGTH, SHELL_RADIUS } from './constants';
+import { TOTAL_MAIN, TRAIL_LENGTH, SHELL_RADIUS, MIGRATOR_RATIO } from './constants';
 import {
   generateHomePositions,
   generateSpherePositions,
@@ -60,9 +60,9 @@ export function initializeParticleData(): {
     data.migratorIndexMap[i] = -1;
   }
 
-  // Assign migrators (50% of particles)
+  // Assign migrators
   const shuffledIndices = shuffleIndices(TOTAL_MAIN);
-  const migratorCount = Math.floor(TOTAL_MAIN / 2);
+  const migratorCount = Math.floor(TOTAL_MAIN * MIGRATOR_RATIO);
 
   for (let i = 0; i < migratorCount; i++) {
     data.migrator[shuffledIndices[i]] = 1;

@@ -4,7 +4,8 @@ import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
 import {
   STATE4_CONCENTRATE,
-  TIME_STEP,
+  TARGET_FRAME_MS,
+  MAX_FRAME_DELTA_MS,
   TOTAL_MAIN,
   TRAIL_LENGTH,
   CORE_COLOR_LERP,
@@ -31,6 +32,8 @@ import {
 } from '@/lib/particles/animationStates';
 import { createFlashMesh, createNovaMesh } from '@/lib/particles/scene';
 
+const scaleFrameLerp = (factor: number, frameScale: number) => 1 - Math.pow(1 - factor, frameScale);
+
 interface CameraPanRef {
   isDragging: boolean;
   offset: { x: number; y: number };
@@ -51,6 +54,7 @@ interface UseParticleAnimationProps {
 export function useParticleAnimation({ state, config, refs, data, cameraPanRef }: UseParticleAnimationProps) {
   const stateRef = useRef(state);
   const speedRef = useRef(config.speed);
+  const lastFrameTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -166,16 +170,26 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
     };
 
-    const animate = () => {
+    lastFrameTimeRef.current = null;
+
+    const animate = (frameTime: number = performance.now()) => {
       data.animationId.current = requestAnimationFrame(animate);
 
-      const now = performance.now();
+      const now = frameTime;
+      const rawDeltaMs =
+        lastFrameTimeRef.current === null ? TARGET_FRAME_MS : now - lastFrameTimeRef.current;
+      lastFrameTimeRef.current = now;
+      const deltaMs = Math.min(MAX_FRAME_DELTA_MS, Math.max(0, rawDeltaMs));
+      const deltaSeconds = deltaMs / 1000;
+      const frameScale = deltaMs / TARGET_FRAME_MS;
+      const coreColorLerp = scaleFrameLerp(CORE_COLOR_LERP, frameScale);
+      const ambientColorLerp = scaleFrameLerp(AMBIENT_COLOR_LERP, frameScale);
       const stateElapsed = now - data.stateStart.current;
       const currentState = stateRef.current;
       const speed = speedRef.current;
 
       // Update time
-      data.time.current += TIME_STEP * speed;
+      data.time.current += deltaSeconds * speed;
 
       // Update shader uniforms
       if (refs.particles.current) {
@@ -205,9 +219,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Update flash mesh
       if (refs.flashMesh.current && refs.scene.current) {
         const mesh = refs.flashMesh.current;
-        mesh.scale.multiplyScalar(FLASH_SCALE_FACTOR);
+        mesh.scale.multiplyScalar(Math.pow(FLASH_SCALE_FACTOR, frameScale));
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity -= FLASH_OPACITY_DECAY;
+        mat.opacity -= FLASH_OPACITY_DECAY * frameScale;
 
         if (mat.opacity <= 0) {
           refs.scene.current.remove(mesh);
@@ -283,7 +297,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         case 2:
         case 3:
           // Faster shell rotation for visible spinning effect
-          data.shellAngle.current += 0.012 * speed;
+          data.shellAngle.current += 0.012 * speed * frameScale;
           animateState2And3(
             attributes,
             particleData,
@@ -315,7 +329,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             }
 
             if (refs.planets.current) {
-              animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, speed);
+              animatePlanets(refs.planets.current, refs.orbitGroup.current, stateElapsed, speed, frameScale);
             }
           }
           break;
@@ -333,6 +347,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.snapshotPositions.current,
             particleData.burstVelocity,
             data.time.current,
+            frameScale,
             data.currentPrimaryColor.current,
             data.currentSecondaryColor.current
           );
@@ -364,11 +379,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Lerp core color towards primary state color
-      data.currentCoreColor.current.lerp(targetPrimaryColor, CORE_COLOR_LERP);
+      data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
 
       // Lerp primary and secondary ambient colors
-      data.currentPrimaryColor.current.lerp(targetPrimaryColor, AMBIENT_COLOR_LERP);
-      data.currentSecondaryColor.current.lerp(targetSecondaryColor, AMBIENT_COLOR_LERP);
+      data.currentPrimaryColor.current.lerp(targetPrimaryColor, ambientColorLerp);
+      data.currentSecondaryColor.current.lerp(targetSecondaryColor, ambientColorLerp);
 
       // Update core group colors
       if (refs.coreGroup.current) {
@@ -396,7 +411,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // System group rotation
       if (refs.systemGroup.current) {
-        refs.systemGroup.current.rotation.y += 0.0005 * speed;
+        refs.systemGroup.current.rotation.y += 0.0005 * speed * frameScale;
         refs.systemGroup.current.rotation.x = Math.sin(data.time.current * 0.1) * 0.02;
       }
 
@@ -442,15 +457,17 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       if (refs.camera.current) {
         const targetX = data.mousePosition.current.x * 8;
         const targetY = data.mousePosition.current.y * 8;
-        data.cameraDrift.current.x += (targetX - data.cameraDrift.current.x) * 0.05;
-        data.cameraDrift.current.y += (targetY - data.cameraDrift.current.y) * 0.05;
+        const driftLerp = scaleFrameLerp(0.05, frameScale);
+        data.cameraDrift.current.x += (targetX - data.cameraDrift.current.x) * driftLerp;
+        data.cameraDrift.current.y += (targetY - data.cameraDrift.current.y) * driftLerp;
 
         // Get pan offset from cameraPanRef with smooth interpolation
         const panOffset = cameraPanRef.current?.targetOffset || { x: 0, y: 0 };
         const currentPanX = refs.camera.current.userData.panX || 0;
         const currentPanY = refs.camera.current.userData.panY || 0;
-        const smoothPanX = currentPanX + (panOffset.x - currentPanX) * 0.1;
-        const smoothPanY = currentPanY + (panOffset.y - currentPanY) * 0.1;
+        const panLerp = scaleFrameLerp(0.1, frameScale);
+        const smoothPanX = currentPanX + (panOffset.x - currentPanX) * panLerp;
+        const smoothPanY = currentPanY + (panOffset.y - currentPanY) * panLerp;
         refs.camera.current.userData.panX = smoothPanX;
         refs.camera.current.userData.panY = smoothPanY;
 
@@ -459,7 +476,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         const targetZ = CAMERA_Z;
         
         // Smooth camera Z transition
-        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * 0.03;
+        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * scaleFrameLerp(0.03, frameScale);
 
         refs.camera.current.position.x =
           Math.sin(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +

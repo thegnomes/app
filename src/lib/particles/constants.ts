@@ -33,21 +33,27 @@ export const TRAVEL_DURATION = 600;
 /** Duration of planet entry animation */
 export const PLANET_ENTRY_DURATION = 800;
 
-/** Time step for animation frame */
-export const TIME_STEP = 0.02;
+/** Target frame duration used to normalize per-frame damping and rotation */
+export const TARGET_FRAME_MS = 1000 / 60;
+
+/** Maximum delta applied after frame stalls or tab inactivity */
+export const MAX_FRAME_DELTA_MS = 50;
 
 // ============================================
 // Particle Counts
 // ============================================
 
 /** Total number of main particles */
-export const TOTAL_MAIN = 4000;
+export const TOTAL_MAIN = 1400;
 
 /** Number of segments in orbit lines */
-export const ORBIT_SEGMENTS = 120;
+export const ORBIT_SEGMENTS = 84;
 
 /** Length of trail for migrating particles */
-export const TRAIL_LENGTH = 10;
+export const TRAIL_LENGTH = 5;
+
+/** Share of particles that migrate into shells and collapse trails */
+export const MIGRATOR_RATIO = 0.25;
 
 // ============================================
 // Geometry Constants

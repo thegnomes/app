@@ -56,11 +56,11 @@ export const particleFragmentShader = `
     // Discard pixels outside circle
     if (dist > 0.5) discard;
     
-    // Smooth edge fade
-    float a = (1.0 - smoothstep(0.3, 0.5, dist)) * vAlpha;
+    // Smooth edge fade with a wider falloff for softer particles.
+    float a = (1.0 - smoothstep(0.18, 0.5, dist)) * vAlpha;
     
-    // Twinkling effect
-    float twinkle = sin(uTime * 3.0 + vRandom * 10.0) * 0.3 + 0.7;
+    // Subtle twinkle; most shimmer is driven by state logic.
+    float twinkle = sin(uTime * 0.8 + vRandom * 10.0) * 0.06 + 0.94;
     
     gl_FragColor = vec4(vColor * twinkle, a);
   }

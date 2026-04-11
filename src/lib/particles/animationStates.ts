@@ -1,18 +1,13 @@
 import * as THREE from 'three';
 import type { AppState, ParticleData, ParticleAttributes } from '@/types';
 import {
-  STATE1_DURATION,
-  STATE2_DURATION,
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
   STATE2_COLOR_SHIFT_DURATION,
-  TRAVEL_DURATION,
-  STABILIZE_DURATION,
   STATE4_CONCENTRATE,
   BURST_DURATION,
   BURST_DAMPING,
   PLANET_ENTRY_DURATION,
-  PLANET_ENTRY_BASE_TIME,
   PLANET_ENTRY_DELAY,
   SHELL_RADIUS,
   TOTAL_MAIN,
@@ -27,17 +22,6 @@ import type { PlanetInstance } from './scene';
 // State 0: Neural Brain - Particles form a 3D brain shape
 // Starting state - the brain with subtle neural network
 // ============================================
-
-// Pre-allocated color constants to avoid GC pressure
-const DARK_BLUE_R = 0.024;
-const DARK_BLUE_G = 0.102;
-const DARK_BLUE_B = 0.180;
-const SOFT_CYAN_R = 0.102;
-const SOFT_CYAN_G = 0.373;
-const SOFT_CYAN_B = 0.478;
-const COLOR_DIFF_R = SOFT_CYAN_R - DARK_BLUE_R;
-const COLOR_DIFF_G = SOFT_CYAN_G - DARK_BLUE_G;
-const COLOR_DIFF_B = SOFT_CYAN_B - DARK_BLUE_B;
 
 export function animateState0(
   attributes: ParticleAttributes,
@@ -114,7 +98,7 @@ export function animateState1(
       colors[i3] = coreColor.r;
       colors[i3 + 1] = coreColor.g;
       colors[i3 + 2] = coreColor.b;
-      sizes[i] = (3.0 + Math.sin(time * 3) * 0.5) * coreEased;
+      sizes[i] = (3.0 + Math.sin(time * 2) * 0.25) * coreEased;
       alphas[i] = 0.9 * coreEased;
       continue;
     }
@@ -132,7 +116,7 @@ export function animateState1(
     // Particles closer to center appear first, outer particles follow
     const distDelay = (distFromCenter / 150) * 0.08;
     const rndDelay = rnd * 0.03;
-    let t = Math.max(0, Math.min(1, (stateElapsed / BG_ENTRY) - distDelay - rndDelay));
+    const t = Math.max(0, Math.min(1, (stateElapsed / BG_ENTRY) - distDelay - rndDelay));
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];
@@ -160,36 +144,25 @@ export function animateState1(
       positions[i3 + 2] = maxExpandZ + (tz - maxExpandZ) * disperseEased;
     }
 
-    // Twinkle effect
-    const twinkle = Math.sin(time * (1.0 + rnd * 2.0) + rnd * 6.283);
-    const glimmerIntensity = (Math.max(0, twinkle) * 0.4 + 0.2) * eased;
+    // Subtle twinkle for depth without noisy brightness pumping.
+    const twinkle = Math.sin(time * (0.35 + rnd * 0.8) + rnd * 6.283);
+    const glimmerIntensity = (Math.max(0, twinkle) * 0.12 + 0.08) * eased;
     
-    const brightness = 0.3 + glimmerIntensity * 0.8;
+    const brightness = 0.62 + glimmerIntensity * 0.35;
     colors[i3] = (BRAIN_COLOR_R + STAR1_DIFF_R * eased) * brightness;
     colors[i3 + 1] = (BRAIN_COLOR_G + STAR1_DIFF_G * eased) * brightness;
     colors[i3 + 2] = (BRAIN_COLOR_B + STAR1_DIFF_B * eased) * brightness;
 
     const baseSize = 0.5 + rnd * 0.3 + (0.7 + rnd * 0.5) * eased;
-    sizes[i] = (baseSize + glimmerIntensity * 0.8) * eased;
+    sizes[i] = (baseSize + glimmerIntensity * 0.2) * eased;
     // Background fully visible before core starts
-    alphas[i] = (0.4 + rnd * 0.3) * eased + glimmerIntensity * 0.5;
+    alphas[i] = (0.4 + rnd * 0.3) * eased + glimmerIntensity * 0.12;
   }
 }
 
 // ============================================
 // State 2 & 3: Charging Shell and Solar System
 // ============================================
-
-// Pre-calculated color constants for white/cool white interpolation
-const WHITE_R = 1.0;
-const WHITE_G = 1.0;
-const WHITE_B = 1.0;
-const COOL_WHITE_R = 0.878;
-const COOL_WHITE_G = 0.949;
-const COOL_WHITE_B = 0.996;
-const COOL_DIFF_R = COOL_WHITE_R - WHITE_R;
-const COOL_DIFF_G = COOL_WHITE_G - WHITE_G;
-const COOL_DIFF_B = COOL_WHITE_B - WHITE_B;
 
 // Color constants for blue to orange interpolation (State 2 substage 3)
 const BLUE_R = 0.133;
@@ -256,7 +229,7 @@ export function animateState2And3(
       // STATE 2: CHARGING SHELL with 3 substates (0-13000ms)
       // 
       // Substate 1 (0-6000ms): Particles flow from starfield to Fibonacci positions
-      // Substate 2 (6000-10000ms): Spike/thorn bounce with decay
+      // Substate 2 (6000-10000ms): Calm damped overshoot with decay
       // Substate 3 (10000-13000ms): Stable sphere with color shift + compression
       
       // Start from starfield position
@@ -270,9 +243,6 @@ export function animateState2And3(
       const fibZ = fibTargetZ;
       
       let colorT = 0;
-      let compressionFactor = 1;
-      let baseRadius: number;
-      
       // Substate 1 draw-in duration (0-6000ms)
       const drawInDuration = STATE2_ABSORPTION_DURATION;
       const colorInterpolationStart =
@@ -319,7 +289,7 @@ export function animateState2And3(
         positions[i3 + 2] = rz;
         
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Spike/thorn bounce effect with smooth ramp in and decay out
+        // Substate 2: Calm shell overshoot with smooth ramp in and decay out
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         const preFx = startX + (fibX - startX) * drawInEased;
@@ -343,31 +313,26 @@ export function animateState2And3(
         const fz = anchorX * sinA + anchorZ * cosA;
         const fy = anchorY;
         
-        // Spike/thorn bounce calculation - repetitive throughout s2
-        const idxPhase = (i % 11) * 0.57; // 11 phase groups
-        const speedGroup = (i % 7); // 7 speed groups
-        const baseFreq = 12 + speedGroup * 2.5 + rnd * 3;
+        // Calm damped overshoot: slower, heavier motion instead of repetitive spikes.
+        const idxPhase = (i % 13) * 0.31;
+        const wavePhase = time * (1.2 + rnd * 0.5) + idxPhase;
+        const settlePulse = Math.max(
+          0,
+          Math.sin(localBounceProgress * Math.PI * 1.25)
+        ) * Math.exp(-localBounceProgress * 1.7);
+        const calmOscillation = (Math.sin(wavePhase) * 0.5 + 0.5) * 0.25;
+        const fullBounceAmp = SHELL_RADIUS * (0.06 + rnd * 0.12);
         
-        // Multi-wave for sharp spikes - REPETITIVE (continuous oscillation)
-        const primaryWave = Math.sin(time * baseFreq + idxPhase);
-        const harmonicWave = Math.sin(time * baseFreq * 2.7 + idxPhase * 1.3) * 0.4;
-        const slowPulse = Math.sin(time * baseFreq * 0.4 + idxPhase * 0.5) * 0.2;
-        const spikeWave = primaryWave + harmonicWave * Math.abs(primaryWave) + slowPulse;
-        
-        // Base amplitude for full bounce
-        const baseAmp = 0.3 + rnd * 0.4; // 30-70% of shell radius
-        const fullBounceAmp = SHELL_RADIUS * baseAmp;
-        
-        // Smooth envelope: ramp up over 30%, hold, then decay over 40%
+        // Smooth envelope: ramp up gently, hold briefly, then decay.
         let amplitudeFactor = 0;
         if (hasReachedShell) {
           if (localBounceProgress < 0.3) {
             // Ramp up from circumference after this particle arrives.
-            amplitudeFactor = easeOutCubic(localBounceProgress / 0.3);
-          } else if (localBounceProgress < 0.6) {
-            amplitudeFactor = 1;
+            amplitudeFactor = easeOutCubic(localBounceProgress / 0.35);
+          } else if (localBounceProgress < 0.5) {
+            amplitudeFactor = 0.85;
           } else {
-            const decayProgress = (localBounceProgress - 0.6) / 0.4;
+            const decayProgress = (localBounceProgress - 0.5) / 0.5;
             amplitudeFactor = 1 - easeOutCubic(decayProgress);
           }
         }
@@ -383,8 +348,7 @@ export function animateState2And3(
         const bounceAmp = fullBounceAmp * amplitudeFactor;
         
         // Circumference-outward bounce only (never inward toward core).
-        const outwardPulse = Math.max(0, spikeWave);
-        const bounceOffset = outwardPulse * bounceAmp;
+        const bounceOffset = (settlePulse * 0.7 + calmOscillation * 0.3) * bounceAmp;
         const r = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
         const scale = 1 + (bounceOffset / r);
         
@@ -399,7 +363,7 @@ export function animateState2And3(
         const s3Eased = easeOutCubic(s3Progress);
         
         // Compression: 100% -> 80%
-        compressionFactor = 1 - (s3Eased * 0.2);
+        const compressionFactor = 1 - (s3Eased * 0.2);
         
         // Continue color shift that started in substate 2 decay
         colorT = Math.min(
@@ -422,8 +386,8 @@ export function animateState2And3(
       
       // Color interpolation (blue -> orange, only in substate 3)
       const colorEased = easeOutCubic(colorT);
-      const flicker = (1 - colorT) * Math.sin(time * 0.008 + rnd * 5) * 0.15;
-      const brightness = 0.85 + flicker;
+      const flicker = (1 - colorT) * Math.sin(time * 0.7 + rnd * 5) * 0.04;
+      const brightness = 0.88 + flicker;
       colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
       colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
       colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
@@ -470,7 +434,8 @@ export function animatePlanets(
   planets: PlanetInstance[],
   orbitGroup: THREE.Group | null,
   stateElapsed: number,
-  speed: number
+  speed: number,
+  frameScale: number
 ): void {
   const startPos = new THREE.Vector3(-90, -70, 30);
 
@@ -508,7 +473,7 @@ export function animatePlanets(
     // Once entered, orbit at 2x speed
     if (entryProgress >= 1) {
       const prevAngle = planet.angle;
-      planet.angle += planet.speed * 0.06 * speed; // 2x faster orbit speed
+      planet.angle += planet.speed * 0.06 * speed * frameScale; // 2x faster orbit speed
       const delta = planet.angle - prevAngle;
 
       if (!planet.hasCompletedFirstOrbit) {
@@ -557,6 +522,7 @@ export function animateState4(
   snapshotPositions: Float32Array,
   burstVelocities: Float32Array,
   time: number,
+  frameScale: number,
   primaryColor: THREE.Color,
   secondaryColor: THREE.Color
 ): void {
@@ -621,20 +587,21 @@ export function animateState4(
 
     if (burstElapsed < BURST_DURATION) {
       const fadeNorm = 1 / BURST_DURATION;
+      const damping = Math.pow(BURST_DAMPING, frameScale);
       
       for (let i = 0; i < TOTAL_MAIN; i++) {
         const i3 = i * 3;
 
         if (migrator[i]) {
           // Apply damping to velocity
-          burstVelocities[i3] *= BURST_DAMPING;
-          burstVelocities[i3 + 1] *= BURST_DAMPING;
-          burstVelocities[i3 + 2] *= BURST_DAMPING;
+          burstVelocities[i3] *= damping;
+          burstVelocities[i3 + 1] *= damping;
+          burstVelocities[i3 + 2] *= damping;
 
           // Update position
-          positions[i3] += burstVelocities[i3];
-          positions[i3 + 1] += burstVelocities[i3 + 1];
-          positions[i3 + 2] += burstVelocities[i3 + 2];
+          positions[i3] += burstVelocities[i3] * frameScale;
+          positions[i3 + 1] += burstVelocities[i3 + 1] * frameScale;
+          positions[i3 + 2] += burstVelocities[i3 + 2] * frameScale;
 
           // Fade out with enhanced glow
           const fade = Math.max(0, 1 - burstElapsed * fadeNorm);
