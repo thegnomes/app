@@ -29,7 +29,7 @@ const STATE_CONTENT: Record<AppState, StateTextContent> = {
   },
 };
 
-const TYPING_SPEED_MS = 12; // Faster typing
+const TYPING_SPEED_MS = 12;
 const TRANSITION_DURATION_MS = 600;
 
 type Segment = { type: 'text' | 'br'; value: string };
@@ -75,81 +75,84 @@ interface TextInstance {
 }
 
 export function StateText({ state }: { state: AppState }) {
-  const [instances, setInstances] = useState<TextInstance[]>([]);
+  const [current, setCurrent] = useState<TextInstance>({
+    state,
+    headerCount: 0,
+    subtextCount: 0,
+    isTyping: true,
+    opacity: 1,
+    translateY: 0,
+  });
+  const [previous, setPrevious] = useState<TextInstance | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stateRef = useRef(state);
-  const typingStateRef = useRef<AppState | null>(null);
+  const typingStateRef = useRef<AppState>(state);
 
-  // Track current state
   useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+    if (current.state === state) {
+      return;
+    }
+    const previousInstance: TextInstance = {
+      ...current,
+      isTyping: false,
+      opacity: 0.2,
+      translateY: -30,
+    };
+    const nextCurrent: TextInstance = {
+      state,
+      headerCount: 0,
+      subtextCount: 0,
+      isTyping: true,
+      opacity: 1,
+      translateY: 30,
+    };
 
-  // Handle state changes - add new instance and transition old ones
-  useEffect(() => {
-    const currentState = state;
-    
-    setInstances((prev) => {
-      // Check if we already have this state
-      if (prev.some((inst) => inst.state === currentState)) {
-        return prev;
-      }
-
-      // Create new instance for current state
-      const newInstance: TextInstance = {
-        state: currentState,
-        headerCount: 0,
-        subtextCount: 0,
-        isTyping: true,
-        opacity: 1,
-        translateY: 20, // Start slightly below
-      };
-
-      // Transition existing instances (shift up and fade)
-      const transitioned = prev.map((inst) => ({
-        ...inst,
-        isTyping: false,
-        opacity: 0,
-        translateY: -30, // Shift up
-      }));
-
-      return [...transitioned, newInstance];
+    requestAnimationFrame(() => {
+      setPrevious(previousInstance);
+      setCurrent(nextCurrent);
+      typingStateRef.current = state;
+      requestAnimationFrame(() => {
+        setCurrent((prev) => ({
+          ...prev,
+          translateY: 0,
+        }));
+      });
     });
 
-    // Clean up old instances after transition
+    if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      setInstances((prev) => prev.filter((inst) => inst.state === currentState || inst.opacity > 0));
-    }, TRANSITION_DURATION_MS + 100);
+      setPrevious((prev) => {
+        if (!prev || prev.state === state) {
+          return null;
+        }
+        return {
+          ...prev,
+          opacity: 0,
+          translateY: -40,
+        };
+      });
+    }, TRANSITION_DURATION_MS);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [state]);
+  }, [state, current]);
 
-  // Typing animation for current instance
   useEffect(() => {
-    const currentInstance = instances.find((inst) => inst.state === state && inst.isTyping);
-    if (!currentInstance) return;
-
-    const content = STATE_CONTENT[state];
+    const content = STATE_CONTENT[current.state];
     const headerSegments = parseSegments(content.header);
     const subtextSegments = parseSegments(content.subtext);
     const headerTotal = countChars(headerSegments);
     const subtextTotal = countChars(subtextSegments);
 
-    typingStateRef.current = state;
+    if (!current.isTyping) return;
 
     const typeNext = () => {
-      if (typingStateRef.current !== state) return;
+      if (typingStateRef.current !== current.state) return;
 
-      setInstances((prev) => {
-        const idx = prev.findIndex((inst) => inst.state === state);
-        if (idx === -1) return prev;
-
-        const inst = prev[idx];
-        let newHeaderCount = inst.headerCount;
-        let newSubtextCount = inst.subtextCount;
-        let newIsTyping = inst.isTyping;
+      setCurrent((prev) => {
+        let newHeaderCount = prev.headerCount;
+        let newSubtextCount = prev.subtextCount;
+        let newIsTyping = prev.isTyping;
 
         if (newHeaderCount < headerTotal) {
           newHeaderCount += 1;
@@ -159,25 +162,17 @@ export function StateText({ state }: { state: AppState }) {
           newIsTyping = false;
         }
 
-        const updated = [...prev];
-        updated[idx] = {
-          ...inst,
+        return {
+          ...prev,
           headerCount: newHeaderCount,
           subtextCount: newSubtextCount,
           isTyping: newIsTyping,
         };
-        return updated;
       });
 
-      const current = instances.find((inst) => inst.state === state);
-      const headerDone = current ? current.headerCount >= headerTotal : false;
-      const subtextDone = current ? current.subtextCount >= subtextTotal : false;
-
-      if (!headerDone || !subtextDone) {
-        timerRef.current = setTimeout(() => {
-          requestAnimationFrame(typeNext);
-        }, TYPING_SPEED_MS);
-      }
+      timerRef.current = setTimeout(() => {
+        requestAnimationFrame(typeNext);
+      }, TYPING_SPEED_MS);
     };
 
     timerRef.current = setTimeout(() => {
@@ -187,57 +182,84 @@ export function StateText({ state }: { state: AppState }) {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [instances, state]);
+  }, [current]);
+
+  const nextState = ((current.state + 1) % 5) as AppState;
+  const queuedContent = STATE_CONTENT[nextState];
+
+  const renderTextBlock = (instance: TextInstance, mode: 'previous' | 'current') => {
+    const content = STATE_CONTENT[instance.state];
+    const headerSegments = parseSegments(content.header);
+    const subtextSegments = parseSegments(content.subtext);
+    const headerTotal = countChars(headerSegments);
+    const subtextTotal = countChars(subtextSegments);
+
+    const showHeaderCursor = mode === 'current' && instance.isTyping && instance.headerCount < headerTotal;
+    const showSubtextCursor =
+      mode === 'current' &&
+      instance.isTyping &&
+      instance.headerCount >= headerTotal &&
+      instance.subtextCount < subtextTotal;
+
+    return (
+      <div
+        key={`${mode}-${instance.state}`}
+        className="absolute left-0 top-0 w-full transition-all ease-out"
+        style={{
+          transitionDuration: `${TRANSITION_DURATION_MS}ms`,
+          opacity: mode === 'current' ? 1 : instance.opacity,
+          transform: `translateY(${instance.translateY}px)`,
+        }}
+      >
+        <h1
+          className="text-[14px] font-bold tracking-wide gradient-text text-center leading-relaxed"
+          style={{
+            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+          }}
+        >
+          {buildHtml(headerSegments, mode === 'current' ? instance.headerCount : headerTotal)}
+          {showHeaderCursor && (
+            <span className="inline-block w-0.5 h-[1em] bg-purple-400/80 ml-0.5 align-middle animate-pulse" />
+          )}
+        </h1>
+
+        <p
+          className="mt-2 text-[14px] font-medium tracking-wide text-white/90 text-center leading-relaxed"
+          style={{
+            textShadow: '0 0 20px rgba(255, 255, 255, 0.2)',
+          }}
+        >
+          {buildHtml(subtextSegments, mode === 'current' ? instance.subtextCount : subtextTotal)}
+          {showSubtextCursor && (
+            <span className="inline-block w-0.5 h-[1em] bg-white/80 ml-0.5 align-middle animate-pulse" />
+          )}
+        </p>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-20 pointer-events-none">
-      <div className="absolute left-[50px] top-1/2 -translate-y-1/2 w-[50vw]">
-        {instances.map((inst) => {
-          const content = STATE_CONTENT[inst.state];
-          const headerSegments = parseSegments(content.header);
-          const subtextSegments = parseSegments(content.subtext);
-          const headerTotal = countChars(headerSegments);
-          const subtextTotal = countChars(subtextSegments);
+      <div className="absolute left-1/2 top-1/2 w-[56vw] -translate-x-1/2 -translate-y-1/2">
+        <div className="relative min-h-[140px]">
+          {previous && renderTextBlock(previous, 'previous')}
+          {renderTextBlock(current, 'current')}
+        </div>
 
-          const showHeaderCursor = inst.isTyping && inst.headerCount < headerTotal;
-          const showSubtextCursor =
-            inst.isTyping && inst.headerCount >= headerTotal && inst.subtextCount < subtextTotal;
-
-          return (
-            <div
-              key={inst.state}
-              className="absolute left-0 top-0 transition-all duration-500 ease-out"
-              style={{
-                opacity: inst.opacity,
-                transform: `translateY(${inst.translateY}px)`,
-              }}
-            >
-              <h1
-                className="text-[14px] font-bold tracking-wide gradient-text text-left leading-relaxed"
-                style={{
-                  textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
-                }}
-              >
-                {buildHtml(headerSegments, inst.headerCount)}
-                {showHeaderCursor && (
-                  <span className="inline-block w-0.5 h-[1em] bg-purple-400/80 ml-0.5 align-middle animate-pulse" />
-                )}
-              </h1>
-
-              <p
-                className="mt-2 text-[14px] font-medium tracking-wide text-white/90 text-left leading-relaxed"
-                style={{
-                  textShadow: '0 0 20px rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                {buildHtml(subtextSegments, inst.subtextCount)}
-                {showSubtextCursor && (
-                  <span className="inline-block w-0.5 h-[1em] bg-white/80 ml-0.5 align-middle animate-pulse" />
-                )}
-              </p>
-            </div>
-          );
-        })}
+        <div
+          className="mt-6 text-center opacity-35 transition-all ease-out"
+          style={{
+            transitionDuration: `${TRANSITION_DURATION_MS}ms`,
+            transform: 'translateY(24px)',
+          }}
+        >
+          <h2 className="text-[12px] font-semibold tracking-wide text-white/70 leading-relaxed">
+            {queuedContent.header.replaceAll('<br>', ' ')}
+          </h2>
+          <p className="mt-1 text-[12px] font-medium tracking-wide text-white/55 leading-relaxed">
+            {queuedContent.subtext.replaceAll('<br>', ' ')}
+          </p>
+        </div>
       </div>
     </div>
   );
