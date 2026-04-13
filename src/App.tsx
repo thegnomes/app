@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ParticleCanvas } from './components/ParticleCanvas';
-import { ControlPanel } from './components/ControlPanel';
 import { StateText } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import './App.css';
+import { DEFAULT_CONFIG } from '@/types';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
@@ -13,21 +13,8 @@ import {
 
 export type AppState = 0 | 1 | 2 | 3 | 4;
 
-export interface ParticleConfig {
-  speed: number;
-  centerColor: string;
-  ambientColor: string;
-}
-
-const defaultConfig: ParticleConfig = {
-  speed: 1.0,
-  centerColor: '#ffd700',
-  ambientColor: '#60a5fa',
-};
-
 function App() {
   const [state, setState] = useState<AppState>(0);
-  const [config, setConfig] = useState<ParticleConfig>(defaultConfig);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -220,14 +207,11 @@ function App() {
       <div className="particle-canvas-container">
         <ParticleCanvas 
           state={state} 
-          config={config} 
+          config={DEFAULT_CONFIG}
           cameraPanRef={cameraPanRef}
         />
       </div>
       <StateText state={state} />
-      <div className="control-panel">
-        <ControlPanel state={state} setState={setState} config={config} setConfig={setConfig} />
-      </div>
       <Footer />
     </div>
   );
