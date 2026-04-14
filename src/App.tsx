@@ -1,20 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ParticleCanvas } from './components/ParticleCanvas';
-import { StateText } from './components/StateText';
+import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import './App.css';
-import { DEFAULT_CONFIG } from '@/types';
+import { DEFAULT_CONFIG, type AppState } from '@/types';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-export type AppState = 0 | 1 | 2 | 3 | 4;
-
 function App() {
   const [state, setState] = useState<AppState>(0);
+  const [textState, setTextState] = useState<TextSceneState>(0);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -63,6 +62,7 @@ function App() {
   // Handle transition from State 0 (video brain) to State 1 (starfield)
   const handleVideoTransition = useCallback(() => {
     setState(1);
+    setTextState(1);
   }, []);
 
   // Separate mouse handler for canvas pan (only works on particle canvas)
@@ -133,12 +133,14 @@ function App() {
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
       setState(2);
+      setTextState(2);
       inState2Ref.current = true;
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
       const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       substateTimersRef.current.push(
         setTimeout(() => {
+          setTextState(3);
           dispatchState2SubstateEvent(
             2,
             STATE2_ABSORPTION_DURATION,
@@ -148,6 +150,7 @@ function App() {
       );
       substateTimersRef.current.push(
         setTimeout(() => {
+          setTextState(4);
           dispatchState2SubstateEvent(
             3,
             substate3Start,
@@ -160,6 +163,8 @@ function App() {
         // State 2 complete - ready for planet entry on mouse release
         inState2Ref.current = false;
         planetEntryReadyRef.current = true;
+        holdTimerRef.current = null;
+        setTextState(6);
       }, STATE2_DURATION);
     };
 
@@ -168,6 +173,7 @@ function App() {
         // Released early during State 2 - go to collapse
         clearState2Timers();
         inState2Ref.current = false;
+        setTextState(5);
         setState(4);
       } else if (planetEntryReadyRef.current) {
         // Released after State 2 completed - planets start entering orbit
@@ -194,7 +200,10 @@ function App() {
   // Auto-return from state 4 to state 1
   useEffect(() => {
     if (state === 4) {
-      const t = setTimeout(() => setState(1), 2500);
+      const t = setTimeout(() => {
+        setState(1);
+        setTextState(1);
+      }, 2500);
       return () => clearTimeout(t);
     }
   }, [state]);
@@ -211,7 +220,7 @@ function App() {
           cameraPanRef={cameraPanRef}
         />
       </div>
-      <StateText state={state} />
+      <StateText state={textState} />
       <Footer />
     </div>
   );

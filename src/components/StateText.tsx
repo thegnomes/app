@@ -1,264 +1,296 @@
-import React, { useState, useEffect, useRef } from 'react';
-import type { AppState } from '../App';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-interface StateTextContent {
+export type TextSceneState = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'silence';
+
+interface StateTextConfig {
   header: string;
   subtext: string;
+  revealMode: RevealMode;
+  headerDelay: number;
+  subtextDelay: number;
+  transitionDuration: number;
+  lingerPrevious: number;
 }
 
-const STATE_CONTENT: Record<AppState, StateTextContent> = {
+const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
-    header: 'I have a Theory',
-    subtext: 'A universe exists in each of our minds.Thoughts drift like stardust,until a click of inspiration strikes a spark.',
+    header: 'I have a theory.',
+    subtext: '',
+    revealMode: 'soft',
+    headerDelay: 180,
+    subtextDelay: 0,
+    transitionDuration: 900,
+    lingerPrevious: 0,
   },
   1: {
-    header: 'Ideas begin with thoughts that matter.<br>But a spark alone does not become a star.',
-    subtext: 'It needs a centre — something solid enough to gather around.<br>A light tap, and the pull begins.',
+    header: 'Ideas begin as drift.',
+    subtext: 'Something scattered. Not yet formed.',
+    revealMode: 'airy',
+    headerDelay: 180,
+    subtextDelay: 900,
+    transitionDuration: 1100,
+    lingerPrevious: 420,
   },
   2: {
-    header: 'Time. Pressure. Intent',
-    subtext: 'An idea starts to hold<br>when its core takes shape.',
+    header: 'Time. Pressure. Intent.',
+    subtext: 'A centre begins to hold.',
+    revealMode: 'firm',
+    headerDelay: 80,
+    subtextDelay: 360,
+    transitionDuration: 520,
+    lingerPrevious: 240,
   },
   3: {
-    header: 'Then comes the moment <br>when potential is released into light.',
-    subtext: 'A kind of star that draws worlds into orbit,<br> finding its place in the universe.',
+    header: 'What gathers, begins to last.',
+    subtext: '',
+    revealMode: 'bridge',
+    headerDelay: 40,
+    subtextDelay: 0,
+    transitionDuration: 320,
+    lingerPrevious: 180,
   },
   4: {
-    header: 'Most ideas burn bright at first,',
-    subtext: 'then fade back into the void.',
+    header: 'Then comes the moment\nwhen potential turns to light.',
+    subtext: 'Not just bright enough to burn —\nsteady enough to draw worlds into orbit.',
+    revealMode: 'payoff',
+    headerDelay: 90,
+    subtextDelay: 560,
+    transitionDuration: 1050,
+    lingerPrevious: 260,
+  },
+  5: {
+    header: '',
+    subtext: '',
+    revealMode: 'silence',
+    headerDelay: 0,
+    subtextDelay: 0,
+    transitionDuration: 820,
+    lingerPrevious: 820,
+  },
+  6: {
+    header: 'But not every star endures.',
+    subtext: '',
+    revealMode: 'reflection',
+    headerDelay: 420,
+    subtextDelay: 0,
+    transitionDuration: 900,
+    lingerPrevious: 420,
   },
 };
 
-const TYPING_SPEED_MS = 12;
-const TRANSITION_DURATION_MS = 600;
-
-type Segment = { type: 'text' | 'br'; value: string };
-
-function parseSegments(text: string): Segment[] {
-  const result: Segment[] = [];
-  const parts = text.split('<br>');
-  parts.forEach((part, i) => {
-    if (part) result.push({ type: 'text', value: part });
-    if (i < parts.length - 1) result.push({ type: 'br', value: '<br>' });
-  });
-  return result;
+interface TextBlockInstance {
+  id: number;
+  state: TextSceneState;
+  config: StateTextConfig;
+  phase: 'enter' | 'visible' | 'exit';
+  headerVisible: boolean;
+  subtextVisible: boolean;
+  exitDuration?: number;
 }
 
-function countChars(segments: Segment[]): number {
-  return segments.reduce((sum, seg) => sum + (seg.type === 'text' ? seg.value.length : 0), 0);
+const ENTER_Y_BY_MODE: Record<RevealMode, number> = {
+  soft: 8,
+  airy: 18,
+  firm: 10,
+  bridge: 4,
+  payoff: 10,
+  reflection: 8,
+  silence: 0,
+};
+
+const EXIT_Y_BY_MODE: Record<RevealMode, number> = {
+  soft: -8,
+  airy: -24,
+  firm: -16,
+  bridge: -10,
+  payoff: -18,
+  reflection: -10,
+  silence: -14,
+};
+
+function hasText(config: StateTextConfig): boolean {
+  return Boolean(config.header || config.subtext);
 }
 
-function buildHtml(segments: Segment[], count: number): React.ReactNode {
-  let remaining = Math.max(0, count);
-  const nodes: React.ReactNode[] = [];
-  segments.forEach((seg, i) => {
-    if (seg.type === 'text') {
-      const take = Math.min(remaining, seg.value.length);
-      if (take > 0) {
-        nodes.push(<span key={`t-${i}`}>{seg.value.slice(0, take)}</span>);
-        remaining -= take;
-      }
-    } else if (seg.type === 'br') {
-      nodes.push(<br key={`b-${i}`} />);
-    }
-  });
-  return <>{nodes}</>;
+function renderMultiline(text: string): ReactNode {
+  return text.split('\n').map((line, index, lines) => (
+    <span key={`${line}-${index}`}>
+      {line}
+      {index < lines.length - 1 && <br />}
+    </span>
+  ));
 }
 
-interface TextInstance {
-  state: AppState;
-  headerCount: number;
-  subtextCount: number;
-  isTyping: boolean;
-  opacity: number;
-  translateY: number;
-}
-
-export function StateText({ state }: { state: AppState }) {
-  const [current, setCurrent] = useState<TextInstance>({
+function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
+  return {
+    id,
     state,
-    headerCount: 0,
-    subtextCount: 0,
-    isTyping: true,
-    opacity: 1,
-    translateY: 0,
-  });
-  const [previous, setPrevious] = useState<TextInstance | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const typingStateRef = useRef<AppState>(state);
+    config: STATE_TEXT_CONFIG[state],
+    phase: 'enter',
+    headerVisible: false,
+    subtextVisible: false,
+  };
+}
+
+function getHeaderTone(revealMode: RevealMode): string {
+  if (revealMode === 'payoff') return 'text-[#ffd4a3]';
+  if (revealMode === 'reflection') return 'text-white/90';
+  if (revealMode === 'silence') return 'text-transparent';
+  return 'gradient-text';
+}
+
+function getSubtextTone(revealMode: RevealMode): string {
+  if (revealMode === 'payoff') return 'text-orange-50/90';
+  if (revealMode === 'reflection') return 'text-white/65';
+  return 'text-white/85';
+}
+
+function getHeaderShadow(revealMode: RevealMode): string {
+  if (revealMode === 'payoff') return '0 0 34px rgba(249, 115, 22, 0.52)';
+  if (revealMode === 'reflection') return '0 0 24px rgba(255, 255, 255, 0.18)';
+  return '0 0 30px rgba(168, 85, 247, 0.5)';
+}
+
+function getSubtextShadow(revealMode: RevealMode): string {
+  if (revealMode === 'payoff') return '0 0 24px rgba(251, 146, 60, 0.32)';
+  return '0 0 20px rgba(255, 255, 255, 0.18)';
+}
+
+export function StateText({ state }: { state: TextSceneState }) {
+  const [active, setActive] = useState<TextBlockInstance | null>(null);
+  const [previous, setPrevious] = useState<TextBlockInstance | null>(null);
+  const activeRef = useRef<TextBlockInstance | null>(null);
+  const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const nextIdRef = useRef(0);
 
   useEffect(() => {
-    if (current.state === state) {
-      return;
-    }
-    const previousInstance: TextInstance = {
-      ...current,
-      isTyping: false,
-      opacity: 0.2,
-      translateY: -30,
-    };
-    const nextCurrent: TextInstance = {
-      state,
-      headerCount: 0,
-      subtextCount: 0,
-      isTyping: true,
-      opacity: 1,
-      translateY: 30,
+    activeRef.current = active;
+  }, [active]);
+
+  useEffect(() => {
+    const clearTimers = () => {
+      timerRefs.current.forEach((timerId) => clearTimeout(timerId));
+      timerRefs.current = [];
     };
 
-    requestAnimationFrame(() => {
+    const queueTimer = (callback: () => void, delay: number) => {
+      const timerId = setTimeout(callback, delay);
+      timerRefs.current.push(timerId);
+    };
+
+    clearTimers();
+
+    const nextConfig = STATE_TEXT_CONFIG[state];
+    const outgoing = activeRef.current;
+    if (outgoing && hasText(outgoing.config) && nextConfig.lingerPrevious > 0) {
+      const previousInstance: TextBlockInstance = {
+        ...outgoing,
+        phase: 'visible',
+        headerVisible: true,
+        subtextVisible: true,
+        exitDuration: nextConfig.transitionDuration,
+      };
       setPrevious(previousInstance);
-      setCurrent(nextCurrent);
-      typingStateRef.current = state;
-      requestAnimationFrame(() => {
-        setCurrent((prev) => ({
-          ...prev,
-          translateY: 0,
-        }));
-      });
-    });
+      queueTimer(() => {
+        setPrevious((prev) => (prev?.id === previousInstance.id ? { ...prev, phase: 'exit' } : prev));
+      }, 20);
+      queueTimer(() => {
+        setPrevious((prev) => (prev?.id === previousInstance.id ? null : prev));
+      }, nextConfig.transitionDuration + nextConfig.lingerPrevious);
+    } else {
+      setPrevious(null);
+    }
 
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setPrevious((prev) => {
-        if (!prev || prev.state === state) {
-          return null;
-        }
-        return {
-          ...prev,
-          opacity: 0,
-          translateY: -40,
-        };
-      });
-    }, TRANSITION_DURATION_MS);
+    const nextInstance = createTextInstance(state, nextIdRef.current);
+    nextIdRef.current += 1;
+    setActive(nextInstance);
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [state, current]);
+    if (nextConfig.header) {
+      queueTimer(() => {
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, phase: 'visible', headerVisible: true }
+            : current
+        );
+      }, nextConfig.headerDelay);
+    }
 
-  useEffect(() => {
-    const content = STATE_CONTENT[current.state];
-    const headerSegments = parseSegments(content.header);
-    const subtextSegments = parseSegments(content.subtext);
-    const headerTotal = countChars(headerSegments);
-    const subtextTotal = countChars(subtextSegments);
+    if (nextConfig.subtext) {
+      queueTimer(() => {
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, phase: 'visible', subtextVisible: true }
+            : current
+        );
+      }, nextConfig.subtextDelay);
+    }
 
-    if (!current.isTyping) return;
+    return clearTimers;
+  }, [state]);
 
-    const typeNext = () => {
-      if (typingStateRef.current !== current.state) return;
+  const renderTextBlock = (instance: TextBlockInstance, mode: 'previous' | 'active') => {
+    if (!hasText(instance.config)) return null;
 
-      setCurrent((prev) => {
-        let newHeaderCount = prev.headerCount;
-        let newSubtextCount = prev.subtextCount;
-        let newIsTyping = prev.isTyping;
-
-        if (newHeaderCount < headerTotal) {
-          newHeaderCount += 1;
-        } else if (newSubtextCount < subtextTotal) {
-          newSubtextCount += 1;
-        } else {
-          newIsTyping = false;
-        }
-
-        return {
-          ...prev,
-          headerCount: newHeaderCount,
-          subtextCount: newSubtextCount,
-          isTyping: newIsTyping,
-        };
-      });
-
-      timerRef.current = setTimeout(() => {
-        requestAnimationFrame(typeNext);
-      }, TYPING_SPEED_MS);
-    };
-
-    timerRef.current = setTimeout(() => {
-      requestAnimationFrame(typeNext);
-    }, TYPING_SPEED_MS);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [current]);
-
-  const nextState = ((current.state + 1) % 5) as AppState;
-  const queuedContent = STATE_CONTENT[nextState];
-
-  const renderTextBlock = (instance: TextInstance, mode: 'previous' | 'current') => {
-    const content = STATE_CONTENT[instance.state];
-    const headerSegments = parseSegments(content.header);
-    const subtextSegments = parseSegments(content.subtext);
-    const headerTotal = countChars(headerSegments);
-    const subtextTotal = countChars(subtextSegments);
-
-    const showHeaderCursor = mode === 'current' && instance.isTyping && instance.headerCount < headerTotal;
-    const showSubtextCursor =
-      mode === 'current' &&
-      instance.isTyping &&
-      instance.headerCount >= headerTotal &&
-      instance.subtextCount < subtextTotal;
+    const { config, phase } = instance;
+    const isExiting = phase === 'exit';
+    const blockOpacity = isExiting ? 0 : 1;
+    const blockY = isExiting ? EXIT_Y_BY_MODE[config.revealMode] : 0;
+    const duration = instance.exitDuration ?? config.transitionDuration;
+    const enterY = ENTER_Y_BY_MODE[config.revealMode];
+    const headerOpacity = instance.headerVisible && !isExiting ? 1 : 0;
+    const subtextOpacity = instance.subtextVisible && !isExiting ? 1 : 0;
+    const headerY = instance.headerVisible ? 0 : enterY;
+    const subtextY = instance.subtextVisible ? 0 : enterY + 4;
 
     return (
       <div
-        key={`${mode}-${instance.state}`}
+        key={`${mode}-${instance.id}-${instance.state}`}
         className="absolute left-0 top-0 w-full transition-all ease-out"
         style={{
-          transitionDuration: `${TRANSITION_DURATION_MS}ms`,
-          opacity: mode === 'current' ? 1 : instance.opacity,
-          transform: `translateY(${instance.translateY}px)`,
+          opacity: blockOpacity,
+          transform: `translate3d(0, ${blockY}px, 0)`,
+          transitionDuration: `${duration}ms`,
         }}
       >
-        <h1
-          className="text-[14px] font-bold tracking-wide gradient-text text-center leading-relaxed"
-          style={{
-            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
-          }}
-        >
-          {buildHtml(headerSegments, mode === 'current' ? instance.headerCount : headerTotal)}
-          {showHeaderCursor && (
-            <span className="inline-block w-0.5 h-[1em] bg-purple-400/80 ml-0.5 align-middle animate-pulse" />
-          )}
-        </h1>
+        {config.header && (
+          <h1
+            className={`text-center text-[18px] sm:text-[22px] font-bold leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
+            style={{
+              opacity: headerOpacity,
+              transform: `translate3d(0, ${headerY}px, 0)`,
+              transitionDuration: `${config.transitionDuration}ms`,
+              textShadow: getHeaderShadow(config.revealMode),
+            }}
+          >
+            {renderMultiline(config.header)}
+          </h1>
+        )}
 
-        <p
-          className="mt-2 text-[14px] font-medium tracking-wide text-white/90 text-center leading-relaxed"
-          style={{
-            textShadow: '0 0 20px rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          {buildHtml(subtextSegments, mode === 'current' ? instance.subtextCount : subtextTotal)}
-          {showSubtextCursor && (
-            <span className="inline-block w-0.5 h-[1em] bg-white/80 ml-0.5 align-middle animate-pulse" />
-          )}
-        </p>
+        {config.subtext && (
+          <p
+            className={`mt-4 text-center text-[14px] sm:text-[15px] font-medium leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
+            style={{
+              opacity: subtextOpacity,
+              transform: `translate3d(0, ${subtextY}px, 0)`,
+              transitionDuration: `${config.transitionDuration}ms`,
+              textShadow: getSubtextShadow(config.revealMode),
+            }}
+          >
+            {renderMultiline(config.subtext)}
+          </p>
+        )}
       </div>
     );
   };
 
   return (
     <div className="fixed inset-0 z-20 pointer-events-none">
-      <div className="absolute left-1/2 top-1/2 w-[56vw] -translate-x-1/2 -translate-y-1/2">
-        <div className="relative min-h-[140px]">
+      <div className="absolute left-1/2 top-1/2 w-[min(78vw,820px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
+        <div className="relative min-h-[180px]">
           {previous && renderTextBlock(previous, 'previous')}
-          {renderTextBlock(current, 'current')}
-        </div>
-
-        <div
-          className="mt-6 text-center opacity-35 transition-all ease-out"
-          style={{
-            transitionDuration: `${TRANSITION_DURATION_MS}ms`,
-            transform: 'translateY(24px)',
-          }}
-        >
-          <h2 className="text-[12px] font-semibold tracking-wide text-white/70 leading-relaxed">
-            {queuedContent.header.replaceAll('<br>', ' ')}
-          </h2>
-          <p className="mt-1 text-[12px] font-medium tracking-wide text-white/55 leading-relaxed">
-            {queuedContent.subtext.replaceAll('<br>', ' ')}
-          </p>
+          {active && renderTextBlock(active, 'active')}
         </div>
       </div>
     </div>
