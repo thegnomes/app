@@ -283,7 +283,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute left-0 top-0 w-full transition-all ease-out"
+        className="absolute left-0 top-0 grid w-full grid-cols-[minmax(0,1fr)_clamp(72px,16vw,220px)_minmax(0,1fr)] items-center transition-all ease-out"
         style={{
           opacity: blockOpacity,
           transform: `translate3d(0, ${blockY}px, 0)`,
@@ -292,7 +292,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`font-unica text-center text-[20px] sm:text-[26px] font-normal leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
+            className={`font-unica col-start-1 text-right text-[30px] sm:text-[39px] font-normal leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
@@ -306,7 +306,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`font-unica mt-4 text-center text-[16px] sm:text-[18px] font-normal leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
+            className={`font-unica col-start-3 text-left text-[24px] sm:text-[27px] font-normal leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
@@ -323,7 +323,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
   return (
     <div className="fixed inset-0 z-20 pointer-events-none">
-      <div className="absolute left-1/2 top-1/2 w-[min(78vw,820px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
+      <div className="absolute left-1/2 top-1/2 w-[min(92vw,1120px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
         <div className="relative min-h-[180px]">
           {previous && renderTextBlock(previous, 'previous')}
           {active && renderTextBlock(active, 'active')}
