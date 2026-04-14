@@ -10,56 +10,66 @@ interface StateTextConfig {
   revealMode: RevealMode;
   headerDelay: number;
   subtextDelay: number;
+  subtextTypeDuration: number;
   transitionDuration: number;
   lingerPrevious: number;
   autoExitDelay?: number;
+  visibleHeaderWords?: number;
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
-    header: 'I have a theory.',
-    subtext: '',
+    header: 'I have a theory',
+    subtext: 'That what we call the universe is a collective mind made visible.',
     revealMode: 'soft',
     headerDelay: 180,
-    subtextDelay: 0,
+    subtextDelay: 720,
+    subtextTypeDuration: 2100,
     transitionDuration: 900,
     lingerPrevious: 0,
   },
   1: {
-    header: 'Ideas begin as drift.',
-    subtext: 'Something scattered. Not yet formed.',
+    header: 'Every idea begins as drift',
+    subtext: 'Waiting for the click of inspiration.',
     revealMode: 'airy',
     headerDelay: 180,
     subtextDelay: 900,
+    subtextTypeDuration: 1400,
     transitionDuration: 1100,
     lingerPrevious: 420,
   },
   '2.1': {
-    header: 'Time',
+    header: 'Time Pressure Intent',
     subtext: 'Something begins to gather.',
     revealMode: 'firm',
     headerDelay: 80,
     subtextDelay: 360,
+    subtextTypeDuration: 1200,
     transitionDuration: 520,
-    lingerPrevious: 240,
+    lingerPrevious: 0,
+    visibleHeaderWords: 1,
   },
   '2.2': {
-    header: 'Pressure',
+    header: 'Time Pressure Intent',
     subtext: 'The centre learns to hold.',
     revealMode: 'firm',
-    headerDelay: 80,
+    headerDelay: 0,
     subtextDelay: 320,
+    subtextTypeDuration: 1100,
     transitionDuration: 520,
-    lingerPrevious: 240,
+    lingerPrevious: 0,
+    visibleHeaderWords: 2,
   },
   '2.3': {
-    header: 'Intent',
+    header: 'Time Pressure Intent',
     subtext: 'And then, the choice to let go.',
     revealMode: 'firm',
-    headerDelay: 80,
+    headerDelay: 0,
     subtextDelay: 320,
+    subtextTypeDuration: 1200,
     transitionDuration: 620,
-    lingerPrevious: 280,
+    lingerPrevious: 0,
+    visibleHeaderWords: 3,
   },
   3: {
     header: 'What gathers, begins to last.',
@@ -67,15 +77,17 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     revealMode: 'bridge',
     headerDelay: 40,
     subtextDelay: 0,
+    subtextTypeDuration: 0,
     transitionDuration: 320,
     lingerPrevious: 180,
   },
   4: {
-    header: 'Then comes the moment\nwhen potential turns to light.',
-    subtext: 'Not just bright enough to burn —\nsteady enough to draw worlds into orbit.',
+    header: 'Then, light.',
+    subtext: 'What time gathered, pressure held, intent sets alight.',
     revealMode: 'payoff',
     headerDelay: 90,
     subtextDelay: 560,
+    subtextTypeDuration: 1700,
     transitionDuration: 1050,
     lingerPrevious: 260,
   },
@@ -85,6 +97,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     revealMode: 'collapse',
     headerDelay: 80,
     subtextDelay: 360,
+    subtextTypeDuration: 900,
     transitionDuration: 780,
     lingerPrevious: 320,
     autoExitDelay: 1650,
@@ -95,6 +108,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     revealMode: 'reflection',
     headerDelay: 420,
     subtextDelay: 0,
+    subtextTypeDuration: 0,
     transitionDuration: 900,
     lingerPrevious: 420,
   },
@@ -107,6 +121,7 @@ interface TextBlockInstance {
   phase: 'enter' | 'visible' | 'exit';
   headerVisible: boolean;
   subtextVisible: boolean;
+  subtextCount: number;
   exitDuration?: number;
 }
 
@@ -145,6 +160,29 @@ function renderMultiline(text: string): ReactNode {
   ));
 }
 
+function renderPartialMultiline(text: string, count: number): ReactNode {
+  return renderMultiline(text.slice(0, Math.max(0, Math.min(text.length, count))));
+}
+
+function renderHeaderText(config: StateTextConfig): ReactNode {
+  if (!config.visibleHeaderWords) return renderMultiline(config.header);
+
+  const words = config.header.split(' ');
+  return words.map((word, index) => (
+    <span
+      key={`${word}-${index}`}
+      className="inline-block transition-opacity ease-out"
+      style={{
+        opacity: index < config.visibleHeaderWords! ? 1 : 0,
+        transitionDuration: `${config.transitionDuration}ms`,
+      }}
+    >
+      {index > 0 && ' '}
+      {word}
+    </span>
+  ));
+}
+
 function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
   return {
     id,
@@ -153,6 +191,7 @@ function createTextInstance(state: TextSceneState, id: number): TextBlockInstanc
     phase: 'enter',
     headerVisible: false,
     subtextVisible: false,
+    subtextCount: 0,
   };
 }
 
@@ -216,6 +255,7 @@ export function StateText({ state }: { state: TextSceneState }) {
         phase: 'visible',
         headerVisible: true,
         subtextVisible: true,
+        subtextCount: outgoing.config.subtext.length,
         exitDuration: nextConfig.transitionDuration,
       };
       setPrevious(previousInstance);
@@ -243,13 +283,48 @@ export function StateText({ state }: { state: TextSceneState }) {
       }, nextConfig.headerDelay);
     }
 
+    const typeSubtext = () => {
+      const totalChars = nextConfig.subtext.length;
+      if (totalChars === 0) return;
+
+      if (nextConfig.subtextTypeDuration <= 0) {
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, subtextVisible: true, subtextCount: totalChars }
+            : current
+        );
+        return;
+      }
+
+      const startedAt = performance.now();
+      const tickMs = Math.max(28, Math.min(70, nextConfig.subtextTypeDuration / totalChars));
+
+      const tick = () => {
+        const progress = Math.min(1, (performance.now() - startedAt) / nextConfig.subtextTypeDuration);
+        const nextCount = Math.min(totalChars, Math.ceil(totalChars * progress));
+
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, subtextVisible: true, subtextCount: nextCount }
+            : current
+        );
+
+        if (progress < 1) {
+          queueTimer(tick, tickMs);
+        }
+      };
+
+      tick();
+    };
+
     if (nextConfig.subtext) {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
-            ? { ...current, phase: 'visible', subtextVisible: true }
+            ? { ...current, phase: 'visible', subtextVisible: true, subtextCount: 0 }
             : current
         );
+        typeSubtext();
       }, nextConfig.subtextDelay);
     }
 
@@ -257,7 +332,13 @@ export function StateText({ state }: { state: TextSceneState }) {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
-            ? { ...current, phase: 'exit', headerVisible: true, subtextVisible: true }
+            ? {
+                ...current,
+                phase: 'exit',
+                headerVisible: true,
+                subtextVisible: true,
+                subtextCount: nextConfig.subtext.length,
+              }
             : current
         );
       }, nextConfig.autoExitDelay);
@@ -279,6 +360,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     const subtextOpacity = instance.subtextVisible && !isExiting ? 1 : 0;
     const headerY = instance.headerVisible ? 0 : enterY;
     const subtextY = instance.subtextVisible ? 0 : enterY + 4;
+    const subtextCount = mode === 'active' && !isExiting ? instance.subtextCount : config.subtext.length;
 
     return (
       <div
@@ -300,7 +382,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               textShadow: getHeaderShadow(config.revealMode),
             }}
           >
-            {renderMultiline(config.header)}
+            {renderHeaderText(config)}
           </h1>
         )}
 
@@ -314,7 +396,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               textShadow: getSubtextShadow(config.revealMode),
             }}
           >
-            {renderMultiline(config.subtext)}
+            {renderPartialMultiline(config.subtext, subtextCount)}
           </p>
         )}
       </div>
