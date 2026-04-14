@@ -67,6 +67,15 @@
   }
 }
 
+@keyframes text-color-morph {
+  from {
+    color: var(--text-color-from);
+  }
+  to {
+    color: var(--text-color-to);
+  }
+}
+
 .gradient-text {
   background: linear-gradient(90deg, #c084fc, #a855f7, #c084fc);
   background-size: 200% auto;

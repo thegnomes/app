@@ -12,7 +12,7 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 3400;
+const FINAL_VIDEO_DELAY_MS = 2600;
 
 function App() {
   const [state, setState] = useState<AppState>(0);

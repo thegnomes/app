@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 export type TextSceneState = 0 | 1 | '2.1' | '2.2' | '2.3' | 3 | 4 | 5 | 6;
 
@@ -8,6 +8,7 @@ interface StateTextConfig {
   header: string;
   subtext: string;
   revealMode: RevealMode;
+  accentColor?: string;
   headerDelay: number;
   subtextDelay: number;
   subtextTypeDuration: number;
@@ -39,9 +40,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     lingerPrevious: 420,
   },
   '2.1': {
-    header: 'Time Pressure Intent',
+    header: 'Time. Pressure. Intent.',
     subtext: 'Something begins to gather.',
     revealMode: 'firm',
+    accentColor: '#22d3ee',
     headerDelay: 80,
     subtextDelay: 360,
     subtextTypeDuration: 1200,
@@ -50,9 +52,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     visibleHeaderWords: 1,
   },
   '2.2': {
-    header: 'Time Pressure Intent',
+    header: 'Time. Pressure. Intent.',
     subtext: 'The centre learns to hold.',
     revealMode: 'firm',
+    accentColor: '#3b82f6',
     headerDelay: 0,
     subtextDelay: 320,
     subtextTypeDuration: 1100,
@@ -61,9 +64,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     visibleHeaderWords: 2,
   },
   '2.3': {
-    header: 'Time Pressure Intent',
+    header: 'Time. Pressure. Intent.',
     subtext: 'And then, the choice to let go.',
     revealMode: 'firm',
+    accentColor: '#f97316',
     headerDelay: 0,
     subtextDelay: 320,
     subtextTypeDuration: 1200,
@@ -223,6 +227,18 @@ function getSubtextShadow(revealMode: RevealMode): string {
   return '0 0 20px rgba(255, 255, 255, 0.18)';
 }
 
+function getAccentStyle(config: StateTextConfig): CSSProperties {
+  if (!config.accentColor) return {};
+
+  return {
+    color: config.accentColor,
+    textShadow: `0 0 28px ${config.accentColor}66`,
+    animation: `text-color-morph ${config.transitionDuration}ms ease-out both`,
+    '--text-color-from': '#a855f7',
+    '--text-color-to': config.accentColor,
+  } as CSSProperties;
+}
+
 export function StateText({ state }: { state: TextSceneState }) {
   const [active, setActive] = useState<TextBlockInstance | null>(null);
   const [previous, setPrevious] = useState<TextBlockInstance | null>(null);
@@ -361,6 +377,9 @@ export function StateText({ state }: { state: TextSceneState }) {
     const headerY = instance.headerVisible ? 0 : enterY;
     const subtextY = instance.subtextVisible ? 0 : enterY + 4;
     const subtextCount = mode === 'active' && !isExiting ? instance.subtextCount : config.subtext.length;
+    const accentStyle = getAccentStyle(config);
+    const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
+    const subtextTone = config.accentColor ? '' : getSubtextTone(config.revealMode);
 
     return (
       <div
@@ -374,12 +393,13 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`font-orbitron col-start-1 flex h-[1.4em] items-center justify-end overflow-hidden whitespace-nowrap text-right text-[30px] sm:text-[39px] font-normal leading-none ${getHeaderTone(config.revealMode)} transition-all ease-out`}
+            className={`font-orbitron col-start-1 flex h-[1.6em] items-center justify-end overflow-hidden whitespace-nowrap px-5 py-2 text-right text-[30px] sm:text-[39px] font-normal leading-none ${headerTone} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
               transitionDuration: `${config.transitionDuration}ms`,
               textShadow: getHeaderShadow(config.revealMode),
+              ...accentStyle,
             }}
           >
             {renderHeaderText(config)}
@@ -388,12 +408,13 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`font-orbitron col-start-3 flex h-[1.4em] items-center justify-start overflow-hidden whitespace-nowrap text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${getSubtextTone(config.revealMode)} transition-all ease-out`}
+            className={`font-orbitron col-start-3 flex h-[1.6em] items-center justify-start overflow-hidden whitespace-nowrap px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${subtextTone} transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
               transitionDuration: `${config.transitionDuration}ms`,
               textShadow: getSubtextShadow(config.revealMode),
+              ...accentStyle,
             }}
           >
             {renderPartialMultiline(config.subtext, subtextCount)}
