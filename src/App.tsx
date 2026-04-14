@@ -3,6 +3,7 @@ import { ParticleCanvas } from './components/ParticleCanvas';
 import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
+import { FinalVideoOverlay } from './components/FinalVideoOverlay';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import {
@@ -11,9 +12,12 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
+const FINAL_VIDEO_DELAY_MS = 3400;
+
 function App() {
   const [state, setState] = useState<AppState>(0);
   const [textState, setTextState] = useState<TextSceneState>(0);
+  const [showFinalVideo, setShowFinalVideo] = useState(false);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -63,6 +67,7 @@ function App() {
   const handleVideoTransition = useCallback(() => {
     setState(1);
     setTextState(1);
+    setShowFinalVideo(false);
   }, []);
 
   // Separate mouse handler for canvas pan (only works on particle canvas)
@@ -134,6 +139,7 @@ function App() {
       stateRef.current = 2;
       setState(2);
       setTextState('2.1');
+      setShowFinalVideo(false);
       inState2Ref.current = true;
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
@@ -174,6 +180,7 @@ function App() {
         inState2Ref.current = false;
         setState(4);
         setTextState(5);
+        setShowFinalVideo(false);
       } else if (planetEntryReadyRef.current) {
         // Released after State 2 completed - planets start entering orbit
         planetEntryReadyRef.current = false;
@@ -203,10 +210,21 @@ function App() {
       const t = setTimeout(() => {
         setState(1);
         setTextState(1);
+        setShowFinalVideo(false);
       }, 2500);
       return () => clearTimeout(t);
     }
   }, [state]);
+
+  useEffect(() => {
+    if (textState !== 4) return;
+
+    const timerId = setTimeout(() => {
+      setShowFinalVideo(true);
+    }, FINAL_VIDEO_DELAY_MS);
+
+    return () => clearTimeout(timerId);
+  }, [textState]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
@@ -221,6 +239,7 @@ function App() {
         />
       </div>
       <StateText state={textState} />
+      <FinalVideoOverlay isActive={showFinalVideo} />
       <Footer />
     </div>
   );
