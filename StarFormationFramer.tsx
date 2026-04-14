@@ -1458,7 +1458,7 @@ function initializeBurstVelocities(burstVelocities: Float32Array, minSpeed = 10,
 // MAIN COMPONENT
 // ============================================================
 
-export default function StarFormationFramer(props: StarFormationFramerProps) {
+export function StarFormationFramer(props: StarFormationFramerProps) {
     const {
         phase = 1,
         autoPlay = false,
@@ -2288,3 +2288,5 @@ addPropertyControls(StarFormationFramer, {
         defaultValue: true,
     },
 })
+
+export default StarFormationFramer
