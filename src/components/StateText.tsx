@@ -374,7 +374,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`font-orbitron col-start-1 text-center text-[30px] sm:text-[39px] font-normal leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
+            className={`font-orbitron col-start-1 flex h-[1.4em] items-center justify-end overflow-hidden whitespace-nowrap text-right text-[30px] sm:text-[39px] font-normal leading-none ${getHeaderTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
@@ -388,7 +388,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`font-orbitron col-start-3 text-center text-[12px] sm:text-[13.5px] font-normal leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
+            className={`font-orbitron col-start-3 flex h-[1.4em] items-center justify-start overflow-hidden whitespace-nowrap text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${getSubtextTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
