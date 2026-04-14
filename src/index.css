@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Unica+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -76,6 +76,6 @@
   animation: gradient-shift 3s ease infinite;
 }
 
-.font-unica {
-  font-family: 'Unica One', sans-serif;
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
 }
