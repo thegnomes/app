@@ -133,14 +133,14 @@ function App() {
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
       setState(2);
-      setTextState(2);
+      setTextState('2.1');
       inState2Ref.current = true;
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
       const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       substateTimersRef.current.push(
         setTimeout(() => {
-          setTextState(3);
+          setTextState('2.2');
           dispatchState2SubstateEvent(
             2,
             STATE2_ABSORPTION_DURATION,
@@ -150,7 +150,7 @@ function App() {
       );
       substateTimersRef.current.push(
         setTimeout(() => {
-          setTextState(4);
+          setTextState('2.3');
           dispatchState2SubstateEvent(
             3,
             substate3Start,
@@ -164,7 +164,6 @@ function App() {
         inState2Ref.current = false;
         planetEntryReadyRef.current = true;
         holdTimerRef.current = null;
-        setTextState(6);
       }, STATE2_DURATION);
     };
 
@@ -173,8 +172,8 @@ function App() {
         // Released early during State 2 - go to collapse
         clearState2Timers();
         inState2Ref.current = false;
-        setTextState(5);
         setState(4);
+        setTextState(5);
       } else if (planetEntryReadyRef.current) {
         // Released after State 2 completed - planets start entering orbit
         planetEntryReadyRef.current = false;
@@ -184,6 +183,7 @@ function App() {
           })
         );
         setState(3);
+        setTextState(4);
       }
     };
 

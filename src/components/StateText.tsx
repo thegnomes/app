@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type TextSceneState = 0 | 1 | '2.1' | '2.2' | '2.3' | 3 | 4 | 5 | 6;
 
-type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'silence';
+type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'collapse' | 'silence';
 
 interface StateTextConfig {
   header: string;
@@ -12,6 +12,7 @@ interface StateTextConfig {
   subtextDelay: number;
   transitionDuration: number;
   lingerPrevious: number;
+  autoExitDelay?: number;
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
@@ -33,14 +34,32 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 1100,
     lingerPrevious: 420,
   },
-  2: {
-    header: 'Time. Pressure. Intent.',
-    subtext: 'A centre begins to hold.',
+  '2.1': {
+    header: 'Time',
+    subtext: 'Something begins to gather.',
     revealMode: 'firm',
     headerDelay: 80,
     subtextDelay: 360,
     transitionDuration: 520,
     lingerPrevious: 240,
+  },
+  '2.2': {
+    header: 'Pressure',
+    subtext: 'The centre learns to hold.',
+    revealMode: 'firm',
+    headerDelay: 80,
+    subtextDelay: 320,
+    transitionDuration: 520,
+    lingerPrevious: 240,
+  },
+  '2.3': {
+    header: 'Intent',
+    subtext: 'And then, the choice to let go.',
+    revealMode: 'firm',
+    headerDelay: 80,
+    subtextDelay: 320,
+    transitionDuration: 620,
+    lingerPrevious: 280,
   },
   3: {
     header: 'What gathers, begins to last.',
@@ -61,13 +80,14 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     lingerPrevious: 260,
   },
   5: {
-    header: '',
-    subtext: '',
-    revealMode: 'silence',
-    headerDelay: 0,
-    subtextDelay: 0,
-    transitionDuration: 820,
-    lingerPrevious: 820,
+    header: 'Some ideas burn brightly at first,',
+    subtext: 'but fade back into the dark.',
+    revealMode: 'collapse',
+    headerDelay: 80,
+    subtextDelay: 360,
+    transitionDuration: 780,
+    lingerPrevious: 320,
+    autoExitDelay: 1650,
   },
   6: {
     header: 'But not every star endures.',
@@ -97,6 +117,7 @@ const ENTER_Y_BY_MODE: Record<RevealMode, number> = {
   bridge: 4,
   payoff: 10,
   reflection: 8,
+  collapse: 8,
   silence: 0,
 };
 
@@ -107,6 +128,7 @@ const EXIT_Y_BY_MODE: Record<RevealMode, number> = {
   bridge: -10,
   payoff: -18,
   reflection: -10,
+  collapse: -18,
   silence: -14,
 };
 
@@ -137,6 +159,7 @@ function createTextInstance(state: TextSceneState, id: number): TextBlockInstanc
 function getHeaderTone(revealMode: RevealMode): string {
   if (revealMode === 'payoff') return 'text-[#ffd4a3]';
   if (revealMode === 'reflection') return 'text-white/90';
+  if (revealMode === 'collapse') return 'text-white/85';
   if (revealMode === 'silence') return 'text-transparent';
   return 'gradient-text';
 }
@@ -144,17 +167,20 @@ function getHeaderTone(revealMode: RevealMode): string {
 function getSubtextTone(revealMode: RevealMode): string {
   if (revealMode === 'payoff') return 'text-orange-50/90';
   if (revealMode === 'reflection') return 'text-white/65';
+  if (revealMode === 'collapse') return 'text-white/62';
   return 'text-white/85';
 }
 
 function getHeaderShadow(revealMode: RevealMode): string {
   if (revealMode === 'payoff') return '0 0 34px rgba(249, 115, 22, 0.52)';
   if (revealMode === 'reflection') return '0 0 24px rgba(255, 255, 255, 0.18)';
+  if (revealMode === 'collapse') return '0 0 24px rgba(255, 255, 255, 0.14)';
   return '0 0 30px rgba(168, 85, 247, 0.5)';
 }
 
 function getSubtextShadow(revealMode: RevealMode): string {
   if (revealMode === 'payoff') return '0 0 24px rgba(251, 146, 60, 0.32)';
+  if (revealMode === 'collapse') return '0 0 18px rgba(255, 255, 255, 0.1)';
   return '0 0 20px rgba(255, 255, 255, 0.18)';
 }
 
@@ -184,7 +210,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
     const nextConfig = STATE_TEXT_CONFIG[state];
     const outgoing = activeRef.current;
-    if (outgoing && hasText(outgoing.config) && nextConfig.lingerPrevious > 0) {
+    if (outgoing && outgoing.phase !== 'exit' && hasText(outgoing.config) && nextConfig.lingerPrevious > 0) {
       const previousInstance: TextBlockInstance = {
         ...outgoing,
         phase: 'visible',
@@ -227,6 +253,16 @@ export function StateText({ state }: { state: TextSceneState }) {
       }, nextConfig.subtextDelay);
     }
 
+    if (nextConfig.autoExitDelay) {
+      queueTimer(() => {
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, phase: 'exit', headerVisible: true, subtextVisible: true }
+            : current
+        );
+      }, nextConfig.autoExitDelay);
+    }
+
     return clearTimers;
   }, [state]);
 
@@ -256,7 +292,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`text-center text-[18px] sm:text-[22px] font-bold leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
+            className={`font-unica text-center text-[20px] sm:text-[26px] font-normal leading-relaxed ${getHeaderTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
@@ -270,7 +306,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`mt-4 text-center text-[14px] sm:text-[15px] font-medium leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
+            className={`font-unica mt-4 text-center text-[16px] sm:text-[18px] font-normal leading-relaxed ${getSubtextTone(config.revealMode)} transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
