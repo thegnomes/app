@@ -190,64 +190,14 @@ function generateFibonacciPositions(count: number, out: Float32Array, radius = S
     }
 }
 
-function brainSDF(x: number, y: number, z: number): number {
-    const width = 22
-    const height = 16
-    const depth = 18
-    const separation = 2
-    const isLeft = x < 0
-    const centerX = isLeft ? -separation : separation
-    const nx = (x - centerX) / width
-    const ny = y / height
-    const nz = z / depth
-    let dist = Math.sqrt(nx * nx + ny * ny + nz * nz) - 1.0
-    const foldFreqX = 4.0
-    const foldFreqY = 6.0
-    const foldFreqZ = 3.0
-    const foldAmp = 0.15
-    const folds = Math.sin(x * foldFreqX) * Math.cos(y * foldFreqY) * Math.sin(z * foldFreqZ)
-    const fineFolds = Math.sin(x * 8.0 + z * 2.0) * Math.cos(y * 10.0) * 0.5
-    dist += (folds + fineFolds * 0.3) * foldAmp
-    if (y < -height * 0.6) {
-        const stemFactor = Math.abs(y + height * 0.6) / (height * 0.4)
-        dist += stemFactor * stemFactor * 0.5
-    }
-    if (y > height * 0.7) {
-        const topFactor = (y - height * 0.7) / (height * 0.3)
-        dist += topFactor * topFactor * 0.3
-    }
-    return dist
-}
-
-function getBrainSurfacePoint(): { x: number; y: number; z: number } {
-    let attempts = 0
-    const maxAttempts = 100
-    while (attempts < maxAttempts) {
-        attempts++
-        const x = (Math.random() - 0.5) * 50
-        const y = (Math.random() - 0.5) * 35
-        const z = (Math.random() - 0.5) * 40
-        const dist = brainSDF(x, y, z)
-        if (Math.abs(dist) < 0.15 && dist <= 0) {
-            return { x, y, z }
-        }
-    }
-    const theta = Math.random() * Math.PI * 2
-    const phi = Math.acos(2 * Math.random() - 1)
-    return {
-        x: Math.cos(theta) * Math.sin(phi) * 20,
-        y: Math.cos(phi) * 14,
-        z: Math.sin(theta) * Math.sin(phi) * 16,
-    }
-}
-
 function generateBrainPositions(count: number, out: Float32Array, scale = 1): void {
     for (let i = 0; i < count; i++) {
         const i3 = i * 3
-        const point = getBrainSurfacePoint()
-        out[i3] = point.x * scale
-        out[i3 + 1] = point.y * scale
-        out[i3 + 2] = point.z * scale
+        const theta = Math.random() * Math.PI * 2
+        const phi = Math.acos(2 * Math.random() - 1)
+        out[i3] = Math.cos(theta) * Math.sin(phi) * 20 * scale
+        out[i3 + 1] = Math.cos(phi) * 14 * scale
+        out[i3 + 2] = Math.sin(theta) * Math.sin(phi) * 16 * scale
     }
 }
 
