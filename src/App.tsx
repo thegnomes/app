@@ -18,7 +18,7 @@ function App() {
   const [state, setState] = useState<AppState>(0);
   const [textState, setTextState] = useState<TextSceneState>(0);
   const [showFinalVideo, setShowFinalVideo] = useState(false);
-  const [idleLoaded, setIdleLoaded] = useState(false);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [autoZoom, setAutoZoom] = useState(false);
   
   // Use refs to track current state to avoid closure issues
@@ -72,9 +72,24 @@ function App() {
     setShowFinalVideo(false);
   }, []);
 
-  // Auto-play text after idle video loads, then auto-transition to starfield
+  // Wait for all assets and fonts to load before starting the experience
   useEffect(() => {
-    if (!idleLoaded) return;
+    const waitForLoad = new Promise<void>((resolve) => {
+      if (document.readyState === 'complete') {
+        resolve();
+      } else {
+        window.addEventListener('load', () => resolve());
+      }
+    });
+
+    Promise.all([waitForLoad, document.fonts.ready]).then(() => {
+      setAssetsLoaded(true);
+    });
+  }, []);
+
+  // Auto-play text after assets load, then auto-transition to starfield
+  useEffect(() => {
+    if (!assetsLoaded) return;
     const timer = setTimeout(() => {
       setAutoZoom(true);
       setState(1);
@@ -82,7 +97,7 @@ function App() {
       setShowFinalVideo(false);
     }, 3800);
     return () => clearTimeout(timer);
-  }, [idleLoaded]);
+  }, [assetsLoaded]);
 
   // Separate mouse handler for canvas pan (only works on particle canvas)
   useEffect(() => {
@@ -246,7 +261,6 @@ function App() {
         <VideoBackground 
           isActive={state === 0} 
           onTransition={handleVideoTransition}
-          onIdleLoaded={() => setIdleLoaded(true)}
           autoTrigger={autoZoom}
         />
       </div>
@@ -257,7 +271,7 @@ function App() {
           cameraPanRef={cameraPanRef}
         />
       </div>
-      {idleLoaded && <StateText state={textState} />}
+      {assetsLoaded && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} />
       <Footer />
     </div>

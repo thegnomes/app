@@ -3,14 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 interface VideoBackgroundProps {
   isActive: boolean;
   onTransition: () => void;
-  onIdleLoaded?: () => void;
   autoTrigger?: boolean;
 }
 
 // Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
 const TRANSITION_TIME = 0;
 
-export function VideoBackground({ isActive, onTransition, onIdleLoaded, autoTrigger }: VideoBackgroundProps) {
+export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -79,7 +78,7 @@ export function VideoBackground({ isActive, onTransition, onIdleLoaded, autoTrig
           loop
           playsInline
           preload="auto"
-          onCanPlayThrough={onIdleLoaded}
+
           className="w-full h-full object-contain"
         />
       )}
