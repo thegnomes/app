@@ -20,6 +20,7 @@ function App() {
   const [showFinalVideo, setShowFinalVideo] = useState(false);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [autoZoom, setAutoZoom] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -74,17 +75,42 @@ function App() {
 
   // Explicitly preload critical video assets before starting the experience
   useEffect(() => {
-    const preloadVideo = (src: string): Promise<void> =>
-      new Promise((resolve) => {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.playsInline = true;
-        video.src = src;
-        const onReady = () => {
-          resolve();
+    const sources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
+    const videos: HTMLVideoElement[] = [];
+    let fontsReady = false;
+
+    const updateProgress = () => {
+      let total = 0;
+      videos.forEach((v) => {
+        if (v.readyState >= 4) {
+          total += 1;
+        } else if (v.duration && v.buffered.length > 0) {
+          const buffered = v.buffered.end(v.buffered.length - 1);
+          total += Math.min(1, buffered / v.duration);
+        }
+      });
+      total += fontsReady ? 1 : 0;
+      const pct = Math.min(100, Math.round((total / (sources.length + 1)) * 100));
+      setLoadProgress(pct);
+    };
+
+    const interval = setInterval(updateProgress, 100);
+
+    const promises = sources.map((src) => {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.src = src;
+      videos.push(video);
+      return new Promise<void>((resolve) => {
+        const cleanup = () => {
           video.removeEventListener('canplaythrough', onReady);
           video.removeEventListener('error', onReady);
+        };
+        const onReady = () => {
+          cleanup();
+          resolve();
         };
         video.addEventListener('canplaythrough', onReady);
         video.addEventListener('error', onReady);
@@ -92,15 +118,21 @@ function App() {
           onReady();
         }
       });
+    });
 
-    Promise.all([
-      preloadVideo('/idle_brain.webm'),
-      preloadVideo('/brain_zoom.webm'),
-      preloadVideo('/zoom-compiled-edit-latest-web.webm'),
-      document.fonts.ready,
-    ]).then(() => {
+    promises.push(
+      document.fonts.ready.then(() => {
+        fontsReady = true;
+      })
+    );
+
+    Promise.all(promises).then(() => {
+      clearInterval(interval);
+      setLoadProgress(100);
       setAssetsLoaded(true);
     });
+
+    return () => clearInterval(interval);
   }, []);
 
   // Auto-play text after assets load, then auto-transition to starfield
@@ -278,6 +310,7 @@ function App() {
           isActive={state === 0} 
           onTransition={handleVideoTransition}
           autoTrigger={autoZoom}
+          loadProgress={loadProgress}
         />
       </div>
       <div className="particle-canvas-container">

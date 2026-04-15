@@ -4,12 +4,13 @@ interface VideoBackgroundProps {
   isActive: boolean;
   onTransition: () => void;
   autoTrigger?: boolean;
+  loadProgress?: number;
 }
 
 // Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
 const TRANSITION_TIME = 0;
 
-export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBackgroundProps) {
+export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgress = 0 }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -71,16 +72,20 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
     >
       {/* Idle brain video - slow rotation */}
       {!isZooming && (
-        <video
-          src="/idle_brain.webm"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-
-          className="w-full h-full object-contain"
-        />
+        <>
+          <video
+            src="/idle_brain.webm"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-full object-contain"
+          />
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/70 font-orbitron text-sm tracking-[0.2em] pointer-events-none">
+            {loadProgress}%
+          </div>
+        </>
       )}
 
       {/* Zoom transition video - plays full with alpha, fades at end */}
