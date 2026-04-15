@@ -5,10 +5,12 @@ interface FinalVideoOverlayProps {
   onEnded?: () => void;
 }
 
-type VideoTextPhase = 'zoom' | 'astronaut' | null;
+type VideoTextPhase = 'zoom' | 'gap' | 'astronaut' | null;
+
+const GAP_DURATION_MS = 1200;
 
 const ZOOM_OUT_END_S = 5.5;
-const TEXT_TRANSITION_MS = 800;
+const TEXT_TRANSITION_MS = 1400;
 
 export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,12 +35,20 @@ export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps)
     void video.play();
   }, [isActive]);
 
+  useEffect(() => {
+    if (phase !== 'gap') return;
+    const timer = setTimeout(() => {
+      setPhase('astronaut');
+    }, GAP_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video) return;
     const t = video.currentTime;
-    if (phase !== 'astronaut' && t >= ZOOM_OUT_END_S) {
-      setPhase('astronaut');
+    if (phase === 'zoom' && t >= ZOOM_OUT_END_S) {
+      setPhase('gap');
     }
   };
 

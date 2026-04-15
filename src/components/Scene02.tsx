@@ -37,7 +37,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         playsInline
         loop
         preload="auto"
-        className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 scale-[0.566] object-contain"
+        className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-contain"
       />
     </div>
   );
