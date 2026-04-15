@@ -175,7 +175,7 @@ function renderHeaderText(config: StateTextConfig): ReactNode {
   return words.map((word, index) => (
     <span
       key={`${word}-${index}`}
-      className="inline-block transition-opacity ease-out"
+      className="inline-block px-1 transition-opacity ease-out"
       style={{
         opacity: index < config.visibleHeaderWords! ? 1 : 0,
         transitionDuration: `${config.transitionDuration}ms`,
@@ -393,7 +393,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`font-orbitron col-start-1 flex h-[1.6em] items-center justify-end overflow-hidden whitespace-nowrap px-5 py-2 text-right text-[30px] sm:text-[39px] font-normal leading-none ${headerTone} transition-all ease-out`}
+            className={`font-orbitron col-start-1 flex min-h-[1.6em] items-center justify-end px-5 py-2 text-right text-[30px] sm:text-[39px] font-normal leading-none ${headerTone} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
@@ -408,7 +408,7 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`font-orbitron col-start-3 flex h-[1.6em] items-center justify-start overflow-hidden whitespace-nowrap px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${subtextTone} transition-all ease-out`}
+            className={`font-orbitron col-start-3 flex min-h-[1.6em] items-center justify-start px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${subtextTone} transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
