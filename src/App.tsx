@@ -72,17 +72,33 @@ function App() {
     setShowFinalVideo(false);
   }, []);
 
-  // Wait for all assets and fonts to load before starting the experience
+  // Explicitly preload critical video assets before starting the experience
   useEffect(() => {
-    const waitForLoad = new Promise<void>((resolve) => {
-      if (document.readyState === 'complete') {
-        resolve();
-      } else {
-        window.addEventListener('load', () => resolve());
-      }
-    });
+    const preloadVideo = (src: string): Promise<void> =>
+      new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+        video.src = src;
+        const onReady = () => {
+          resolve();
+          video.removeEventListener('canplaythrough', onReady);
+          video.removeEventListener('error', onReady);
+        };
+        video.addEventListener('canplaythrough', onReady);
+        video.addEventListener('error', onReady);
+        if (video.readyState >= 4) {
+          onReady();
+        }
+      });
 
-    Promise.all([waitForLoad, document.fonts.ready]).then(() => {
+    Promise.all([
+      preloadVideo('/idle_brain.webm'),
+      preloadVideo('/brain_zoom.webm'),
+      preloadVideo('/zoom-compiled-edit-latest-web.webm'),
+      document.fonts.ready,
+    ]).then(() => {
       setAssetsLoaded(true);
     });
   }, []);

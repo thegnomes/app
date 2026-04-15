@@ -89,6 +89,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
         src="/brain_zoom.webm"
         muted
         playsInline
+        preload="auto"
         className={`
           absolute inset-0 w-full h-full object-cover
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
