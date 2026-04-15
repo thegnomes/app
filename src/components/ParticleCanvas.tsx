@@ -49,6 +49,7 @@ export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasPr
         // NO transition - particles must be visible immediately for seamless video handoff
         transition: 'none',
         pointerEvents: state === 0 ? 'none' : 'auto',
+        touchAction: 'none',
       }}
     />
   );

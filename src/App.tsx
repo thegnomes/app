@@ -157,71 +157,77 @@ function App() {
     return () => clearTimeout(timer);
   }, [assetsLoaded]);
 
-  // Separate mouse handler for canvas pan (only works on particle canvas)
+  // Separate pointer handler for canvas pan (works with mouse + touch)
   useEffect(() => {
     const canvas = document.querySelector('.particle-canvas-container');
     if (!canvas) return;
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
       if (stateRef.current !== 1) return; // Only pan in State 1
-      
+
+      (canvas as HTMLElement).setPointerCapture?.(e.pointerId);
       panStateRef.current.isDragging = true;
       panStateRef.current.dragStart = { x: e.clientX, y: e.clientY };
       cameraPanRef.current.isDragging = true;
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (!panStateRef.current.isDragging) return;
-      
+
       const dx = (e.clientX - panStateRef.current.dragStart.x) * 0.05;
       const dy = (e.clientY - panStateRef.current.dragStart.y) * 0.05;
-      
+
       panStateRef.current.targetOffset = {
         x: panStateRef.current.cameraOffset.x + dx,
-        y: panStateRef.current.cameraOffset.y - dy
+        y: panStateRef.current.cameraOffset.y - dy,
       };
-      
+
       panStateRef.current.targetOffset.x = Math.max(-50, Math.min(50, panStateRef.current.targetOffset.x));
       panStateRef.current.targetOffset.y = Math.max(-50, Math.min(50, panStateRef.current.targetOffset.y));
-      
+
       cameraPanRef.current.targetOffset = panStateRef.current.targetOffset;
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = (e: PointerEvent) => {
       if (panStateRef.current.isDragging) {
         panStateRef.current.cameraOffset = { ...panStateRef.current.targetOffset };
         cameraPanRef.current.offset = panStateRef.current.cameraOffset;
+        try {
+          (canvas as HTMLElement).releasePointerCapture?.(e.pointerId);
+        } catch {
+          // ignore if capture was not set
+        }
       }
       panStateRef.current.isDragging = false;
       cameraPanRef.current.isDragging = false;
     };
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
 
     return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      canvas.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, []);
 
-  // Global mouse handler for state transitions (only in State 1, on canvas only)
+  // Global pointer handler for state transitions (works with mouse + touch)
   useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      
+
       // Only handle clicks on the particle canvas, not on UI
       const target = e.target as HTMLElement;
       if (target.closest('.control-panel')) return;
       if (target.closest('.video-background')) return;
-      
+
       // Only work in State 1
       if (stateRef.current !== 1) return;
       if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
-      
+
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
       setState(2);
@@ -260,7 +266,7 @@ function App() {
       }, STATE2_DURATION);
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       if (inState2Ref.current) {
         // Released early during State 2 - go to collapse
         clearState2Timers();
@@ -281,13 +287,13 @@ function App() {
       }
     };
 
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointerup', handlePointerUp);
 
     return () => {
       clearState2Timers();
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [clearState2Timers, dispatchState2SubstateEvent]);
 
