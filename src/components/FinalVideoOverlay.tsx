@@ -88,6 +88,7 @@ export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps)
         isActive ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
       aria-hidden={!isActive}
+      style={{ transition: 'opacity 800ms ease-out' }}
     >
       <video
         ref={videoRef}
