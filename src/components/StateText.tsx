@@ -207,11 +207,8 @@ function getHeaderTone(revealMode: RevealMode): string {
   return 'gradient-text';
 }
 
-function getSubtextTone(revealMode: RevealMode): string {
-  if (revealMode === 'payoff') return 'text-orange-50/90';
-  if (revealMode === 'reflection') return 'text-white/65';
-  if (revealMode === 'collapse') return 'text-white/62';
-  return 'text-white/85';
+function getSubtextTone(): string {
+  return 'text-white';
 }
 
 function getHeaderShadow(revealMode: RevealMode): string {
@@ -379,7 +376,6 @@ export function StateText({ state }: { state: TextSceneState }) {
     const subtextCount = mode === 'active' && !isExiting ? instance.subtextCount : config.subtext.length;
     const accentStyle = getAccentStyle(config);
     const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
-    const subtextTone = config.accentColor ? '' : getSubtextTone(config.revealMode);
 
     return (
       <div
@@ -393,7 +389,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       >
         {config.header && (
           <h1
-            className={`font-orbitron col-start-1 flex min-h-[1.6em] items-center justify-end px-5 py-2 text-right text-[30px] sm:text-[39px] font-normal leading-none ${headerTone} transition-all ease-out`}
+            className={`font-orbitron col-start-1 flex min-h-[1.6em] items-center justify-end px-5 py-2 text-right text-[24px] font-normal leading-none ${headerTone} transition-all ease-out`}
             style={{
               opacity: headerOpacity,
               transform: `translate3d(0, ${headerY}px, 0)`,
@@ -408,13 +404,12 @@ export function StateText({ state }: { state: TextSceneState }) {
 
         {config.subtext && (
           <p
-            className={`font-orbitron col-start-3 flex min-h-[1.6em] items-center justify-start px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none ${subtextTone} transition-all ease-out`}
+            className={`font-orbitron col-start-3 flex min-h-[1.6em] items-center justify-start px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out`}
             style={{
               opacity: subtextOpacity,
               transform: `translate3d(0, ${subtextY}px, 0)`,
               transitionDuration: `${config.transitionDuration}ms`,
               textShadow: getSubtextShadow(config.revealMode),
-              ...accentStyle,
             }}
           >
             {renderPartialMultiline(config.subtext, subtextCount)}
@@ -427,7 +422,7 @@ export function StateText({ state }: { state: TextSceneState }) {
   return (
     <div className="fixed inset-0 z-20 pointer-events-none">
       <div className="absolute left-1/2 top-1/2 w-[min(92vw,1120px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
-        <div className="relative min-h-[180px]">
+        <div className="relative min-h-fit">
           {previous && renderTextBlock(previous, 'previous')}
           {active && renderTextBlock(active, 'active')}
         </div>
