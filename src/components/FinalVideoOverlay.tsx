@@ -52,7 +52,7 @@ export function FinalVideoOverlay({ isActive }: FinalVideoOverlayProps) {
 
     return (
       <div
-        className="absolute left-0 top-0 grid w-full grid-cols-[minmax(0,1fr)_clamp(72px,16vw,220px)_minmax(0,1fr)] items-center transition-all ease-out"
+        className="absolute inset-0 flex w-full flex-col items-center justify-center text-center transition-all ease-out"
         style={{
           opacity,
           transform: `translate3d(0, ${y}px, 0)`,
@@ -60,18 +60,18 @@ export function FinalVideoOverlay({ isActive }: FinalVideoOverlayProps) {
         }}
       >
         <h1
-          className="font-orbitron col-start-1 flex min-h-[1.6em] items-center justify-end px-5 py-2 text-right text-[24px] font-normal leading-none gradient-text transition-all ease-out"
+          className="font-orbitron flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[24px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out"
           style={{
-            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+            textShadow: '0 0 30px rgba(168, 85, 247, 0.6)',
             transitionDuration: `${TEXT_TRANSITION_MS}ms`,
           }}
         >
           {header}
         </h1>
         <p
-          className="font-orbitron col-start-3 flex min-h-[1.6em] items-center justify-start px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out"
+          className="font-orbitron flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all ease-out"
           style={{
-            textShadow: '0 0 20px rgba(255, 255, 255, 0.18)',
+            textShadow: '0 0 20px rgba(0, 0, 0, 0.8)',
             transitionDuration: `${TEXT_TRANSITION_MS}ms`,
           }}
         >

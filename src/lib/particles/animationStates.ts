@@ -339,8 +339,8 @@ export function animateState2And3(
       const fibY = fibTargetY;
       const fibZ = fibTargetZ;
       
-      // Substate 1 draw-in duration (0-6000ms)
-      const drawInDuration = STATE2_ABSORPTION_DURATION;
+      // Substate 1 draw-in duration stretched to end of substate 2 (0-10000ms)
+      const drawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       const transitionStart = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.35;
       const transitionDuration = STATE2_DURATION - transitionStart;
       

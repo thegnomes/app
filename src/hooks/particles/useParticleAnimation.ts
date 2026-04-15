@@ -553,7 +553,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
         const novaElapsed = performance.now() - refs.novaState.current.startTime;
         const isState3Flare = currentState === 3;
-        const novaDuration = isState3Flare ? 900 : 1800;
+        const novaDuration = isState3Flare ? 500 : 1800;
         const progress = Math.min(novaElapsed / novaDuration, 1);
 
         const startScale = isState3Flare ? 0.2 : 0.5;
