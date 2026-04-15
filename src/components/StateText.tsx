@@ -387,34 +387,35 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionDuration: `${duration}ms`,
         }}
       >
-        {config.header && (
-          <h1
-            className={`font-orbitron col-start-1 flex min-h-[1.6em] items-center justify-end px-5 py-2 text-right text-[24px] font-normal leading-none ${headerTone} transition-all ease-out`}
-            style={{
-              opacity: headerOpacity,
-              transform: `translate3d(0, ${headerY}px, 0)`,
-              transitionDuration: `${config.transitionDuration}ms`,
-              textShadow: getHeaderShadow(config.revealMode),
-              ...accentStyle,
-            }}
-          >
-            {renderHeaderText(config)}
-          </h1>
-        )}
-
-        {config.subtext && (
-          <p
-            className={`font-orbitron col-start-3 flex min-h-[1.6em] items-center justify-start px-5 py-2 text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out`}
-            style={{
-              opacity: subtextOpacity,
-              transform: `translate3d(0, ${subtextY}px, 0)`,
-              transitionDuration: `${config.transitionDuration}ms`,
-              textShadow: getSubtextShadow(config.revealMode),
-            }}
-          >
-            {renderPartialMultiline(config.subtext, subtextCount)}
-          </p>
-        )}
+        <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
+          {config.header && (
+            <h1
+              className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} transition-all ease-out`}
+              style={{
+                opacity: headerOpacity,
+                transform: `translate3d(0, ${headerY}px, 0)`,
+                transitionDuration: `${config.transitionDuration}ms`,
+                textShadow: getHeaderShadow(config.revealMode),
+                ...accentStyle,
+              }}
+            >
+              {renderHeaderText(config)}
+            </h1>
+          )}
+          {config.subtext && (
+            <p
+              className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out`}
+              style={{
+                opacity: subtextOpacity,
+                transform: `translate3d(0, ${subtextY}px, 0)`,
+                transitionDuration: `${config.transitionDuration}ms`,
+                textShadow: getSubtextShadow(config.revealMode),
+              }}
+            >
+              {renderPartialMultiline(config.subtext, subtextCount)}
+            </p>
+          )}
+        </div>
       </div>
     );
   };

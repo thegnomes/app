@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Scene02Props {
   isActive: boolean;
@@ -7,6 +7,8 @@ interface Scene02Props {
 
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
+  const [scaleNebula, setScaleNebula] = useState(2);
+  const [scaleAstro, setScaleAstro] = useState(1);
 
   useEffect(() => {
     const video = astroRef.current;
@@ -19,17 +21,34 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     }
   }, [playAstro]);
 
+  useEffect(() => {
+    if (isActive) {
+      const t = setTimeout(() => {
+        setScaleNebula(1);
+        setScaleAstro(0.5);
+      }, 50);
+      return () => clearTimeout(t);
+    } else {
+      setScaleNebula(2);
+      setScaleAstro(1);
+    }
+  }, [isActive]);
+
   if (!isActive) return null;
 
   return (
     <div className="fixed inset-0 z-30 overflow-hidden bg-black">
-      {/* Nebula background - scale 100% */}
+      {/* Nebula background - starts at 200%, zooms out to 100% */}
       <img
         src="/scene02/nebula_space_only2x.png"
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+        style={{
+          transform: `translate(-50%, -50%) scale(${scaleNebula})`,
+          transition: 'transform 10s ease-out',
+        }}
       />
-      {/* Astronaut video - scale 56.6%, centered, no autoplay initially */}
+      {/* Astronaut video - starts at 100%, zooms out to 50% */}
       <video
         ref={astroRef}
         src="/scene02/looking-astro-loop2.webm"
@@ -37,7 +56,11 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         playsInline
         loop
         preload="auto"
-        className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-contain"
+        className="absolute left-1/2 top-1/2 h-full w-full object-contain"
+        style={{
+          transform: `translate(-50%, -50%) scale(${scaleAstro})`,
+          transition: 'transform 10s ease-out',
+        }}
       />
     </div>
   );
