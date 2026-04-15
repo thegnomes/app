@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 interface FinalVideoOverlayProps {
   isActive: boolean;
+  onEnded?: () => void;
 }
 
 type VideoTextPhase = 'zoom' | 'astronaut' | null;
@@ -9,7 +10,7 @@ type VideoTextPhase = 'zoom' | 'astronaut' | null;
 const ZOOM_OUT_END_S = 5.5;
 const TEXT_TRANSITION_MS = 800;
 
-export function FinalVideoOverlay({ isActive }: FinalVideoOverlayProps) {
+export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<VideoTextPhase>(null);
 
@@ -95,6 +96,7 @@ export function FinalVideoOverlay({ isActive }: FinalVideoOverlayProps) {
         preload="auto"
         className="h-full w-full object-cover"
         onTimeUpdate={handleTimeUpdate}
+        onEnded={onEnded}
       >
         <source src="/zoom-compiled-edit-latest-web.webm" type="video/webm" />
         <source src="/zoom-compiled-edit-latest.mp4" type="video/mp4" />

@@ -4,6 +4,7 @@ import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import { FinalVideoOverlay } from './components/FinalVideoOverlay';
+import { Scene02 } from './components/Scene02';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import {
@@ -21,6 +22,8 @@ function App() {
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [autoZoom, setAutoZoom] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [scene02Active, setScene02Active] = useState(false);
+  const [playAstro, setPlayAstro] = useState(false);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -71,6 +74,13 @@ function App() {
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
+    setScene02Active(false);
+    setPlayAstro(false);
+  }, []);
+
+  const handleFinalVideoEnded = useCallback(() => {
+    setShowFinalVideo(false);
+    setPlayAstro(true);
   }, []);
 
   // Explicitly preload critical video assets before starting the experience
@@ -288,6 +298,8 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
+        setScene02Active(false);
+        setPlayAstro(false);
       }, 2500);
       return () => clearTimeout(t);
     }
@@ -298,6 +310,8 @@ function App() {
 
     const timerId = setTimeout(() => {
       setShowFinalVideo(true);
+      setScene02Active(true);
+      setPlayAstro(false);
     }, FINAL_VIDEO_DELAY_MS);
 
     return () => clearTimeout(timerId);
@@ -321,7 +335,8 @@ function App() {
         />
       </div>
       {assetsLoaded && <StateText state={textState} />}
-      <FinalVideoOverlay isActive={showFinalVideo} />
+      <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} />
+      <Scene02 isActive={scene02Active} playAstro={playAstro} />
       <Footer />
     </div>
   );
