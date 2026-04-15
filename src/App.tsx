@@ -18,6 +18,8 @@ function App() {
   const [state, setState] = useState<AppState>(0);
   const [textState, setTextState] = useState<TextSceneState>(0);
   const [showFinalVideo, setShowFinalVideo] = useState(false);
+  const [idleLoaded, setIdleLoaded] = useState(false);
+  const [autoZoom, setAutoZoom] = useState(false);
   
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -69,6 +71,18 @@ function App() {
     setTextState(1);
     setShowFinalVideo(false);
   }, []);
+
+  // Auto-play text after idle video loads, then auto-transition to starfield
+  useEffect(() => {
+    if (!idleLoaded) return;
+    const timer = setTimeout(() => {
+      setAutoZoom(true);
+      setState(1);
+      setTextState(1);
+      setShowFinalVideo(false);
+    }, 3800);
+    return () => clearTimeout(timer);
+  }, [idleLoaded]);
 
   // Separate mouse handler for canvas pan (only works on particle canvas)
   useEffect(() => {
@@ -229,7 +243,12 @@ function App() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
       <div className="video-background">
-        <VideoBackground isActive={state === 0} onTransition={handleVideoTransition} />
+        <VideoBackground 
+          isActive={state === 0} 
+          onTransition={handleVideoTransition}
+          onIdleLoaded={() => setIdleLoaded(true)}
+          autoTrigger={autoZoom}
+        />
       </div>
       <div className="particle-canvas-container">
         <ParticleCanvas 
@@ -238,7 +257,7 @@ function App() {
           cameraPanRef={cameraPanRef}
         />
       </div>
-      <StateText state={textState} />
+      {idleLoaded && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} />
       <Footer />
     </div>

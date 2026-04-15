@@ -3,12 +3,14 @@ import { useState, useRef, useEffect } from 'react';
 interface VideoBackgroundProps {
   isActive: boolean;
   onTransition: () => void;
+  onIdleLoaded?: () => void;
+  autoTrigger?: boolean;
 }
 
 // Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
 const TRANSITION_TIME = 0;
 
-export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps) {
+export function VideoBackground({ isActive, onTransition, onIdleLoaded, autoTrigger }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -21,18 +23,15 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
     }
   }, [isActive]);
 
-  const handleClick = () => {
-    if (!isZooming && isActive) {
+  useEffect(() => {
+    if (autoTrigger && !isZooming) {
       setIsZooming(true);
       hasTransitionedRef.current = false;
       onTransition();
       hasTransitionedRef.current = true;
-      // Play the zoom video
-      if (zoomVideoRef.current) {
-        zoomVideoRef.current.play();
-      }
+      zoomVideoRef.current?.play();
     }
-  };
+  }, [autoTrigger, isZooming, onTransition]);
 
   const handleTimeUpdate = () => {
     const video = zoomVideoRef.current;
@@ -62,7 +61,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
 
   return (
     <div
-      onClick={handleClick}
+
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
       style={{
         backgroundColor: '#000000',
@@ -79,6 +78,8 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
           muted
           loop
           playsInline
+          preload="auto"
+          onCanPlayThrough={onIdleLoaded}
           className="w-full h-full object-contain"
         />
       )}
@@ -100,12 +101,7 @@ export function VideoBackground({ isActive, onTransition }: VideoBackgroundProps
         onEnded={handleZoomEnded}
       />
       
-      {/* Click hint */}
-      {!isZooming && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-white/60 text-sm tracking-widest uppercase animate-pulse pointer-events-none">
-          Click to enter
-        </div>
-      )}
+
     </div>
   );
 }
