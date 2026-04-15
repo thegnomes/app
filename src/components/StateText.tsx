@@ -21,7 +21,7 @@ interface StateTextConfig {
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
     header: 'I have a theory',
-    subtext: 'That what we call the universe is a collective mind made visible.',
+    subtext: 'That what we call the universe is our collective mind made visible.',
     revealMode: 'soft',
     headerDelay: 180,
     subtextDelay: 720,
@@ -41,7 +41,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   '2.1': {
     header: 'Time. Pressure. Intent.',
-    subtext: 'Something begins to gather.',
+    subtext: 'The idea begins to take shape.',
     revealMode: 'firm',
     accentColor: '#22d3ee',
     headerDelay: 80,
@@ -53,7 +53,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   '2.2': {
     header: 'Time. Pressure. Intent.',
-    subtext: 'The centre learns to hold.',
+    subtext: 'Form compresses into focus.',
     revealMode: 'firm',
     accentColor: '#3b82f6',
     headerDelay: 0,
@@ -65,7 +65,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   '2.3': {
     header: 'Time. Pressure. Intent.',
-    subtext: 'And then, the choice to let go.',
+    subtext: 'The moment you commit.',
     revealMode: 'firm',
     accentColor: '#f97316',
     headerDelay: 0,
@@ -76,13 +76,13 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     visibleHeaderWords: 3,
   },
   3: {
-    header: 'What gathers, begins to last.',
-    subtext: '',
+    header: 'Commitment ignites the core.',
+    subtext: 'Its gravity draws others into orbit',
     revealMode: 'bridge',
     headerDelay: 40,
-    subtextDelay: 0,
-    subtextTypeDuration: 0,
-    transitionDuration: 320,
+    subtextDelay: 360,
+    subtextTypeDuration: 1400,
+    transitionDuration: 520,
     lingerPrevious: 180,
   },
   4: {
