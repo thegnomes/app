@@ -28,14 +28,18 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
 
     if (!isActive) {
       video.pause();
-      setPhase(null);
-      setShowZoomHeader2(false);
+      requestAnimationFrame(() => {
+        setPhase(null);
+        setShowZoomHeader2(false);
+      });
       return;
     }
 
     video.currentTime = 0;
-    setPhase('zoom');
-    setShowZoomHeader2(false);
+    requestAnimationFrame(() => {
+      setPhase('zoom');
+      setShowZoomHeader2(false);
+    });
     const t = setTimeout(() => setShowZoomHeader2(true), 1400);
     void video.play();
     return () => clearTimeout(t);

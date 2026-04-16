@@ -29,8 +29,10 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       }, 50);
       return () => clearTimeout(t);
     } else {
-      setScaleNebula(2);
-      setScaleAstro(2);
+      requestAnimationFrame(() => {
+        setScaleNebula(2);
+        setScaleAstro(2);
+      });
     }
   }, [playAstro]);
 

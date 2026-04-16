@@ -181,7 +181,8 @@ export function useParticleScene(config: ParticleConfig) {
 
     // Cleanup
     return () => {
-      cancelAnimationFrame(animationRef.current);
+      const animId = animationRef.current;
+      cancelAnimationFrame(animId);
       window.removeEventListener('resize', onResize);
 
       // Dispose dynamically created meshes

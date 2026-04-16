@@ -20,17 +20,19 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
 
   useEffect(() => {
     if (isActive) {
-      setIsVisible(true);
+      requestAnimationFrame(() => setIsVisible(true));
     }
   }, [isActive]);
 
   useEffect(() => {
     if (autoTrigger && !isZooming) {
-      setIsZooming(true);
-      hasTransitionedRef.current = false;
-      onTransition();
-      hasTransitionedRef.current = true;
-      zoomVideoRef.current?.play();
+      requestAnimationFrame(() => {
+        setIsZooming(true);
+        hasTransitionedRef.current = false;
+        onTransition();
+        hasTransitionedRef.current = true;
+        zoomVideoRef.current?.play();
+      });
     }
   }, [autoTrigger, isZooming, onTransition]);
 
@@ -59,12 +61,13 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
   };
 
   useEffect(() => {
+    const video = zoomVideoRef.current;
     return () => {
       if (fadeTimerRef.current) {
         clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = null;
       }
-      zoomVideoRef.current?.pause();
+      video?.pause();
     };
   }, []);
 

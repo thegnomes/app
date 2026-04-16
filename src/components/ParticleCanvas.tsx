@@ -35,16 +35,13 @@ export function ParticleCanvas({ state, config, cameraPanRef }: ParticleCanvasPr
   // Run animation loop
   useParticleAnimation({ state, config, refs, data, cameraPanRef });
 
-  // Update cursor style based on state and drag
-  const cursorStyle = cameraPanRef.current?.isDragging ? 'grabbing' : state === 1 ? 'grab' : 'default';
-
   return (
     <div
       ref={containerRef}
       className="particle-canvas-container fixed inset-0 z-0"
       style={{
         background: state === 0 ? 'black' : 'radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%)',
-        cursor: cursorStyle,
+        cursor: state === 1 ? 'grab' : 'default',
         opacity: state === 0 ? 0 : 1, // Hide in State 0, show in other states
         // NO transition - particles must be visible immediately for seamless video handoff
         transition: 'none',
