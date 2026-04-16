@@ -538,10 +538,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Mark attributes as needing update
-      posAttr.needsUpdate = true;
-      colAttr.needsUpdate = true;
-      sizeAttr.needsUpdate = true;
-      alphaAttr.needsUpdate = true;
+      const geoAttrs = refs.particles.current!.geometry.attributes;
+      geoAttrs.position.needsUpdate = true;
+      geoAttrs.color.needsUpdate = true;
+      geoAttrs.size.needsUpdate = true;
+      geoAttrs.alpha.needsUpdate = true;
 
       // System group rotation
       if (refs.systemGroup.current) {
