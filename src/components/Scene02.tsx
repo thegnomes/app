@@ -22,17 +22,17 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   }, [playAstro]);
 
   useEffect(() => {
-    if (isActive) {
+    if (playAstro) {
       const t = setTimeout(() => {
         setScaleNebula(1);
-        setScaleAstro(0.5);
+        setScaleAstro(1);
       }, 50);
       return () => clearTimeout(t);
     } else {
       setScaleNebula(2);
-      setScaleAstro(1);
+      setScaleAstro(2);
     }
-  }, [isActive]);
+  }, [playAstro]);
 
   if (!isActive) return null;
 
