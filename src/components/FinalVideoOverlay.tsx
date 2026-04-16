@@ -143,8 +143,8 @@ export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps)
               </h1>
             </div>
             {renderTextBlock(
-              'At the edge of fantasy and reality,',
-              'the traveller appears—charting a course through uncertainty.',
+              'At the edge of fantasy and reality, a traveller bears witness',
+              '—plotting a course through uncertainty.',
               phase === 'astronaut'
             )}
           </div>
