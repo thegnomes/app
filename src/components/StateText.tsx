@@ -241,7 +241,16 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
 
   return (
     <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
-      <h1 className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none gradient-text transition-all ease-out">
+      <h1
+        className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none transition-all ease-out"
+        style={{
+          color: '#22d3ee',
+          textShadow: '0 0 28px #22d3ee66',
+          animation: 'text-color-morph 1200ms ease-out both',
+          '--text-color-from': '#a855f7',
+          '--text-color-to': '#22d3ee',
+        } as CSSProperties}
+      >
         {words.map((word, i) => (
           <span
             key={i}

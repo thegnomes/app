@@ -25,7 +25,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     if (playAstro) {
       const t = setTimeout(() => {
         setScaleNebula(1);
-        setScaleAstro(1);
+        setScaleAstro(0.5);
       }, 50);
       return () => clearTimeout(t);
     } else {
