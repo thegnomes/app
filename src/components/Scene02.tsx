@@ -8,7 +8,7 @@ interface Scene02Props {
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
   const [scaleNebula, setScaleNebula] = useState(2);
-  const [scaleAstro, setScaleAstro] = useState(2);
+  const [scaleAstro, setScaleAstro] = useState(1);
 
   useEffect(() => {
     const video = astroRef.current;
@@ -31,7 +31,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     } else {
       requestAnimationFrame(() => {
         setScaleNebula(2);
-        setScaleAstro(2);
+        setScaleAstro(1);
       });
     }
   }, [playAstro]);
