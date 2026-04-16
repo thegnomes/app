@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | '2.1' | '2.2' | '2.3' | 3 | 4 | 5 | 6;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6;
 
 type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'collapse' | 'silence';
 
@@ -40,41 +40,16 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 1100,
     lingerPrevious: 420,
   },
-  '2.1': {
+  '2': {
     header: 'Time. Pressure. Intent.',
-    subtext: 'The idea begins to take shape.',
+    subtext: '',
     revealMode: 'firm',
     accentColor: '#22d3ee',
-    headerDelay: 80,
-    subtextDelay: 360,
-    subtextTypeDuration: 1200,
+    headerDelay: 0,
+    subtextDelay: 0,
+    subtextTypeDuration: 0,
     transitionDuration: 1200,
     lingerPrevious: 0,
-    visibleHeaderWords: 1,
-  },
-  '2.2': {
-    header: 'Time. Pressure. Intent.',
-    subtext: 'Form compresses into focus.',
-    revealMode: 'firm',
-    accentColor: '#3b82f6',
-    headerDelay: 0,
-    subtextDelay: 320,
-    subtextTypeDuration: 1100,
-    transitionDuration: 1200,
-    lingerPrevious: 0,
-    visibleHeaderWords: 2,
-  },
-  '2.3': {
-    header: 'Time. Pressure. Intent.',
-    subtext: 'The moment you commit.',
-    revealMode: 'firm',
-    accentColor: '#f97316',
-    headerDelay: 0,
-    subtextDelay: 320,
-    subtextTypeDuration: 1200,
-    transitionDuration: 1400,
-    lingerPrevious: 0,
-    visibleHeaderWords: 3,
   },
   3: {
     header: 'What gathers, begins to last.',
@@ -238,6 +213,69 @@ function getAccentStyle(config: StateTextConfig): CSSProperties {
   } as CSSProperties;
 }
 
+function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
+  const [visibleWords, setVisibleWords] = useState(0);
+  const [visibleLines, setVisibleLines] = useState(0);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setVisibleWords(0);
+      setVisibleLines(0);
+      return;
+    }
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    timers.push(setTimeout(() => setVisibleWords(1), 0));
+    timers.push(setTimeout(() => setVisibleWords(2), 600));
+    timers.push(setTimeout(() => setVisibleWords(3), 1200));
+    timers.push(setTimeout(() => setVisibleLines(1), 0));
+    timers.push(setTimeout(() => setVisibleLines(2), 2000));
+    timers.push(setTimeout(() => setVisibleLines(3), 4000));
+    return () => timers.forEach(clearTimeout);
+  }, [isVisible]);
+
+  const words = ['Time.', 'Pressure.', 'Intent.'];
+  const lines = [
+    'Something begins to gather.',
+    'Form compresses into focus.',
+    'The moment you commit.',
+  ];
+
+  return (
+    <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
+      <h1 className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none gradient-text transition-all ease-out">
+        {words.map((word, i) => (
+          <span
+            key={i}
+            className="inline-block px-1 transition-opacity ease-out"
+            style={{
+              opacity: i < visibleWords ? 1 : 0,
+              transitionDuration: '1600ms',
+            }}
+          >
+            {word}
+          </span>
+        ))}
+      </h1>
+      <div className="mt-1 flex flex-col items-start gap-2">
+        {lines.map((line, i) => (
+          <p
+            key={i}
+            className="font-orbitron flex min-h-[1.2em] items-center justify-start text-left text-[13.5px] font-normal leading-none text-white transition-all ease-out tracking-[0.15em]"
+            style={{
+              opacity: i < visibleLines ? 1 : 0,
+              transform: `translate3d(0, ${i < visibleLines ? 0 : 10}px, 0)`,
+              transitionDuration: '1200ms',
+              textShadow: getSubtextShadow('firm'),
+            }}
+          >
+            {line}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StateText({ state }: { state: TextSceneState }) {
   const [active, setActive] = useState<TextBlockInstance | null>(null);
   const [previous, setPrevious] = useState<TextBlockInstance | null>(null);
@@ -379,6 +417,22 @@ export function StateText({ state }: { state: TextSceneState }) {
     const accentStyle = getAccentStyle(config);
     const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
 
+    if (instance.state === '2') {
+      return (
+        <div
+          key={`${mode}-${instance.id}-${instance.state}`}
+          className="absolute left-0 top-0 grid w-full grid-cols-[minmax(0,1fr)_clamp(72px,16vw,220px)_minmax(0,1fr)] items-center transition-all ease-out"
+          style={{
+            opacity: blockOpacity,
+            transform: `translate3d(0, ${blockY}px, 0)`,
+            transitionDuration: `${duration}ms`,
+          }}
+        >
+          <State2CumulativeText isVisible={headerVisible && !isExiting} />
+        </div>
+      );
+    }
+
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
@@ -407,7 +461,7 @@ export function StateText({ state }: { state: TextSceneState }) {
           {config.subtext && (
             config.subtextAsHeader ? (
               <h2
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} transition-all ease-out`}
+                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} transition-all ease-out tracking-[0.15em]`}
                 style={{
                   opacity: subtextOpacity,
                   transform: `translate3d(0, ${subtextY}px, 0)`,
@@ -420,7 +474,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               </h2>
             ) : (
               <p
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out`}
+                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out tracking-[0.15em]`}
                 style={{
                   opacity: subtextOpacity,
                   transform: `translate3d(0, ${subtextY}px, 0)`,

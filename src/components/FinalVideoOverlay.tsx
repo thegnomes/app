@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 interface FinalVideoOverlayProps {
   isActive: boolean;
   onEnded?: () => void;
+  onAstronautPhase?: () => void;
 }
 
 type VideoTextPhase = 'zoom' | 'gap' | 'astronaut' | null;
@@ -12,9 +13,10 @@ const GAP_DURATION_MS = 1200;
 const ZOOM_OUT_END_S = 5.5;
 const TEXT_TRANSITION_MS = 1400;
 
-export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps) {
+export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: FinalVideoOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<VideoTextPhase>(null);
+  const [showZoomHeader2, setShowZoomHeader2] = useState(false);
 
   useEffect(() => {
     videoRef.current?.load();
@@ -27,21 +29,26 @@ export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps)
     if (!isActive) {
       video.pause();
       setPhase(null);
+      setShowZoomHeader2(false);
       return;
     }
 
     video.currentTime = 0;
     setPhase('zoom');
+    setShowZoomHeader2(false);
+    const t = setTimeout(() => setShowZoomHeader2(true), 1400);
     void video.play();
+    return () => clearTimeout(t);
   }, [isActive]);
 
   useEffect(() => {
     if (phase !== 'gap') return;
     const timer = setTimeout(() => {
       setPhase('astronaut');
+      onAstronautPhase?.();
     }, GAP_DURATION_MS);
     return () => clearTimeout(timer);
-  }, [phase]);
+  }, [phase, onAstronautPhase]);
 
   const handleTimeUpdate = () => {
     const video = videoRef.current;
@@ -135,6 +142,8 @@ export function FinalVideoOverlay({ isActive, onEnded }: FinalVideoOverlayProps)
               <h1
                 className="font-orbitron flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[24px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out"
                 style={{
+                  opacity: showZoomHeader2 ? 1 : 0,
+                  transform: `translate3d(0, ${showZoomHeader2 ? 0 : 14}px, 0)`,
                   textShadow: '0 0 30px rgba(168, 85, 247, 0.6)',
                   transitionDuration: `${TEXT_TRANSITION_MS}ms`,
                 }}

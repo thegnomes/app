@@ -250,10 +250,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       if (refs.flashMesh.current && refs.scene.current) {
         const mesh = refs.flashMesh.current;
         if (mesh.userData.solarEntryFlare) {
-          mesh.scale.multiplyScalar(Math.pow(1.045, frameScale));
+          mesh.scale.multiplyScalar(Math.pow(1.045, frameScale * 5));
           const material = mesh.material as THREE.ShaderMaterial;
           const opacityUniform = material.uniforms.uOpacity;
-          opacityUniform.value -= 0.012 * frameScale;
+          opacityUniform.value -= 0.06 * frameScale;
           if (opacityUniform.value <= 0) {
             refs.scene.current.remove(mesh);
             mesh.geometry.dispose();
@@ -261,9 +261,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             refs.flashMesh.current = null;
           }
         } else {
-          mesh.scale.multiplyScalar(Math.pow(1.08, frameScale));
+          mesh.scale.multiplyScalar(Math.pow(1.08, frameScale * 5));
           const mat = mesh.material as THREE.MeshBasicMaterial;
-          mat.opacity -= 0.02 * frameScale;
+          mat.opacity -= 0.1 * frameScale;
 
           if (mat.opacity <= 0) {
             refs.scene.current.remove(mesh);

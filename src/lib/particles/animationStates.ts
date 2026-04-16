@@ -548,7 +548,7 @@ export function animatePlanets(
 
   planets.forEach((planet, idx) => {
     // Faster planet entry - reduced delay between planets
-    const entryTime = idx * (PLANET_ENTRY_DELAY * 0.6); // 40% faster entry timing
+    const entryTime = idx * (PLANET_ENTRY_DELAY * 2.5); // increased stagger between planets
 
     if (stateElapsed < entryTime) {
       planet.group.visible = false;

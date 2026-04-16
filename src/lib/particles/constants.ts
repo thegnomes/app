@@ -178,7 +178,7 @@ export const GLOW_RADIUS = 6;
 export const GLOW_OPACITY = 0.55;
 
 /** Duration for the State 3 textured sun sphere to reveal */
-export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 1000;
+export const SOLAR_VIDEO_CORE_TRANSITION_DURATION = 5000;
 
 /** Delay before the State 3 textured sun sphere reveals, leaving room for the entry flare */
 export const SOLAR_VIDEO_CORE_REVEAL_DELAY = 420;
