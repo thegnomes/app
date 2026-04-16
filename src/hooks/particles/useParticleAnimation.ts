@@ -607,10 +607,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.camera.current.userData.panX = smoothPanX;
         refs.camera.current.userData.panY = smoothPanY;
 
-        // Camera Z position - no zoom needed since video handles State 0
-        // Just use standard position for all states
-        const targetZ = CAMERA_Z;
-        
+        // Camera Z position - zoom out during solar system to match video motion
+        const zoomOutProgress = currentState === 3 ? Math.min(1, stateElapsed / 6000) : 0;
+        const targetZ = CAMERA_Z + zoomOutProgress * 120;
+
         // Smooth camera Z transition
         refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * scaleFrameLerp(0.03, frameScale);
 
