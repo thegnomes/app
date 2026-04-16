@@ -63,14 +63,13 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   4: {
     header: 'Commitment ignites the core.',
-    subtext: 'Its gravity draws others into orbit',
+    subtext: 'Its gravity draws others into orbit.',
     revealMode: 'payoff',
     headerDelay: 90,
     subtextDelay: 560,
     subtextTypeDuration: 1400,
     transitionDuration: 1050,
     lingerPrevious: 260,
-    subtextAsHeader: true,
   },
   5: {
     header: 'Some ideas burn brightly at first,',
@@ -184,10 +183,6 @@ function getHeaderTone(revealMode: RevealMode): string {
   return 'gradient-text';
 }
 
-function getSubtextTone(): string {
-  return 'text-white';
-}
-
 function getHeaderShadow(revealMode: RevealMode): string {
   if (revealMode === 'payoff') return '0 0 34px rgba(249, 115, 22, 0.52)';
   if (revealMode === 'reflection') return '0 0 24px rgba(255, 255, 255, 0.18)';
@@ -219,17 +214,21 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
 
   useEffect(() => {
     if (!isVisible) {
-      setVisibleWords(0);
-      setVisibleLines(0);
-      return;
+      const raf = requestAnimationFrame(() => {
+        setVisibleWords(0);
+        setVisibleLines(0);
+      });
+      return () => cancelAnimationFrame(raf);
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
+    // Header words: Time @ 0ms, Pressure @ 3000ms, Intent @ 6000ms
     timers.push(setTimeout(() => setVisibleWords(1), 0));
-    timers.push(setTimeout(() => setVisibleWords(2), 600));
-    timers.push(setTimeout(() => setVisibleWords(3), 1200));
-    timers.push(setTimeout(() => setVisibleLines(1), 0));
-    timers.push(setTimeout(() => setVisibleLines(2), 2000));
-    timers.push(setTimeout(() => setVisibleLines(3), 4000));
+    timers.push(setTimeout(() => setVisibleWords(2), 3000));
+    timers.push(setTimeout(() => setVisibleWords(3), 6000));
+    // Subtext lines start 1000ms after their header word
+    timers.push(setTimeout(() => setVisibleLines(1), 1000));
+    timers.push(setTimeout(() => setVisibleLines(2), 4000));
+    timers.push(setTimeout(() => setVisibleLines(3), 7000));
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
@@ -249,7 +248,7 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
             className="inline-block px-1 transition-opacity ease-out"
             style={{
               opacity: i < visibleWords ? 1 : 0,
-              transitionDuration: '1600ms',
+              transitionDuration: '1000ms',
             }}
           >
             {word}
@@ -264,7 +263,7 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
             style={{
               opacity: i < visibleLines ? 1 : 0,
               transform: `translate3d(0, ${i < visibleLines ? 0 : 10}px, 0)`,
-              transitionDuration: '1200ms',
+              transitionDuration: '2000ms',
               textShadow: getSubtextShadow('firm'),
             }}
           >

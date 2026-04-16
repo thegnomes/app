@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import type { AppState, ParticleConfig, ParticleAttributes } from '@/types';
+import type { AppState, ParticleConfig } from '@/types';
 import type { SceneRefs, AnimationData } from './useParticleScene';
 import {
   STATE4_CONCENTRATE,

@@ -19,7 +19,7 @@ export function AstronautTextOverlay({ isActive }: AstronautTextOverlayProps) {
             className="font-orbitron flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] tracking-[0.15em]"
             style={{ textShadow: '0 0 20px rgba(0, 0, 0, 0.8)' }}
           >
-            —plotting a course through uncertainty.
+            I plot coordinates for ideas — navigating narrative, platforms, and the systems that bring them into form.
           </p>
         </div>
       </div>

@@ -162,7 +162,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
             </div>
             {renderTextBlock(
               'At the edge of fantasy and reality, a traveller bears witness',
-              '—plotting a course through uncertainty.',
+              'I plot coordinates for ideas — navigating narrative, platforms, and the systems that bring them into form.',
               phase === 'astronaut'
             )}
           </div>
