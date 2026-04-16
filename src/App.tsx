@@ -194,16 +194,16 @@ function App() {
     const handlePointerMove = (e: PointerEvent) => {
       if (!panStateRef.current.isDragging) return;
 
-      const dx = (e.clientX - panStateRef.current.dragStart.x) * 0.05;
-      const dy = (e.clientY - panStateRef.current.dragStart.y) * 0.05;
+      const dx = (e.clientX - panStateRef.current.dragStart.x) * 0.12;
+      const dy = (e.clientY - panStateRef.current.dragStart.y) * 0.12;
 
       panStateRef.current.targetOffset = {
         x: panStateRef.current.cameraOffset.x + dx,
         y: panStateRef.current.cameraOffset.y - dy,
       };
 
-      panStateRef.current.targetOffset.x = Math.max(-50, Math.min(50, panStateRef.current.targetOffset.x));
-      panStateRef.current.targetOffset.y = Math.max(-50, Math.min(50, panStateRef.current.targetOffset.y));
+      panStateRef.current.targetOffset.x = Math.max(-80, Math.min(80, panStateRef.current.targetOffset.x));
+      panStateRef.current.targetOffset.y = Math.max(-80, Math.min(80, panStateRef.current.targetOffset.y));
 
       cameraPanRef.current.targetOffset = panStateRef.current.targetOffset;
     };
