@@ -607,9 +607,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.camera.current.userData.panX = smoothPanX;
         refs.camera.current.userData.panY = smoothPanY;
 
-        // Camera Z position - zoom out during solar system to match video motion
-        const zoomOutProgress = currentState === 3 ? Math.min(1, stateElapsed / 6000) : 0;
-        const targetZ = CAMERA_Z + zoomOutProgress * 120;
+        // Camera Z position - continuous zoom out during solar system
+        const targetZ = currentState === 3 ? CAMERA_Z + stateElapsed * 0.02 : CAMERA_Z;
 
         // Smooth camera Z transition
         refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * scaleFrameLerp(0.03, frameScale);
