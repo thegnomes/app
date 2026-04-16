@@ -184,10 +184,73 @@ export function useParticleScene(config: ParticleConfig) {
       cancelAnimationFrame(animationRef.current);
       window.removeEventListener('resize', onResize);
 
-      if (rendererRef.current && initialContainer) {
-        initialContainer.removeChild(rendererRef.current.domElement);
-        rendererRef.current.dispose();
+      // Dispose dynamically created meshes
+      if (flashMeshRef.current) {
+        flashMeshRef.current.geometry.dispose();
+        (flashMeshRef.current.material as THREE.Material).dispose();
+        flashMeshRef.current = null;
       }
+      novaMeshesRef.current.forEach((mesh) => {
+        mesh.geometry.dispose();
+        (mesh.material as THREE.Material).dispose();
+        const container = (mesh as THREE.Mesh & { container?: THREE.Group }).container;
+        if (container) systemGroup.remove(container);
+        else systemGroup.remove(mesh);
+      });
+      novaMeshesRef.current = [];
+
+      // Dispose core group
+      if (coreGroupRef.current) {
+        coreGroupRef.current.children.forEach((child) => {
+          const mesh = child as THREE.Mesh;
+          mesh.geometry?.dispose();
+          (mesh.material as THREE.Material)?.dispose();
+        });
+        systemGroup.remove(coreGroupRef.current);
+        coreGroupRef.current = null;
+      }
+
+      // Dispose trail
+      if (trailRef.current) {
+        trailRef.current.geometry.dispose();
+        (trailRef.current.material as THREE.Material).dispose();
+        systemGroup.remove(trailRef.current);
+        trailRef.current = null;
+      }
+
+      // Dispose orbits
+      if (orbitGroupRef.current) {
+        orbitGroupRef.current.children.forEach((child) => {
+          const line = child as THREE.Line;
+          line.geometry.dispose();
+          (line.material as THREE.Material).dispose();
+        });
+        systemGroup.remove(orbitGroupRef.current);
+        orbitGroupRef.current = null;
+      }
+
+      // Dispose planets
+      if (planetsRef.current) {
+        planetsRef.current.forEach((p) => {
+          p.group.children.forEach((child) => {
+            const mesh = child as THREE.Mesh;
+            mesh.geometry?.dispose();
+            (mesh.material as THREE.Material)?.dispose();
+          });
+          systemGroup.remove(p.group);
+        });
+        planetsRef.current = [];
+      }
+
+      // Dispose solar video core
+      if (solarVideoCoreLayerRef.current) {
+        solarVideoCoreLayerRef.current.geometry.dispose();
+        (solarVideoCoreLayerRef.current.material as THREE.Material).dispose();
+        systemGroup.remove(solarVideoCoreLayerRef.current);
+      }
+      solarVideoCoreTextureRef.current?.dispose();
+      solarVideoCoreTextureRef.current = null;
+      solarVideoCoreLayerRef.current = null;
 
       if (solarVideoCoreVideoRef.current) {
         solarVideoCoreVideoRef.current.pause();
@@ -196,18 +259,41 @@ export function useParticleScene(config: ParticleConfig) {
         solarVideoCoreVideoRef.current = null;
       }
 
-      if (solarVideoCoreLayerRef.current) {
-        solarVideoCoreLayerRef.current.geometry.dispose();
-        (solarVideoCoreLayerRef.current.material as THREE.Material).dispose();
-      }
-      solarVideoCoreTextureRef.current?.dispose();
-      solarVideoCoreTextureRef.current = null;
-      solarVideoCoreLayerRef.current = null;
-
+      // Dispose particles
       if (particlesRef.current) {
         particlesRef.current.geometry.dispose();
         (particlesRef.current.material as THREE.Material).dispose();
+        systemGroup.remove(particlesRef.current);
+        particlesRef.current = null;
       }
+
+      // Remove system group from scene
+      scene.remove(systemGroup);
+      systemGroupRef.current = null;
+
+      // Remove lights from scene and dispose
+      if (sunLightRef.current) {
+        scene.remove(sunLightRef.current);
+        sunLightRef.current.dispose();
+        sunLightRef.current = null;
+      }
+
+      // Dispose renderer and remove canvas
+      if (rendererRef.current) {
+        try {
+          initialContainer.removeChild(rendererRef.current.domElement);
+        } catch {
+          // ignore if already removed
+        }
+        rendererRef.current.dispose();
+        rendererRef.current = null;
+      }
+
+      // Dispose camera and scene
+      cameraRef.current?.clear();
+      cameraRef.current = null;
+      scene.clear();
+      sceneRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

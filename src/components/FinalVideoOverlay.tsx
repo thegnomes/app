@@ -50,11 +50,20 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
     return () => clearTimeout(timer);
   }, [phase, onAstronautPhase]);
 
+  const gapTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    if (!isActive) {
+      gapTriggeredRef.current = false;
+    }
+  }, [isActive]);
+
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video) return;
     const t = video.currentTime;
-    if (phase === 'zoom' && t >= ZOOM_OUT_END_S) {
+    if (phase === 'zoom' && t >= ZOOM_OUT_END_S && !gapTriggeredRef.current) {
+      gapTriggeredRef.current = true;
       setPhase('gap');
     }
   };

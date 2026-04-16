@@ -428,7 +428,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             transitionDuration: `${duration}ms`,
           }}
         >
-          <State2CumulativeText isVisible={headerVisible && !isExiting} />
+          <State2CumulativeText isVisible={instance.headerVisible && !isExiting} />
         </div>
       );
     }

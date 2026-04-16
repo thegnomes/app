@@ -289,6 +289,37 @@ export function animateState2And3(
     }
   }
 
+  // Rotation for shell positioning (frame-constant)
+  const cosA = Math.cos(shellAngle);
+  const sinA = Math.sin(shellAngle);
+
+  // Core color update for substate 3 — hoisted outside loop
+  if (state === 2) {
+    const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+    if (stateElapsed >= substate3Start) {
+      const substate3T = Math.min(1, Math.max(0, (stateElapsed - substate3Start) / (STATE2_DURATION - substate3Start)));
+      const coreColorT = easeOutCubic(substate3T);
+      const glowEntrance = easeInOutCubic(substate3T);
+      const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
+      const coreR =
+        CORE_BLUE_R +
+        CORE_BLUE_TO_ORANGE_R * coreColorT +
+        ORANGE_R * orangePulse * 0.2 * glowEntrance;
+      const coreG =
+        CORE_BLUE_G +
+        CORE_BLUE_TO_ORANGE_G * coreColorT +
+        ORANGE_G * orangePulse * 0.1 * glowEntrance;
+      const coreB = CORE_BLUE_B + CORE_BLUE_TO_ORANGE_B * coreColorT;
+
+      coreColor.setRGB(coreR, coreG, coreB);
+      colors[0] = coreR;
+      colors[1] = coreG;
+      colors[2] = coreB;
+      sizes[0] = 4.2 + glowEntrance * (18 + orangePulse * 8);
+      alphas[0] = 0.95 + glowEntrance * 0.05;
+    }
+  }
+
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
     const rnd = random[i];
@@ -306,10 +337,6 @@ export function animateState2And3(
       continue;
     }
 
-    // Rotation for shell positioning
-    const cosA = Math.cos(shellAngle);
-    const sinA = Math.sin(shellAngle);
-    
     // Fibonacci sphere target position (pre-calculated)
     const fibTargetX = fibonacciPositions[i3];
     const fibTargetY = fibonacciPositions[i3 + 1];
@@ -317,7 +344,7 @@ export function animateState2And3(
     const stableX = fibTargetX * cosA - fibTargetZ * sinA;
     const stableZ = fibTargetX * sinA + fibTargetZ * cosA;
     const stableY = fibTargetY;
-    const stableRadius = Math.sqrt(stableX * stableX + stableY * stableY + stableZ * stableZ) || 1;
+    const stableRadius = SHELL_RADIUS; // fibonacci positions are generated on a sphere of this radius
     const stableUnitX = stableX / stableRadius;
     const stableUnitY = stableY / stableRadius;
     const stableUnitZ = stableZ / stableRadius;
@@ -373,28 +400,6 @@ export function animateState2And3(
       const clusterPhaseLag = state2ClusterPhaseLag[i];
       // Faster early pull-in to avoid sluggish start.
       const drawInEased = easeOutCubic(drawInProgress);
-      if (i === 1 && substate3T > 0) {
-        const coreColorT = easeOutCubic(substate3T);
-        const glowEntrance = easeInOutCubic(substate3T);
-        const orangePulse = Math.sin(time * 4.4) * 0.5 + 0.5;
-        const coreR =
-          CORE_BLUE_R +
-          CORE_BLUE_TO_ORANGE_R * coreColorT +
-          ORANGE_R * orangePulse * 0.2 * glowEntrance;
-        const coreG =
-          CORE_BLUE_G +
-          CORE_BLUE_TO_ORANGE_G * coreColorT +
-          ORANGE_G * orangePulse * 0.1 * glowEntrance;
-        const coreB = CORE_BLUE_B + CORE_BLUE_TO_ORANGE_B * coreColorT;
-
-        coreColor.setRGB(coreR, coreG, coreB);
-        colors[0] = coreR;
-        colors[1] = coreG;
-        colors[2] = coreB;
-        sizes[0] = 4.2 + glowEntrance * (18 + orangePulse * 8);
-        alphas[0] = 0.95 + glowEntrance * 0.05;
-      }
-      
       // Calculate progress and base position based on substate
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
         // Substate 1: Particles coming from starfield
@@ -537,6 +542,9 @@ export function animateState2And3(
 // State 3: Planet Animation
 // ============================================
 
+const _scratchVec = new THREE.Vector3();
+const _startPos = new THREE.Vector3(-90, -70, 30);
+
 export function animatePlanets(
   planets: PlanetInstance[],
   orbitGroup: THREE.Group | null,
@@ -544,43 +552,41 @@ export function animatePlanets(
   speed: number,
   frameScale: number
 ): void {
-  const startPos = new THREE.Vector3(-90, -70, 30);
-
-  planets.forEach((planet, idx) => {
-    // Faster planet entry - reduced delay between planets
-    const entryTime = idx * (PLANET_ENTRY_DELAY * 2.5); // increased stagger between planets
+  for (let idx = 0; idx < planets.length; idx++) {
+    const planet = planets[idx];
+    const entryTime = idx * (PLANET_ENTRY_DELAY * 2.5);
 
     if (stateElapsed < entryTime) {
       planet.group.visible = false;
-      return;
+      continue;
     }
 
     planet.group.visible = true;
-    // Faster entry animation - reduced duration
     const entryProgress = Math.min(
-      (stateElapsed - entryTime) / (PLANET_ENTRY_DURATION * 0.7), // 30% faster entry
+      (stateElapsed - entryTime) / (PLANET_ENTRY_DURATION * 0.7),
       1
     );
     const linearEntry = entryProgress;
 
-    const endPos = new THREE.Vector3(
+    _scratchVec.set(
       Math.cos(planet.angle) * planet.radius,
       0,
       Math.sin(planet.angle) * planet.radius
     );
-    endPos.applyEuler(SHARED_ROTATION);
+    _scratchVec.applyEuler(SHARED_ROTATION);
 
-    planet.group.position.lerpVectors(startPos, endPos, linearEntry);
+    planet.group.position.x = _startPos.x + (_scratchVec.x - _startPos.x) * linearEntry;
+    planet.group.position.y = _startPos.y + (_scratchVec.y - _startPos.y) * linearEntry;
+    planet.group.position.z = _startPos.z + (_scratchVec.z - _startPos.z) * linearEntry;
 
     const startScale = 5.0;
     const endScale = 1.0;
     const s = startScale + (endScale - startScale) * linearEntry;
     planet.group.scale.set(s, s, s);
 
-    // Once entered, orbit at 2x speed
     if (entryProgress >= 1) {
       const prevAngle = planet.angle;
-      planet.angle += planet.speed * 0.06 * speed * frameScale; // 2x faster orbit speed
+      planet.angle += planet.speed * 0.06 * speed * frameScale;
       const delta = planet.angle - prevAngle;
 
       if (!planet.hasCompletedFirstOrbit) {
@@ -591,15 +597,14 @@ export function animatePlanets(
         }
       }
 
-      const v = new THREE.Vector3(
+      _scratchVec.set(
         Math.cos(planet.angle) * planet.radius,
         0,
         Math.sin(planet.angle) * planet.radius
       );
-      v.applyEuler(SHARED_ROTATION);
-      planet.group.position.copy(v);
+      _scratchVec.applyEuler(SHARED_ROTATION);
+      planet.group.position.copy(_scratchVec);
 
-      // Update orbit draw range
       if (orbitGroup) {
         const progress = planet.hasCompletedFirstOrbit
           ? 1
@@ -607,15 +612,14 @@ export function animatePlanets(
         const totalVertices = ORBIT_SEGMENTS + 1;
         const drawCount = Math.max(1, Math.floor(progress * totalVertices));
 
-        orbitGroup.children.forEach((child) => {
-          if (child.userData.idx === idx) {
-            const geo = (child as THREE.Line | THREE.Points).geometry;
-            geo.setDrawRange(0, drawCount);
-          }
-        });
+        const child = orbitGroup.children[idx];
+        if (child) {
+          const geo = (child as THREE.Line | THREE.Points).geometry;
+          geo.setDrawRange(0, drawCount);
+        }
       }
     }
-  });
+  }
 }
 
 // ============================================

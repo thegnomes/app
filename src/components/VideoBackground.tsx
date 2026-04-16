@@ -16,6 +16,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
   const [isVisible, setIsVisible] = useState(false);
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
   const hasTransitionedRef = useRef(false);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (isActive) {
@@ -50,11 +51,22 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
   const handleZoomEnded = () => {
     // Video ended naturally, now fade it out
     setIsFadingOut(true);
-    window.setTimeout(() => {
+    fadeTimerRef.current = window.setTimeout(() => {
+      fadeTimerRef.current = null;
       setIsVisible(false);
       setIsZooming(false);
     }, 800);
   };
+
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current);
+        fadeTimerRef.current = null;
+      }
+      zoomVideoRef.current?.pause();
+    };
+  }, []);
 
   // Keep mounted while zoom video is playing/fading, even after parent switches to state 1
   if (!isActive && !isVisible && !isZooming) return null;

@@ -239,12 +239,15 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       }
 
       // Update planet glow shader uniforms
-      refs.planets.current?.forEach((p) => {
-        const glowMesh = p.group.children[1] as THREE.Mesh;
-        if (glowMesh && (glowMesh.material as THREE.ShaderMaterial).uniforms.uTime) {
-          (glowMesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+      const planets = refs.planets.current;
+      if (planets) {
+        for (let pi = 0; pi < planets.length; pi++) {
+          const glowMesh = planets[pi].group.children[1] as THREE.Mesh;
+          if (glowMesh && (glowMesh.material as THREE.ShaderMaterial).uniforms.uTime) {
+            (glowMesh.material as THREE.ShaderMaterial).uniforms.uTime.value = data.time.current;
+          }
         }
-      });
+      }
 
       // Update flash mesh
       if (refs.flashMesh.current && refs.scene.current) {
@@ -280,24 +283,21 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         stateElapsed = now - data.stateStart.current;
       }
 
-      // Get attribute arrays
-      const posAttr = refs.particles.current!.geometry.attributes.position;
-      const colAttr = refs.particles.current!.geometry.attributes.color;
-      const sizeAttr = refs.particles.current!.geometry.attributes.size;
-      const alphaAttr = refs.particles.current!.geometry.attributes.alpha;
-      const positions = posAttr.array as Float32Array;
-      const colors = colAttr.array as Float32Array;
-      const sizes = sizeAttr.array as Float32Array;
-      const alphas = alphaAttr.array as Float32Array;
-
-      const attributes: ParticleAttributes = {
-        positions,
-        colors,
-        sizes,
-        alphas,
-        random: refs.particles.current!.geometry.attributes.random.array as Float32Array,
-        migrator: refs.particles.current!.geometry.attributes.migrator.array as Float32Array,
-      };
+      // Get attribute arrays (cached on first frame)
+      let attr = data.particleAttributes.current;
+      if (!attr) {
+        const geo = refs.particles.current!.geometry;
+        attr = {
+          positions: geo.attributes.position.array as Float32Array,
+          colors: geo.attributes.color.array as Float32Array,
+          sizes: geo.attributes.size.array as Float32Array,
+          alphas: geo.attributes.alpha.array as Float32Array,
+          random: geo.attributes.random.array as Float32Array,
+          migrator: geo.attributes.migrator.array as Float32Array,
+        };
+        data.particleAttributes.current = attr;
+      }
+      const { positions, colors, sizes, alphas } = attr;
 
       const particleData = data.particleData.current!;
 
@@ -317,7 +317,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       switch (currentState) {
         case 0:
           animateState0(
-            attributes,
+            attr,
             particleData,
             data.time.current,
             data.currentCoreColor.current
@@ -330,7 +330,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
         case 1:
           animateState1(
-            attributes,
+            attr,
             particleData,
             stateElapsed,
             data.snapshotPositions.current,
@@ -355,7 +355,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           // Faster shell rotation for visible spinning effect
           data.shellAngle.current += 0.012 * speed * frameScale;
           animateState2And3(
-            attributes,
+            attr,
             particleData,
             currentState,
             stateElapsed,
@@ -434,7 +434,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           if (refs.trail.current) refs.trail.current.visible = true;
 
           animateState4(
-            attributes,
+            attr,
             particleData,
             stateElapsed,
             data.snapshotPositions.current,
@@ -551,7 +551,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       // Animate nova effect (multiple rings)
       if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
-        const novaElapsed = performance.now() - refs.novaState.current.startTime;
+        const novaElapsed = now - refs.novaState.current.startTime;
         const isState3Flare = currentState === 3;
         const novaDuration = isState3Flare ? 500 : 1800;
         const progress = Math.min(novaElapsed / novaDuration, 1);
@@ -565,10 +565,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         const baseOpacity = isState3Flare ? 0.82 : 0.35;
         const opacity = baseOpacity * (1 - fadeProgress * fadeProgress);
 
-        refs.novaMeshes.current.forEach((nova) => {
+        for (let ni = 0; ni < refs.novaMeshes.current.length; ni++) {
+          const nova = refs.novaMeshes.current[ni];
           nova.scale.set(scale, scale, scale);
           (nova.material as THREE.MeshBasicMaterial).opacity = Math.max(0, opacity);
-        });
+        }
 
         if (progress >= 1) {
           // Remove all novas when done (including their containers)

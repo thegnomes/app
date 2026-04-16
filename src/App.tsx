@@ -22,6 +22,7 @@ function App() {
   const [showFinalVideo, setShowFinalVideo] = useState(false);
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [autoZoom, setAutoZoom] = useState(false);
+  const autoZoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [scene02Active, setScene02Active] = useState(false);
   const [playAstro, setPlayAstro] = useState(false);
@@ -73,6 +74,11 @@ function App() {
 
   // Handle transition from State 0 (video brain) to State 1 (starfield)
   const handleVideoTransition = useCallback(() => {
+    if (autoZoomTimerRef.current) {
+      clearTimeout(autoZoomTimerRef.current);
+      autoZoomTimerRef.current = null;
+    }
+    setAutoZoom(false);
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
@@ -154,13 +160,20 @@ function App() {
   // Auto-play text after assets load, then auto-transition to starfield
   useEffect(() => {
     if (!assetsLoaded) return;
-    const timer = setTimeout(() => {
+    autoZoomTimerRef.current = setTimeout(() => {
+      autoZoomTimerRef.current = null;
+      if (stateRef.current !== 0) return; // user already transitioned manually
       setAutoZoom(true);
       setState(1);
       setTextState(1);
       setShowFinalVideo(false);
     }, 3800);
-    return () => clearTimeout(timer);
+    return () => {
+      if (autoZoomTimerRef.current) {
+        clearTimeout(autoZoomTimerRef.current);
+        autoZoomTimerRef.current = null;
+      }
+    };
   }, [assetsLoaded]);
 
   // Separate pointer handler for canvas pan (works with mouse + touch)
@@ -209,14 +222,20 @@ function App() {
       cameraPanRef.current.isDragging = false;
     };
 
+    const handlePointerCancel = (e: PointerEvent) => {
+      handlePointerUp(e);
+    };
+
     canvas.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerCancel);
 
     return () => {
       canvas.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerCancel);
     };
   }, []);
 
@@ -233,6 +252,10 @@ function App() {
       // Only work in State 1
       if (stateRef.current !== 1) return;
       if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
+
+      // Cancel any active pan drag before transitioning to State 2
+      panStateRef.current.isDragging = false;
+      cameraPanRef.current.isDragging = false;
 
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
@@ -293,11 +316,13 @@ function App() {
 
     window.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
 
     return () => {
       clearState2Timers();
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
     };
   }, [clearState2Timers, dispatchState2SubstateEvent]);
 
