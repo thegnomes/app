@@ -9,7 +9,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
-  const [astroTop, setAstroTop] = useState(0);
 
   useEffect(() => {
     const video = astroRef.current;
@@ -28,7 +27,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         requestAnimationFrame(() => {
           setScaleNebula(1);
           setScaleAstro(0.5);
-          setAstroTop(50);
         });
       });
       return () => cancelAnimationFrame(raf1);
@@ -36,7 +34,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       requestAnimationFrame(() => {
         setScaleNebula(2);
         setScaleAstro(1);
-        setAstroTop(0);
       });
     }
   }, [playAstro]);
@@ -55,21 +52,22 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           transition: 'transform 10s ease-out',
         }}
       />
-      {/* Astronaut video - starts centered, zooms out and aligns toward bottom */}
-      <video
-        ref={astroRef}
-        src="/scene02/looking-astro-loop2.webm"
-        muted
-        playsInline
-        loop
-        preload="auto"
-        className="absolute left-1/2 h-full w-full object-contain"
-        style={{
-          top: `${astroTop}%`,
-          transform: `translateX(-50%) scale(${scaleAstro})`,
-          transition: 'transform 10s ease-out, top 10s ease-out',
-        }}
-      />
+      {/* Astronaut video - centered with subtle float hover */}
+      <div className="astro-float absolute left-1/2 top-1/2 h-full w-full">
+        <video
+          ref={astroRef}
+          src="/scene02/looking-astro-loop2.webm"
+          muted
+          playsInline
+          loop
+          preload="auto"
+          className="h-full w-full object-contain"
+          style={{
+            transform: `scale(${scaleAstro})`,
+            transition: 'transform 10s ease-out',
+          }}
+        />
+      </div>
     </div>
   );
 }

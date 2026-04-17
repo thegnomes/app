@@ -84,3 +84,18 @@ input[type="color"]::-webkit-color-swatch {
 .glow-text {
   text-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
 }
+
+/* Astronaut subtle hover */
+.astro-float {
+  animation: astro-float 6s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes astro-float {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0px);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-12px);
+  }
+}
