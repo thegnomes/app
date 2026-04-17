@@ -21,7 +21,7 @@ export function GalaxyColumn({ srcWebm, srcMov, isPlaying }: GalaxyColumnProps) 
   }, [isPlaying]);
 
   return (
-    <div className="relative h-full w-1/3 overflow-hidden">
+    <div className="relative flex h-full w-1/3 items-center justify-center overflow-hidden">
       <video
         ref={videoRef}
         muted
@@ -29,7 +29,7 @@ export function GalaxyColumn({ srcWebm, srcMov, isPlaying }: GalaxyColumnProps) 
         loop
         autoPlay
         preload="auto"
-        className="h-full w-full object-cover"
+        className="h-1/2 w-1/2 object-cover"
       >
         <source src={srcWebm} type="video/webm" />
         <source src={srcMov} type="video/quicktime" />
