@@ -10,6 +10,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroMoveRef = useRef<HTMLDivElement>(null);
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
+  const [drifted, setDrifted] = useState(false);
 
   useEffect(() => {
     const video = astroRef.current;
@@ -28,6 +29,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         requestAnimationFrame(() => {
           setScaleNebula(1);
           setScaleAstro(0.5);
+          setDrifted(true);
         });
       });
       return () => cancelAnimationFrame(raf1);
@@ -35,6 +37,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       requestAnimationFrame(() => {
         setScaleNebula(2);
         setScaleAstro(1);
+        setDrifted(false);
       });
     }
   }, [playAstro]);
@@ -76,29 +79,35 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           transition: 'transform 10s ease-out',
         }}
       />
-      {/* Astronaut video - centered with subtle float hover + mouse follow */}
+      {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}
       <div className="astro-float absolute left-1/2 top-1/2 h-full w-full">
         <div
-          ref={astroMoveRef}
-          className="h-full w-full will-change-transform"
-          style={{
-            transform: 'translate3d(0, 0, 0)',
-            transition: 'transform 0.15s ease-out',
-          }}
+          className={`h-full w-full transition-all duration-[1500ms] ease-out ${
+            drifted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+          }`}
         >
-          <video
-            ref={astroRef}
-            src="/scene02/looking-astro-loop2.webm"
-            muted
-            playsInline
-            loop
-            preload="auto"
-            className="h-full w-full object-contain"
+          <div
+            ref={astroMoveRef}
+            className="h-full w-full will-change-transform"
             style={{
-              transform: `scale(${scaleAstro})`,
-              transition: 'transform 10s ease-out',
+              transform: 'translate3d(0, 0, 0)',
+              transition: 'transform 0.15s ease-out',
             }}
-          />
+          >
+            <video
+              ref={astroRef}
+              src="/scene02/looking-astro-loop2.webm"
+              muted
+              playsInline
+              loop
+              preload="auto"
+              className="h-full w-full origin-top object-contain object-top"
+              style={{
+                transform: `scale(${scaleAstro})`,
+                transition: 'transform 10s ease-out',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
