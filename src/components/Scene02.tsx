@@ -11,10 +11,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
 
-  const targetRef = useRef({ x: 0, y: 0 });
-  const currentRef = useRef({ x: 0, y: 0 });
-  const rafRef = useRef<number | null>(null);
-
   useEffect(() => {
     const video = astroRef.current;
     if (!video) return;
@@ -44,40 +40,25 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   }, [playAstro]);
 
   useEffect(() => {
-    if (!isActive) {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
-      return;
-    }
+    if (!isActive) return;
+
+    const el = astroMoveRef.current;
+    if (!el) return;
 
     const handleMove = (e: PointerEvent) => {
+      const isDesktop = window.innerWidth >= 1024;
       const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
       const ny = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
-      targetRef.current = { x: nx * 36, y: ny * 24 };
-    };
-
-    const animate = () => {
-      const cx = currentRef.current.x + (targetRef.current.x - currentRef.current.x) * 0.06;
-      const cy = currentRef.current.y + (targetRef.current.y - currentRef.current.y) * 0.06;
-      currentRef.current = { x: cx, y: cy };
-      const el = astroMoveRef.current;
-      if (el) {
-        el.style.transform = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0)`;
-      }
-      rafRef.current = requestAnimationFrame(animate);
+      const maxX = isDesktop ? 90 : 36;
+      const maxY = isDesktop ? 60 : 24;
+      const x = nx * maxX;
+      const y = ny * maxY;
+      el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
     };
 
     window.addEventListener('pointermove', handleMove);
-    rafRef.current = requestAnimationFrame(animate);
-
     return () => {
       window.removeEventListener('pointermove', handleMove);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
     };
   }, [isActive]);
 
@@ -100,7 +81,10 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <div
           ref={astroMoveRef}
           className="h-full w-full will-change-transform"
-          style={{ transform: 'translate3d(0, 0, 0)' }}
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            transition: 'transform 0.15s ease-out',
+          }}
         >
           <video
             ref={astroRef}
