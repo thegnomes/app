@@ -178,17 +178,18 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <GalaxyColumn
           srcWebm="/webm/toto-ga2.webm"
           srcMov="/webm/toto-ga2.mov"
-          isPlaying={playAstro}
+          label="TOTO"
         />
         <GalaxyColumn
           srcWebm="/webm/nft11-ga2.webm"
           srcMov="/webm/nft11-ga2.mov"
-          isPlaying={playAstro}
+          label="NFT11"
+          alignTop
         />
         <GalaxyColumn
           srcWebm="/webm/oxytap-ga2.webm"
           srcMov="/webm/oxytap-ga2.mov"
-          isPlaying={playAstro}
+          label="OXYTAP"
         />
       </div>
       {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}

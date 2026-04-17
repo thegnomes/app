@@ -99,3 +99,12 @@ input[type="color"]::-webkit-color-swatch {
     transform: translateX(-50%) translateY(-12px);
   }
 }
+
+@keyframes ring-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
