@@ -5,9 +5,41 @@ interface Scene02Props {
   playAstro: boolean;
 }
 
+interface DriftPoint {
+  x: number;
+  y: number;
+}
+
+const ASTRO_DRIFT_LAG = 0.055;
+const ASTRO_DESKTOP_DRIFT: DriftPoint = { x: 90, y: 60 };
+const ASTRO_MOBILE_DRIFT: DriftPoint = { x: 36, y: 24 };
+
+function getIdleAstronautDriftTarget(clientX: number, clientY: number): DriftPoint {
+  const viewportWidth = window.innerWidth || 1;
+  const viewportHeight = window.innerHeight || 1;
+  const driftRange = viewportWidth >= 1024 ? ASTRO_DESKTOP_DRIFT : ASTRO_MOBILE_DRIFT;
+
+  const normalizedX = (clientX / viewportWidth - 0.5) * 2;
+  const normalizedY = (clientY / viewportHeight - 0.5) * 2;
+
+  return {
+    x: normalizedX * driftRange.x,
+    y: normalizedY * driftRange.y,
+  };
+}
+
+function driftIdleAstronautTowardMouse(current: DriftPoint, target: DriftPoint): DriftPoint {
+  return {
+    x: current.x + (target.x - current.x) * ASTRO_DRIFT_LAG,
+    y: current.y + (target.y - current.y) * ASTRO_DRIFT_LAG,
+  };
+}
+
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
   const astroMoveRef = useRef<HTMLDivElement>(null);
+  const astroDriftTargetRef = useRef<DriftPoint>({ x: 0, y: 0 });
+  const astroDriftCurrentRef = useRef<DriftPoint>({ x: 0, y: 0 });
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
@@ -48,20 +80,32 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     const el = astroMoveRef.current;
     if (!el) return;
 
+    astroDriftTargetRef.current = { x: 0, y: 0 };
+    astroDriftCurrentRef.current = { x: 0, y: 0 };
+    el.style.transform = 'translate3d(0, 0, 0)';
+
     const handleMove = (e: PointerEvent) => {
-      const isDesktop = window.innerWidth >= 1024;
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
-      const maxX = isDesktop ? 90 : 36;
-      const maxY = isDesktop ? 60 : 24;
-      const x = nx * maxX;
-      const y = ny * maxY;
-      el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+      astroDriftTargetRef.current = getIdleAstronautDriftTarget(e.clientX, e.clientY);
+    };
+
+    let frameId = 0;
+    const animateDrift = () => {
+      const nextPosition = driftIdleAstronautTowardMouse(
+        astroDriftCurrentRef.current,
+        astroDriftTargetRef.current
+      );
+
+      astroDriftCurrentRef.current = nextPosition;
+      el.style.transform = `translate3d(${nextPosition.x.toFixed(2)}px, ${nextPosition.y.toFixed(2)}px, 0)`;
+      frameId = requestAnimationFrame(animateDrift);
     };
 
     window.addEventListener('pointermove', handleMove);
+    frameId = requestAnimationFrame(animateDrift);
+
     return () => {
       window.removeEventListener('pointermove', handleMove);
+      cancelAnimationFrame(frameId);
     };
   }, [isActive]);
 
@@ -91,7 +135,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
             className="h-full w-full will-change-transform"
             style={{
               transform: 'translate3d(0, 0, 0)',
-              transition: 'transform 0.15s ease-out',
             }}
           >
             <video
