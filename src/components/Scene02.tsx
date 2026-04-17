@@ -53,6 +53,17 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     const video = astroRef.current;
     if (!video) return;
     if (playAstro) {
+      // Reset drift to centre so astronaut fades in at centre before following cursor
+      astroDriftTargetRef.current = { x: 0, y: 0 };
+      astroDriftCurrentRef.current = { x: 0, y: 0 };
+      nebulaDriftTargetRef.current = { x: 0, y: 0 };
+      nebulaDriftCurrentRef.current = { x: 0, y: 0 };
+      if (astroMoveRef.current) {
+        astroMoveRef.current.style.transform = 'translate3d(0, 0, 0)';
+      }
+      if (nebulaParallaxRef.current) {
+        nebulaParallaxRef.current.style.transform = 'translate3d(0, 0, 0)';
+      }
       void video.play();
     } else {
       video.pause();
@@ -167,17 +178,17 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <GalaxyColumn
           srcWebm="/webm/toto-ga2.webm"
           srcMov="/webm/toto-ga2.mov"
-          isActive={isActive}
+          isPlaying={playAstro}
         />
         <GalaxyColumn
           srcWebm="/webm/nft11-ga2.webm"
           srcMov="/webm/nft11-ga2.mov"
-          isActive={isActive}
+          isPlaying={playAstro}
         />
         <GalaxyColumn
           srcWebm="/webm/oxytap-ga2.webm"
           srcMov="/webm/oxytap-ga2.mov"
-          isActive={isActive}
+          isPlaying={playAstro}
         />
       </div>
       {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}

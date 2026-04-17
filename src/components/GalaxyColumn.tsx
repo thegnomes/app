@@ -3,22 +3,22 @@ import { useEffect, useRef } from 'react';
 interface GalaxyColumnProps {
   srcWebm: string;
   srcMov: string;
-  isActive: boolean;
+  isPlaying: boolean;
 }
 
-export function GalaxyColumn({ srcWebm, srcMov, isActive }: GalaxyColumnProps) {
+export function GalaxyColumn({ srcWebm, srcMov, isPlaying }: GalaxyColumnProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive) {
+    if (isPlaying) {
       void video.play();
     } else {
       video.pause();
       video.currentTime = 0;
     }
-  }, [isActive]);
+  }, [isPlaying]);
 
   return (
     <div className="relative h-full w-1/3 overflow-hidden">
@@ -27,6 +27,7 @@ export function GalaxyColumn({ srcWebm, srcMov, isActive }: GalaxyColumnProps) {
         muted
         playsInline
         loop
+        autoPlay
         preload="auto"
         className="h-full w-full object-cover"
       >
