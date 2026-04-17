@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { GalaxyColumn } from './GalaxyColumn';
 
 interface Scene02Props {
   isActive: boolean;
@@ -157,8 +158,30 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           }}
         />
       </div>
+      {/* Galaxy columns - 3 columns spanning full viewport */}
+      <div
+        className={`absolute inset-0 z-10 flex transition-opacity duration-[1500ms] ease-out ${
+          drifted ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <GalaxyColumn
+          srcWebm="/webm/toto-ga2.webm"
+          srcMov="/webm/toto-ga2.mov"
+          isActive={isActive}
+        />
+        <GalaxyColumn
+          srcWebm="/webm/nft11-ga2.webm"
+          srcMov="/webm/nft11-ga2.mov"
+          isActive={isActive}
+        />
+        <GalaxyColumn
+          srcWebm="/webm/oxytap-ga2.webm"
+          srcMov="/webm/oxytap-ga2.mov"
+          isActive={isActive}
+        />
+      </div>
       {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}
-      <div className="astro-float absolute left-1/2 top-1/2 h-full w-full">
+      <div className="astro-float absolute left-1/2 top-1/2 z-20 h-full w-full">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
             drifted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
