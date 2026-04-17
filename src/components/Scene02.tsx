@@ -7,8 +7,13 @@ interface Scene02Props {
 
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
+  const astroMoveRef = useRef<HTMLDivElement>(null);
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
+
+  const targetRef = useRef({ x: 0, y: 0 });
+  const currentRef = useRef({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const video = astroRef.current;
@@ -38,6 +43,44 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     }
   }, [playAstro]);
 
+  useEffect(() => {
+    if (!isActive) {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      return;
+    }
+
+    const handleMove = (e: PointerEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
+      targetRef.current = { x: nx * 36, y: ny * 24 };
+    };
+
+    const animate = () => {
+      const cx = currentRef.current.x + (targetRef.current.x - currentRef.current.x) * 0.06;
+      const cy = currentRef.current.y + (targetRef.current.y - currentRef.current.y) * 0.06;
+      currentRef.current = { x: cx, y: cy };
+      const el = astroMoveRef.current;
+      if (el) {
+        el.style.transform = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0)`;
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [isActive]);
+
   if (!isActive) return null;
 
   return (
@@ -52,21 +95,27 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           transition: 'transform 10s ease-out',
         }}
       />
-      {/* Astronaut video - centered with subtle float hover */}
+      {/* Astronaut video - centered with subtle float hover + mouse follow */}
       <div className="astro-float absolute left-1/2 top-1/2 h-full w-full">
-        <video
-          ref={astroRef}
-          src="/scene02/looking-astro-loop2.webm"
-          muted
-          playsInline
-          loop
-          preload="auto"
-          className="h-full w-full object-contain"
-          style={{
-            transform: `scale(${scaleAstro})`,
-            transition: 'transform 10s ease-out',
-          }}
-        />
+        <div
+          ref={astroMoveRef}
+          className="h-full w-full will-change-transform"
+          style={{ transform: 'translate3d(0, 0, 0)' }}
+        >
+          <video
+            ref={astroRef}
+            src="/scene02/looking-astro-loop2.webm"
+            muted
+            playsInline
+            loop
+            preload="auto"
+            className="h-full w-full object-contain"
+            style={{
+              transform: `scale(${scaleAstro})`,
+              transition: 'transform 10s ease-out',
+            }}
+          />
+        </div>
       </div>
     </div>
   );
