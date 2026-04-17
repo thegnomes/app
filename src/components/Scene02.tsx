@@ -13,6 +13,7 @@ interface DriftPoint {
 const ASTRO_DRIFT_LAG = 0.055;
 const ASTRO_DESKTOP_DRIFT_PCT = { x: 0.45, y: 0.45 };
 const ASTRO_MOBILE_DRIFT_PCT = { x: 0.35, y: 0.35 };
+const NEBULA_PARALLAX_RATIO = 0.12;
 
 function getIdleAstronautDriftTarget(clientX: number, clientY: number): DriftPoint {
   const viewportWidth = window.innerWidth || 1;
@@ -38,8 +39,11 @@ function driftIdleAstronautTowardMouse(current: DriftPoint, target: DriftPoint):
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
   const astroMoveRef = useRef<HTMLDivElement>(null);
+  const nebulaParallaxRef = useRef<HTMLDivElement>(null);
   const astroDriftTargetRef = useRef<DriftPoint>({ x: 0, y: 0 });
   const astroDriftCurrentRef = useRef<DriftPoint>({ x: 0, y: 0 });
+  const nebulaDriftTargetRef = useRef<DriftPoint>({ x: 0, y: 0 });
+  const nebulaDriftCurrentRef = useRef<DriftPoint>({ x: 0, y: 0 });
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
@@ -83,9 +87,19 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     astroDriftTargetRef.current = { x: 0, y: 0 };
     astroDriftCurrentRef.current = { x: 0, y: 0 };
     el.style.transform = 'translate3d(0, 0, 0)';
+    nebulaDriftTargetRef.current = { x: 0, y: 0 };
+    nebulaDriftCurrentRef.current = { x: 0, y: 0 };
+    if (nebulaParallaxRef.current) {
+      nebulaParallaxRef.current.style.transform = 'translate3d(0, 0, 0)';
+    }
 
     const handleMove = (e: PointerEvent) => {
-      astroDriftTargetRef.current = getIdleAstronautDriftTarget(e.clientX, e.clientY);
+      const target = getIdleAstronautDriftTarget(e.clientX, e.clientY);
+      astroDriftTargetRef.current = target;
+      nebulaDriftTargetRef.current = {
+        x: -target.x * NEBULA_PARALLAX_RATIO,
+        y: -target.y * NEBULA_PARALLAX_RATIO,
+      };
     };
 
     let frameId = 0;
@@ -94,9 +108,17 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         astroDriftCurrentRef.current,
         astroDriftTargetRef.current
       );
+      const nextNebulaPosition = driftIdleAstronautTowardMouse(
+        nebulaDriftCurrentRef.current,
+        nebulaDriftTargetRef.current
+      );
 
       astroDriftCurrentRef.current = nextPosition;
+      nebulaDriftCurrentRef.current = nextNebulaPosition;
       el.style.transform = `translate3d(${nextPosition.x.toFixed(2)}px, ${nextPosition.y.toFixed(2)}px, 0)`;
+      if (nebulaParallaxRef.current) {
+        nebulaParallaxRef.current.style.transform = `translate3d(${nextNebulaPosition.x.toFixed(2)}px, ${nextNebulaPosition.y.toFixed(2)}px, 0)`;
+      }
       frameId = requestAnimationFrame(animateDrift);
     };
 
@@ -114,15 +136,27 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   return (
     <div className="fixed inset-0 z-30 overflow-hidden bg-black">
       {/* Nebula background - starts at 200%, zooms out to 100% */}
-      <img
-        src="/scene02/nebula_space_only2x.png"
-        alt=""
-        className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+      <div
+        ref={nebulaParallaxRef}
+        className="absolute will-change-transform"
         style={{
-          transform: `translate(-50%, -50%) scale(${scaleNebula})`,
-          transition: 'transform 10s ease-out',
+          top: '-7.5%',
+          left: '-7.5%',
+          width: '115%',
+          height: '115%',
+          transform: 'translate3d(0, 0, 0)',
         }}
-      />
+      >
+        <img
+          src="/scene02/nebula_space_only2x.png"
+          alt=""
+          className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+          style={{
+            transform: `translate(-50%, -50%) scale(${scaleNebula})`,
+            transition: 'transform 10s ease-out',
+          }}
+        />
+      </div>
       {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}
       <div className="astro-float absolute left-1/2 top-1/2 h-full w-full">
         <div
