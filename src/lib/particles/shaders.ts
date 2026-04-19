@@ -19,6 +19,7 @@ export const particleVertexShader = `
   varying float vRandom;
   
   uniform float uTime;
+  uniform float uSizeMultiplier;
   
   void main() {
     vColor = color;
@@ -33,7 +34,7 @@ export const particleVertexShader = `
     }
     
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = finalSize * (300.0 / -mvPosition.z);
+    gl_PointSize = finalSize * uSizeMultiplier * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -189,6 +190,7 @@ export const planetGlowFragmentShader = `
  */
 export interface ParticleUniforms {
   uTime: { value: number };
+  uSizeMultiplier: { value: number };
 }
 
 /**

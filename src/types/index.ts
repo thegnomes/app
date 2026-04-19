@@ -48,6 +48,8 @@ export interface ParticleData {
   state2ClusterPhaseLag: Float32Array;
   brainPositions: Float32Array;
   fibonacciPositions: Float32Array; // Target positions on Fibonacci sphere
+  brainDistances: Float32Array;
+  migratorIndices: number[];
 }
 
 /** State labels for UI display */

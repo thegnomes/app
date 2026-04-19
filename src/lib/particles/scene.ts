@@ -27,6 +27,13 @@ import { particleVertexShader, particleFragmentShader, glowVertexShader, planetG
 import { createParticleGeometry } from './particleData';
 import type { ParticleAttributes } from '@/types';
 import { createOrbitGeometryFromAngle, generateBrainConnections } from './geometry';
+import {
+  PLANET_GEOMETRY_DETAIL,
+  FLASH_GEOMETRY_DETAIL,
+  NOVA_GEOMETRY_SEGMENTS,
+  SOLAR_ENTRY_FLARE_DETAIL,
+  PARTICLE_SIZE_MULTIPLIER,
+} from './constants';
 
 /**
  * Initialize the Three.js scene
@@ -49,8 +56,6 @@ export function initializeScene(): {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   return { scene, camera, renderer };
 }
@@ -74,11 +79,6 @@ export function initializeLighting(
     SUN_LIGHT_DISTANCE
   );
   sun.position.set(0, 0, 0);
-  sun.castShadow = true;
-  sun.shadow.mapSize.width = 2048;
-  sun.shadow.mapSize.height = 2048;
-  sun.shadow.camera.near = 0.5;
-  sun.shadow.camera.far = 500;
   scene.add(sun);
 
   return { ambient, sun };
@@ -95,7 +95,7 @@ export function createParticleSystem(
   const material = new THREE.ShaderMaterial({
     vertexShader: particleVertexShader,
     fragmentShader: particleFragmentShader,
-    uniforms: { uTime: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uSizeMultiplier: { value: PARTICLE_SIZE_MULTIPLIER } },
     vertexColors: true,
     transparent: true,
     blending: THREE.AdditiveBlending,
@@ -309,7 +309,7 @@ export function createPlanets(parent: THREE.Object3D, angles: number[]): PlanetI
 
     // Main planet mesh with planet's unique color
     const mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(planetConfig.size, 32, 32),
+      new THREE.SphereGeometry(planetConfig.size, PLANET_GEOMETRY_DETAIL, PLANET_GEOMETRY_DETAIL),
       new THREE.MeshStandardMaterial({
         color: new THREE.Color(planetConfig.color),
         roughness: 0.5,
@@ -321,7 +321,7 @@ export function createPlanets(parent: THREE.Object3D, angles: number[]): PlanetI
 
     // Outer glow with custom shader (unique color per planet)
     const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(planetConfig.size * PLANET_GLOW_MULTIPLIER, 32, 32),
+      new THREE.SphereGeometry(planetConfig.size * PLANET_GLOW_MULTIPLIER, PLANET_GEOMETRY_DETAIL, PLANET_GEOMETRY_DETAIL),
       new THREE.ShaderMaterial({
         vertexShader: glowVertexShader,
         fragmentShader: planetGlowFragmentShader,
@@ -466,7 +466,7 @@ export function createFlashMesh(
   opacity: number = 0.6,
   scale: number = 0.05
 ): THREE.Mesh {
-  const geometry = new THREE.SphereGeometry(1, 32, 32);
+  const geometry = new THREE.SphereGeometry(1, FLASH_GEOMETRY_DETAIL, FLASH_GEOMETRY_DETAIL);
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,
@@ -484,7 +484,7 @@ export function createFlashMesh(
  * Create a collapse-style expanding flare for the State 3 solar entry.
  */
 export function createSolarEntryFlareMesh(scene: THREE.Scene): THREE.Mesh {
-  const geometry = new THREE.SphereGeometry(1, 64, 64);
+  const geometry = new THREE.SphereGeometry(1, SOLAR_ENTRY_FLARE_DETAIL, SOLAR_ENTRY_FLARE_DETAIL);
   const material = new THREE.ShaderMaterial({
     vertexShader: `
       varying vec3 vNormal;
@@ -537,7 +537,7 @@ export function createNovaMesh(
   rotationZ: number = 0
 ): THREE.Mesh {
   // Ring geometry - thinner for softer look
-  const geometry = new THREE.RingGeometry(0.92, 1, 128);
+  const geometry = new THREE.RingGeometry(0.92, 1, NOVA_GEOMETRY_SEGMENTS);
   const material = new THREE.MeshBasicMaterial({
     color,
     transparent: true,

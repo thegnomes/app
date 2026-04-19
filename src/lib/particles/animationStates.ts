@@ -80,22 +80,22 @@ export function animateState1(
   void _primaryColor;
   void _secondaryColor;
   const { positions, colors, sizes, alphas } = attributes;
-  const { homePositions, brainPositions, random } = data;
+  const { homePositions, random, brainDistances } = data;
 
   // BACKGROUND PARTICLES - appear FIRST (0-600ms, fully visible by ~800ms)
   // CORE PARTICLE - appears AFTER background is established (1200ms-2200ms)
-  
+  const BG_ENTRY = 600;
+  const CORE_VISIBLE_START = 1200;
+  const CORE_DURATION = 1000;
+  const baseT = stateElapsed / BG_ENTRY;
+
   for (let i = 0; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
 
     if (i === 0) {
-      // CORE PARTICLE - INVISIBLE until background is established
-      // Background stars appear first (0-600ms), then core fades in (1200-2200ms)
-      const CORE_VISIBLE_START = 1200; // Core starts appearing AFTER background is fully visible
-      const CORE_DURATION = 1000; // 1s to fully appear for dramatic effect
       const coreT = Math.max(0, Math.min(1, (stateElapsed - CORE_VISIBLE_START) / CORE_DURATION));
       const coreEased = easeOutCubic(coreT);
-      
+
       positions[i3] = 0;
       positions[i3 + 1] = 0;
       positions[i3 + 2] = 0;
@@ -108,19 +108,10 @@ export function animateState1(
     }
 
     const rnd = random[i];
-    
-    // BACKGROUND PARTICLES - appear FIRST before core
-    const brainX = brainPositions[i3];
-    const brainY = brainPositions[i3 + 1];
-    const brainZ = brainPositions[i3 + 2];
-    const distFromCenter = Math.sqrt(brainX * brainX + brainY * brainY + brainZ * brainZ);
-    
-    // Background appears quickly over 600ms - completes WELL BEFORE core starts (1200ms)
-    const BG_ENTRY = 600; // 0.6s for full appearance
-    // Particles closer to center appear first, outer particles follow
-    const distDelay = (distFromCenter / 150) * 0.08;
+
+    const distDelay = (brainDistances[i] / 150) * 0.08;
     const rndDelay = rnd * 0.03;
-    const t = Math.max(0, Math.min(1, (stateElapsed / BG_ENTRY) - distDelay - rndDelay));
+    const t = Math.max(0, Math.min(1, baseT - distDelay - rndDelay));
     const eased = easeOutCubic(t);
 
     const sx = snapshotPositions[i3];
@@ -142,7 +133,7 @@ export function animateState1(
       const maxExpandX = sx * 3.5;
       const maxExpandY = sy * 3.5;
       const maxExpandZ = sz * 3.5;
-      
+
       positions[i3] = maxExpandX + (tx - maxExpandX) * disperseEased;
       positions[i3 + 1] = maxExpandY + (ty - maxExpandY) * disperseEased;
       positions[i3 + 2] = maxExpandZ + (tz - maxExpandZ) * disperseEased;
@@ -151,7 +142,7 @@ export function animateState1(
     // Subtle twinkle for depth without noisy brightness pumping.
     const twinkle = Math.sin(time * (0.35 + rnd * 0.8) + rnd * 6.283);
     const glimmerIntensity = (Math.max(0, twinkle) * 0.12 + 0.08) * eased;
-    
+
     const brightness = 0.62 + glimmerIntensity * 0.35;
     colors[i3] = (BRAIN_COLOR_R + STAR1_DIFF_R * eased) * brightness;
     colors[i3 + 1] = (BRAIN_COLOR_G + STAR1_DIFF_G * eased) * brightness;
@@ -159,7 +150,6 @@ export function animateState1(
 
     const baseSize = 0.5 + rnd * 0.3 + (0.7 + rnd * 0.5) * eased;
     sizes[i] = (baseSize + glimmerIntensity * 0.2) * eased;
-    // Background fully visible before core starts
     alphas[i] = (0.4 + rnd * 0.3) * eased + glimmerIntensity * 0.12;
   }
 }
@@ -320,6 +310,42 @@ export function animateState2And3(
     }
   }
 
+  // Precompute state-2 time constants outside the per-particle loop
+  const isState2 = state === 2;
+  const s2_drawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+  const s2_transitionStart = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.35;
+  const s2_transitionDuration = STATE2_DURATION - s2_transitionStart;
+  const s2_substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+  const s2_stabilizationEnd = s2_substate3Start;
+
+  let s2_transitionT = 0;
+  let s2_transitionEased = 0;
+  let s2_bounceDecayProgress = 0;
+  let s2_compressionFactor = 1;
+  let s2_compressedStableRadius = SHELL_RADIUS;
+  let s2_substate3T = 0;
+  let s2_shellGlow = 0;
+  let s2_colorEased = 0;
+  let s2_colorT = 0;
+
+  if (isState2) {
+    s2_transitionT = Math.min(1, Math.max(0, (stateElapsed - s2_transitionStart) / s2_transitionDuration));
+    s2_transitionEased = easeOutCubic(s2_transitionT);
+    s2_bounceDecayProgress = Math.min(
+      1,
+      Math.max(0, (stateElapsed - s2_transitionStart) / (s2_stabilizationEnd - s2_transitionStart))
+    );
+    s2_compressionFactor = 1 - s2_transitionEased * 0.2;
+    s2_compressedStableRadius = SHELL_RADIUS * s2_compressionFactor;
+    s2_substate3T = Math.min(1, Math.max(0, (stateElapsed - s2_substate3Start) / (STATE2_DURATION - s2_substate3Start)));
+    s2_shellGlow = easeInOutCubic(s2_substate3T);
+    s2_colorEased = easeOutCubic(s2_transitionT);
+    s2_colorT = s2_transitionT;
+  }
+
+  const state3CompressionFactor = 0.8;
+  const state3ShellRadiusComp = SHELL_RADIUS * state3CompressionFactor;
+
   for (let i = 1; i < TOTAL_MAIN; i++) {
     const i3 = i * 3;
     const rnd = random[i];
@@ -344,86 +370,50 @@ export function animateState2And3(
     const stableX = fibTargetX * cosA - fibTargetZ * sinA;
     const stableZ = fibTargetX * sinA + fibTargetZ * cosA;
     const stableY = fibTargetY;
-    const stableRadius = SHELL_RADIUS; // fibonacci positions are generated on a sphere of this radius
-    const stableUnitX = stableX / stableRadius;
-    const stableUnitY = stableY / stableRadius;
-    const stableUnitZ = stableZ / stableRadius;
+    const stableUnitX = stableX / SHELL_RADIUS;
+    const stableUnitY = stableY / SHELL_RADIUS;
+    const stableUnitZ = stableZ / SHELL_RADIUS;
 
-    if (state === 2) {
-      // STATE 2: CHARGING SHELL with 3 substates (0-13000ms)
-      // 
-      // Substate 1 (0-6000ms): Particles flow from starfield to Fibonacci positions
-      // Substate 2 (6000-10000ms): Calm damped overshoot with decay
-      // Substate 3 (10000-13000ms): Stable sphere with color shift + compression
-      
-      // Start from starfield position
+    if (isState2) {
       const startX = snapshotPositions[i3];
       const startY = snapshotPositions[i3 + 1];
       const startZ = snapshotPositions[i3 + 2];
-      
-      // Fibonacci target (final destination)
       const fibX = fibTargetX;
       const fibY = fibTargetY;
       const fibZ = fibTargetZ;
-      
-      // Substate 1 draw-in duration stretched to end of substate 2 (0-10000ms)
-      const drawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-      const transitionStart = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.35;
-      const transitionDuration = STATE2_DURATION - transitionStart;
-      
-      // Keep a small stagger for texture, but ensure everyone moves early enough
-      // to avoid a late jump right before substate 2.
+
       const indexDelay = (i / TOTAL_MAIN) * 420;
       const randomDelay = rnd * 280;
       const phaseOffset = Math.sin((i % 23) * 0.27) * 120;
       const particleDelay = indexDelay + randomDelay + phaseOffset;
-      
+
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
-      const drawInProgress = Math.min(1, drawInElapsed / drawInDuration);
-      const stabilizationEnd = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-      const transitionT = Math.min(1, Math.max(0, (stateElapsed - transitionStart) / transitionDuration));
-      const colorT = transitionT;
-      const transitionEased = easeOutCubic(transitionT);
-      const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
-      const substate3T = Math.min(1, Math.max(0, (stateElapsed - substate3Start) / (STATE2_DURATION - substate3Start)));
-      const bounceDecayProgress = Math.min(
-        1,
-        Math.max(0, (stateElapsed - transitionStart) / (stabilizationEnd - transitionStart))
-      );
-      const compressionFactor = 1 - transitionEased * 0.2;
-      const compressedStableRadius = stableRadius * compressionFactor;
+      const drawInProgress = Math.min(1, drawInElapsed / s2_drawInDuration);
+      const drawInEased = easeOutCubic(drawInProgress);
+
       const volatilityEnvelope =
         easeOutCubic(drawInProgress) *
-        Math.pow(Math.max(0, 1 - bounceDecayProgress), 0.9);
+        Math.pow(Math.max(0, 1 - s2_bounceDecayProgress), 0.9);
+
       const clusterWeight = state2ClusterWeight[i];
       const clusterPhase = state2ClusterPhase[i];
       const clusterPhaseLag = state2ClusterPhaseLag[i];
-      // Faster early pull-in to avoid sluggish start.
-      const drawInEased = easeOutCubic(drawInProgress);
-      // Calculate progress and base position based on substate
+
       if (stateElapsed < STATE2_ABSORPTION_DURATION) {
-        // Substate 1: Particles coming from starfield
-        // Radial approach with volatile bounce that decays as the shell forms.
-        
-        // Calculate direction from start to Fibonacci target
         const toFibX = fibX - startX;
         const toFibY = fibY - startY;
         const toFibZ = fibZ - startZ;
-        
-        // Current position: interpolate from starfield toward Fibonacci
-        // Full progress to reach target by end of substate 1
         const cx = startX + toFibX * drawInEased;
         const cy = startY + toFibY * drawInEased;
         const cz = startZ + toFibZ * drawInEased;
-        
-        // Apply rotation to create spinning effect
+
         const rx = cx * cosA - cz * sinA;
         const rz = cx * sinA + cz * cosA;
         const ry = cy;
-        
+
         const displacedRadius = getClusteredSpikeRadius(
           time,
-          compressedStableRadius,
+          s2_compressedStableRadius,
           volatilityEnvelope,
           clusterWeight,
           clusterPhase,
@@ -436,9 +426,7 @@ export function animateState2And3(
         positions[i3] = rx + (displacedX - rx) * drawInEased;
         positions[i3 + 1] = ry + (displacedY - ry) * drawInEased;
         positions[i3 + 2] = rz + (displacedZ - rz) * drawInEased;
-        
       } else if (stateElapsed < STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION) {
-        // Substate 2: Calm shell overshoot with smooth ramp in and decay out
         const s2Elapsed = stateElapsed - STATE2_ABSORPTION_DURATION;
         const s2Progress = s2Elapsed / STATE2_STABILIZE_DURATION;
         const preFx = startX + (fibX - startX) * drawInEased;
@@ -446,82 +434,66 @@ export function animateState2And3(
         const preFz = startZ + (fibZ - startZ) * drawInEased;
 
         const hasReachedShell = drawInProgress >= 1;
-
-        // Before arrival, continue settling towards circumference.
         const settleToAnchor = hasReachedShell ? 1 : Math.min(1, s2Progress / 0.2);
         const anchorX = preFx + (fibX - preFx) * settleToAnchor;
         const anchorY = preFy + (fibY - preFy) * settleToAnchor;
         const anchorZ = preFz + (fibZ - preFz) * settleToAnchor;
 
-        // Apply rotation for spinning
         const fx = anchorX * cosA - anchorZ * sinA;
         const fz = anchorX * sinA + anchorZ * cosA;
         const fy = anchorY;
-        
+
         const displacedRadius = getClusteredSpikeRadius(
           time,
-          compressedStableRadius,
+          s2_compressedStableRadius,
           volatilityEnvelope,
           clusterWeight,
           clusterPhase,
           clusterPhaseLag
         );
         const settleMix = Math.min(1, s2Progress / 0.18);
-        const baseX = fx + (stableUnitX * compressedStableRadius - fx) * settleMix;
-        const baseY = fy + (stableUnitY * compressedStableRadius - fy) * settleMix;
-        const baseZ = fz + (stableUnitZ * compressedStableRadius - fz) * settleMix;
+        const baseX = fx + (stableUnitX * s2_compressedStableRadius - fx) * settleMix;
+        const baseY = fy + (stableUnitY * s2_compressedStableRadius - fy) * settleMix;
+        const baseZ = fz + (stableUnitZ * s2_compressedStableRadius - fz) * settleMix;
         const displacedX = stableUnitX * displacedRadius;
         const displacedY = stableUnitY * displacedRadius;
         const displacedZ = stableUnitZ * displacedRadius;
-        
+
         positions[i3] = baseX + (displacedX - baseX) * drawInEased;
         positions[i3 + 1] = baseY + (displacedY - baseY) * drawInEased;
         positions[i3 + 2] = baseZ + (displacedZ - baseZ) * drawInEased;
-        
       } else {
-        // Substate 3: Stable Fibonacci sphere with compression + color
-        // Final Fibonacci position with compression
-        const fx = fibX * compressionFactor;
-        const fy = fibY * compressionFactor;
-        const fz = fibZ * compressionFactor;
-        
+        const fx = fibX * s2_compressionFactor;
+        const fy = fibY * s2_compressionFactor;
+        const fz = fibZ * s2_compressionFactor;
         const rx = fx * cosA - fz * sinA;
         const rz = fx * sinA + fz * cosA;
-        
+
         positions[i3] = rx;
         positions[i3 + 1] = fy;
         positions[i3 + 2] = rz;
       }
-      
-      // Color interpolation begins when the bounce decay starts.
-      const colorEased = easeOutCubic(colorT);
-      const shellGlow = easeInOutCubic(substate3T);
+
       const shellPulse = Math.sin(time * 3.1 + rnd * 2.4) * 0.5 + 0.5;
-      const flicker = (1 - colorT) * Math.sin(time * 0.7 + rnd * 5) * 0.04;
-      const brightness = 0.88 + flicker + shellGlow * (0.32 + shellPulse * 0.14);
-      colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * colorEased) * brightness;
-      colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * colorEased) * brightness;
-      colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * colorEased) * brightness;
-      
-      // Size with variation
-      sizes[i] = 1.6 + rnd * 0.4 + shellGlow * (0.7 + shellPulse * 0.35);
-      alphas[i] = 0.9 + shellGlow * 0.08;
-      
+      const flicker = (1 - s2_colorT) * Math.sin(time * 0.7 + rnd * 5) * 0.04;
+      const brightness = 0.88 + flicker + s2_shellGlow * (0.32 + shellPulse * 0.14);
+      colors[i3] = (BLUE_R + BLUE_TO_ORANGE_R * s2_colorEased) * brightness;
+      colors[i3 + 1] = (BLUE_G + BLUE_TO_ORANGE_G * s2_colorEased) * brightness;
+      colors[i3 + 2] = (BLUE_B + BLUE_TO_ORANGE_B * s2_colorEased) * brightness;
+
+      sizes[i] = 1.6 + rnd * 0.4 + s2_shellGlow * (0.7 + shellPulse * 0.35);
+      alphas[i] = 0.9 + s2_shellGlow * 0.08;
     } else {
-      // STATE 3: SOLAR SYSTEM - stable Fibonacci sphere with 20% compression
-      const compressionFactor = 0.8;
-      
-      // Apply compression and rotation to Fibonacci position
-      const fx = fibTargetX * compressionFactor;
-      const fy = fibTargetY * compressionFactor;
-      const fz = fibTargetZ * compressionFactor;
-      
+      const fx = fibTargetX * state3CompressionFactor;
+      const fy = fibTargetY * state3CompressionFactor;
+      const fz = fibTargetZ * state3CompressionFactor;
+
       const rx = fx * cosA - fz * sinA;
       const rz = fx * sinA + fz * cosA;
-      
-      const breathe = Math.sin(stateElapsed * 0.001 + random[i] * 10) * 0.2;
-      const breatheScale = 1 + breathe / (SHELL_RADIUS * compressionFactor);
-      
+
+      const breathe = Math.sin(stateElapsed * 0.001 + rnd * 10) * 0.2;
+      const breatheScale = 1 + breathe / state3ShellRadiusComp;
+
       positions[i3] = rx * breatheScale;
       positions[i3 + 1] = fy * breatheScale;
       positions[i3 + 2] = rz * breatheScale;
@@ -755,6 +727,7 @@ export function updateTrail(
   trail: THREE.LineSegments,
   positions: Float32Array,
   migratorIndexMap: Int32Array,
+  migratorIndices: number[],
   trailHistory: Float32Array,
   stateElapsed: number,
   trailColor?: THREE.Color,
@@ -771,19 +744,15 @@ export function updateTrail(
 
   let tIdx = 0;
 
-  for (let i = 0; i < TOTAL_MAIN; i++) {
+  for (const i of migratorIndices) {
+    const i3 = i * 3;
     const mIdx = migratorIndexMap[i];
     if (mIdx < 0) continue;
 
-    const i3 = i * 3;
     const base = mIdx * TRAIL_LENGTH * 3;
 
-    // Shift history
-    for (let h = 0; h < TRAIL_LENGTH - 1; h++) {
-      trailHistory[base + h * 3] = trailHistory[base + (h + 1) * 3];
-      trailHistory[base + h * 3 + 1] = trailHistory[base + (h + 1) * 3 + 1];
-      trailHistory[base + h * 3 + 2] = trailHistory[base + (h + 1) * 3 + 2];
-    }
+    // Shift history using copyWithin for better performance
+    trailHistory.copyWithin(base, base + 3, base + TRAIL_LENGTH * 3);
 
     // Add current position
     trailHistory[base + (TRAIL_LENGTH - 1) * 3] = positions[i3];

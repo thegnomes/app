@@ -23,7 +23,6 @@ import {
   GLOW_RADIUS,
   GLOW_OPACITY,
   SHELL_RADIUS,
-  PARTICLE_SIZE_MULTIPLIER,
   SOLAR_VIDEO_CORE_TRANSITION_DURATION,
   SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
   SOLAR_VIDEO_CORE_ENTRY_SCALE,
@@ -462,6 +461,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
               refs.trail.current,
               positions,
               particleData.migratorIndexMap,
+              particleData.migratorIndices,
               data.trailHistory.current,
               stateElapsed,
               data.currentPrimaryColor.current
@@ -531,10 +531,6 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       // Update sun light color
       if (refs.sunLight.current) {
         refs.sunLight.current.color.copy(data.currentCoreColor.current);
-      }
-
-      for (let i = 0; i < TOTAL_MAIN; i++) {
-        sizes[i] *= PARTICLE_SIZE_MULTIPLIER;
       }
 
       // Mark attributes as needing update
@@ -624,8 +620,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.camera.current.lookAt(0, 0, 0);
       }
 
-      // Render
-      refs.renderer.current!.render(refs.scene.current!, refs.camera.current!);
+      // Render (skip when canvas is invisible in State 0)
+      if (currentState !== 0) {
+        refs.renderer.current!.render(refs.scene.current!, refs.camera.current!);
+      }
     };
 
     animate();

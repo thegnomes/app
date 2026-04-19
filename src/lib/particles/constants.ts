@@ -166,7 +166,7 @@ export const PLANETS: PlanetConfig[] = [
 // ============================================
 
 /** Core sphere geometry detail */
-export const CORE_GEOMETRY_DETAIL = 64;
+export const CORE_GEOMETRY_DETAIL = 32;
 
 /** Core sphere radius */
 export const CORE_RADIUS = 1.5;
@@ -197,6 +197,18 @@ export const SOLAR_VIDEO_CORE_OPACITY = 1.0;
 
 /** Starting scale for the State 3 textured sun sphere reveal */
 export const SOLAR_VIDEO_CORE_ENTRY_SCALE = 0.72;
+
+/** Geometry segment count for planet spheres and glows */
+export const PLANET_GEOMETRY_DETAIL = 16;
+
+/** Geometry segment count for flash effect spheres */
+export const FLASH_GEOMETRY_DETAIL = 16;
+
+/** Geometry segment count for nova ring geometry */
+export const NOVA_GEOMETRY_SEGMENTS = 64;
+
+/** Geometry segment count for solar entry flare sphere */
+export const SOLAR_ENTRY_FLARE_DETAIL = 32;
 
 /** Glow size multiplier for planet glow effect */
 export const PLANET_GLOW_MULTIPLIER = 2.0;

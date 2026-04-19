@@ -143,6 +143,8 @@ export function initializeParticleData(): {
     state2ClusterPhaseLag: new Float32Array(TOTAL_MAIN),
     brainPositions: new Float32Array(TOTAL_MAIN * 3),
     fibonacciPositions: new Float32Array(TOTAL_MAIN * 3),
+    brainDistances: new Float32Array(TOTAL_MAIN),
+    migratorIndices: [],
   };
 
   // Buffer attributes (directly used by GPU)
@@ -170,6 +172,15 @@ export function initializeParticleData(): {
     data.migratorIndexMap[i] = -1;
   }
 
+  // Precompute brain distances for state 1
+  for (let i = 0; i < TOTAL_MAIN; i++) {
+    const i3 = i * 3;
+    const bx = data.brainPositions[i3];
+    const by = data.brainPositions[i3 + 1];
+    const bz = data.brainPositions[i3 + 2];
+    data.brainDistances[i] = Math.sqrt(bx * bx + by * by + bz * bz);
+  }
+
   const shellParticleCount = Math.round((TOTAL_MAIN - 1) * SHELL_PARTICLE_RATIO);
   let assignedShellParticles = 0;
   for (let i = 1; i < TOTAL_MAIN && assignedShellParticles < shellParticleCount; i += 2) {
@@ -188,7 +199,9 @@ export function initializeParticleData(): {
   const migratorCount = Math.floor(TOTAL_MAIN * MIGRATOR_RATIO);
 
   for (let i = 0; i < migratorCount; i++) {
-    data.migrator[shuffledIndices[i]] = 1;
+    const idx = shuffledIndices[i];
+    data.migrator[idx] = 1;
+    data.migratorIndices.push(idx);
   }
 
   // Calculate delays for migrators and non-migrators
