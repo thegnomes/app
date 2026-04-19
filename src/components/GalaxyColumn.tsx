@@ -33,7 +33,8 @@ export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: Galax
 
   return (
     <div
-      className={`relative flex h-full w-1/3 justify-center ${alignTop ? 'items-start' : 'items-center'}`}
+      className={`relative flex h-full w-1/3 justify-center overflow-visible ${alignTop ? 'items-start' : 'items-center'}`}
+      style={{ zIndex: isHovered ? 20 : 10 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

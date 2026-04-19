@@ -12,8 +12,8 @@ interface DriftPoint {
 }
 
 const ASTRO_DRIFT_LAG = 0.055;
-const ASTRO_DESKTOP_DRIFT_PCT = { x: 0.45, y: 0.45 };
-const ASTRO_MOBILE_DRIFT_PCT = { x: 0.35, y: 0.35 };
+const ASTRO_DESKTOP_DRIFT_PCT = { x: 0.15, y: 0.15 };
+const ASTRO_MOBILE_DRIFT_PCT = { x: 0.1, y: 0.1 };
 const NEBULA_PARALLAX_RATIO = 0.12;
 
 function getIdleAstronautDriftTarget(clientX: number, clientY: number): DriftPoint {
@@ -193,7 +193,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         />
       </div>
       {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}
-      <div className="astro-float absolute left-1/2 top-1/2 z-20 h-full w-full">
+      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-20 h-full w-full">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
             drifted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'

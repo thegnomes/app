@@ -12,13 +12,13 @@ export const STATE1_DURATION = 2000;
 export const STATE4_CONCENTRATE = 1000;
 
 /** Substate 1: Particle absorption with radial approach (0-6000ms) */
-export const STATE2_ABSORPTION_DURATION = 6000;
+export const STATE2_ABSORPTION_DURATION = 3000;
 
 /** Substate 2: Spike/thorn bounce decay to stable sphere (6000-10000ms) */
-export const STATE2_STABILIZE_DURATION = 4000;
+export const STATE2_STABILIZE_DURATION = 2000;
 
 /** Substate 3: Compression + color shift (10000-11500ms) - reduced by half */
-export const STATE2_COLOR_SHIFT_DURATION = 1500;
+export const STATE2_COLOR_SHIFT_DURATION = 750;
 
 /** Duration of state 2 (charging shell phase) */
 export const STATE2_DURATION =
