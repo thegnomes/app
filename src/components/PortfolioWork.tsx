@@ -1,29 +1,62 @@
 import { useEffect, useRef, useState } from 'react';
 
-function useReveal() {
+/* ─── Hooks ─── */
+
+function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => {
+      const rect = el.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const start = windowH;
+      const end = -rect.height;
+      const p = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
+      setProgress(p);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [ref]);
+  return progress;
+}
+
+function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(false);
+  const [inView, setInView] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setRevealed(true);
-            io.unobserve(entry.target);
-          }
-        });
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          io.unobserve(el);
+        }
       },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold, rootMargin: '0px 0px -40px 0px' }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
-  return { ref, revealed };
+  }, [threshold]);
+  return { ref, inView };
 }
 
-function Reveal({
+/* ─── Primitives ─── */
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mb-4"
+      style={{ fontFamily: "'Fragment Mono', monospace" }}
+    >
+      {children}
+    </p>
+  );
+}
+
+function FadeIn({
   children,
   className = '',
   delay = 0,
@@ -32,14 +65,14 @@ function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const { ref, revealed } = useReveal();
+  const { ref, inView } = useInView();
   return (
     <div
       ref={ref}
       className={`transition-all duration-700 ease-out ${className}`}
       style={{
-        opacity: revealed ? 1 : 0,
-        transform: revealed ? 'translateY(0)' : 'translateY(24px)',
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateY(0)' : 'translateY(28px)',
         transitionDelay: `${delay}ms`,
       }}
     >
@@ -48,22 +81,93 @@ function Reveal({
   );
 }
 
-function Nav() {
+function ParallaxImage({
+  src,
+  alt,
+  className = '',
+  speed = 0.3,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  speed?: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useScrollProgress(containerRef);
+  const offset = (progress - 0.5) * speed * 100;
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 md:px-10">
+    <div ref={containerRef} className={`overflow-hidden ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover will-change-transform"
+        style={{
+          transform: `translateY(${offset}px) scale(1.08)`,
+        }}
+      />
+    </div>
+  );
+}
+
+function RevealImage({
+  src,
+  alt,
+  className = '',
+  delay = 0,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  delay?: number;
+}) {
+  const { ref, inView } = useInView(0.1);
+  return (
+    <div ref={ref} className={`overflow-hidden ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover will-change-transform transition-transform ease-out"
+        style={{
+          transform: inView ? 'scale(1)' : 'scale(1.12)',
+          opacity: inView ? 1 : 0,
+          transitionDelay: `${delay}ms`,
+          transitionDuration: '1200ms',
+        }}
+      />
+    </div>
+  );
+}
+
+/* ─── Sections ─── */
+
+function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-5 md:px-10 transition-all duration-500 ${
+        scrolled ? 'bg-[#0a0a0a]/80 backdrop-blur-md' : 'bg-transparent'
+      }`}
+    >
       <a href="/" className="text-sm font-medium tracking-tight text-neutral-100 hover:opacity-70 transition-opacity">
         MORAE<span className="align-super text-[10px] ml-0.5">®</span>
       </a>
       <div className="flex items-center gap-6 md:gap-8">
-        <a href="#overview" className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors">
-          Overview
-        </a>
-        <a href="#gallery" className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors">
-          Gallery
-        </a>
-        <a href="#approach" className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors">
-          Approach
-        </a>
+        {['Overview', 'Gallery', 'Approach'].map((item) => (
+          <a
+            key={item}
+            href={`#${item.toLowerCase()}`}
+            className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors"
+          >
+            {item}
+          </a>
+        ))}
         <a
           href="/"
           className="text-xs font-medium tracking-wide text-neutral-900 bg-neutral-100 px-4 py-2 rounded-full hover:bg-neutral-300 transition-colors"
@@ -76,60 +180,62 @@ function Nav() {
 }
 
 function Hero() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const progress = useScrollProgress(sectionRef);
+  const heroY = progress * 120;
+  const contentY = progress * 60;
+  const contentOp = 1 - progress * 1.5;
+
   return (
-    <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 pt-32 px-6 md:px-10">
-      <div className="absolute inset-0 z-0">
+    <section ref={sectionRef} className="relative h-[120vh] flex flex-col justify-end pb-10 md:pb-16 pt-32 px-6 md:px-10 overflow-hidden">
+      <div
+        className="absolute inset-0 z-0 will-change-transform"
+        style={{ transform: `translateY(${heroY}px)` }}
+      >
         <img
           src="/portfolio/hero.jpg"
           alt="Project hero"
-          className="w-full h-full object-cover opacity-60"
+          className="w-full h-full object-cover opacity-50 scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/20" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto w-full">
-        <Reveal delay={0}>
-          <div className="flex items-center gap-3 mb-6">
-            <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
-              Case Study
-            </span>
-            <span className="text-[10px] uppercase tracking-widest text-neutral-500">2026</span>
-          </div>
-        </Reveal>
+      <div
+        className="relative z-10 max-w-7xl mx-auto w-full will-change-transform"
+        style={{ transform: `translateY(${contentY}px)`, opacity: Math.max(0, contentOp) }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
+            Case Study
+          </span>
+          <span className="text-[10px] uppercase tracking-widest text-neutral-500">2026</span>
+        </div>
 
-        <Reveal delay={100}>
-          <h1
-            className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            Sonic
-            <br />
-            <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>Identity</span>
-          </h1>
-        </Reveal>
+        <h1
+          className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          Sonic
+          <br />
+          <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>Identity</span>
+        </h1>
 
-        <Reveal delay={200}>
-          <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">
-            A complete brand and digital experience for a single-product audio company. Designed to eliminate distraction and center the listener.
-          </p>
-        </Reveal>
+        <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">
+          A complete brand and digital experience for a single-product audio company. Designed to eliminate distraction and center the listener.
+        </p>
 
-        <Reveal delay={300}>
-          <div className="flex flex-wrap items-center gap-8 md:gap-12">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Client</p>
-              <p className="text-sm font-medium text-neutral-100">MORAE Audio</p>
+        <div className="flex flex-wrap items-center gap-8 md:gap-12">
+          {[
+            { label: 'Client', value: 'MORAE Audio' },
+            { label: 'Role', value: 'Design & Development' },
+            { label: 'Deliverables', value: 'Web, 3D, Motion' },
+          ].map((meta) => (
+            <div key={meta.label}>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
+              <p className="text-sm font-medium text-neutral-100">{meta.value}</p>
             </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Role</p>
-              <p className="text-sm font-medium text-neutral-100">Design & Development</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">Deliverables</p>
-              <p className="text-sm font-medium text-neutral-100">Web, 3D, Motion</p>
-            </div>
-          </div>
-        </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -140,80 +246,48 @@ function Overview() {
     <section id="overview" className="px-6 md:px-10 py-24 md:py-36">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
         <div className="md:col-span-4">
-          <Reveal>
-            <p
-              className="text-xs uppercase tracking-widest text-neutral-500 mb-4"
-              style={{ fontFamily: "'Fragment Mono', monospace" }}
-            >
-              Philosophy
-            </p>
-          </Reveal>
+          <FadeIn>
+            <Label>Philosophy</Label>
+          </FadeIn>
         </div>
         <div className="md:col-span-8">
-          <Reveal delay={100}>
+          <FadeIn delay={100}>
             <p className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug text-neutral-100 mb-8">
               At MORAE, we don’t follow trends. We study the subtle patterns of sound and the ways people interact with it.
             </p>
-          </Reveal>
-          <Reveal delay={200}>
+          </FadeIn>
+          <FadeIn delay={200}>
             <p className="text-base md:text-lg text-neutral-400 leading-relaxed max-w-2xl">
               Our philosophy is simple: eliminate distractions, highlight essence. Every design decision is deliberate—nothing is accidental. The goal isn’t to impress, but to allow clarity, focus, and awareness to emerge naturally.
             </p>
-          </Reveal>
+          </FadeIn>
         </div>
       </div>
     </section>
   );
 }
 
-const stats = [
-  {
-    num: '01',
-    title: '40 Hours',
-    desc: 'Battery Endurance',
-    detail: 'Engineered for long listening sessions without interruptions.',
-  },
-  {
-    num: '02',
-    title: '32%',
-    desc: 'Enhanced Noise Reduction',
-    detail: 'Advanced ANC algorithms delivering noticeably deeper isolation.',
-  },
-  {
-    num: '03',
-    title: '0.08s',
-    desc: 'Instant Response Time',
-    detail: 'Ultra-fast touch and sensor feedback for seamless control.',
-  },
-  {
-    num: '04',
-    title: '+27%',
-    desc: 'Improved Acoustic Clarity',
-    detail: 'Refined drivers and adaptive tuning for a cleaner, more balanced sound.',
-  },
+const STATS = [
+  { num: '01', title: '40 Hours', desc: 'Battery Endurance', detail: 'Engineered for long listening sessions without interruptions.' },
+  { num: '02', title: '32%', desc: 'Enhanced Noise Reduction', detail: 'Advanced ANC algorithms delivering noticeably deeper isolation.' },
+  { num: '03', title: '0.08s', desc: 'Instant Response Time', detail: 'Ultra-fast touch and sensor feedback for seamless control.' },
+  { num: '04', title: '+27%', desc: 'Improved Acoustic Clarity', detail: 'Refined drivers and adaptive tuning for a cleaner, more balanced sound.' },
 ];
 
 function Stats() {
   return (
     <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
-          {stats.map((s, i) => (
-            <Reveal key={s.num} delay={i * 100}>
-              <div className="group">
-                <p
-                  className="text-sm text-neutral-600 mb-6"
-                  style={{ fontFamily: "'Doto', sans-serif" }}
-                >
-                  {s.num}
-                </p>
-                <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-2">{s.title}</h3>
-                <p className="text-sm font-medium text-neutral-300 mb-3">{s.desc}</p>
-                <p className="text-sm text-neutral-500 leading-relaxed">{s.detail}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
+        {STATS.map((s, i) => (
+          <FadeIn key={s.num} delay={i * 100}>
+            <p className="text-sm text-neutral-600 mb-6" style={{ fontFamily: "'Doto', sans-serif" }}>
+              {s.num}
+            </p>
+            <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-2">{s.title}</h3>
+            <p className="text-sm font-medium text-neutral-300 mb-3">{s.desc}</p>
+            <p className="text-sm text-neutral-500 leading-relaxed">{s.detail}</p>
+          </FadeIn>
+        ))}
       </div>
     </section>
   );
@@ -223,22 +297,17 @@ function Vision() {
   return (
     <section className="px-6 md:px-10 py-24 md:py-40">
       <div className="max-w-5xl mx-auto text-center">
-        <Reveal>
-          <p
-            className="text-xs uppercase tracking-widest text-neutral-500 mb-8"
-            style={{ fontFamily: "'Fragment Mono', monospace" }}
-          >
-            Vision
-          </p>
-        </Reveal>
-        <Reveal delay={150}>
+        <FadeIn>
+          <Label>Vision</Label>
+        </FadeIn>
+        <FadeIn delay={150}>
           <h2
             className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight text-neutral-100"
             style={{ fontFamily: "'Instrument Serif', serif" }}
           >
             “In a world full of distraction, we design for those who notice. MORAE is about clarity, detail, and pure listening—tools for focus, not show.”
           </h2>
-        </Reveal>
+        </FadeIn>
       </div>
     </section>
   );
@@ -248,96 +317,72 @@ function Gallery() {
   return (
     <section id="gallery" className="px-6 md:px-10 pb-16 md:pb-24">
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-        <Reveal>
-          <div className="overflow-hidden rounded-2xl">
-            <img
-              src="/portfolio/product1.png"
-              alt="Product detail"
-              className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-700"
-            />
-          </div>
-        </Reveal>
+        <FadeIn>
+          <ParallaxImage
+            src="/portfolio/product1.png"
+            alt="Product detail"
+            className="rounded-2xl aspect-[16/10]"
+            speed={0.25}
+          />
+        </FadeIn>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          <Reveal delay={100}>
-            <div className="overflow-hidden rounded-2xl h-full">
-              <img
-                src="/portfolio/lifestyle.jpg"
-                alt="Lifestyle"
-                className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-700"
-              />
-            </div>
-          </Reveal>
-          <Reveal delay={200}>
-            <div className="overflow-hidden rounded-2xl h-full">
-              <img
-                src="/portfolio/product2.png"
-                alt="Product angle"
-                className="w-full h-full object-cover hover:scale-[1.02] transition-transform duration-700"
-              />
-            </div>
-          </Reveal>
+          <FadeIn delay={100}>
+            <ParallaxImage
+              src="/portfolio/lifestyle.jpg"
+              alt="Lifestyle"
+              className="rounded-2xl aspect-[4/5]"
+              speed={0.2}
+            />
+          </FadeIn>
+          <FadeIn delay={200}>
+            <ParallaxImage
+              src="/portfolio/product2.png"
+              alt="Product angle"
+              className="rounded-2xl aspect-[4/5]"
+              speed={0.35}
+            />
+          </FadeIn>
         </div>
 
-        <Reveal delay={100}>
-          <div className="overflow-hidden rounded-2xl">
-            <img
-              src="/portfolio/detail.png"
-              alt="Detail shot"
-              className="w-full h-auto object-cover hover:scale-[1.02] transition-transform duration-700"
-            />
-          </div>
-        </Reveal>
+        <FadeIn delay={100}>
+          <RevealImage src="/portfolio/detail.png" alt="Detail shot" className="rounded-2xl" />
+        </FadeIn>
       </div>
     </section>
   );
 }
 
 function Approach() {
+  const items = [
+    {
+      label: 'Craft',
+      heading: 'Precision matters more than extravagance.',
+      body: 'Every material is chosen for function first, form second. Metals are cool to the touch, plastics durable yet unassuming. Even the smallest joint is considered for both performance and longevity. Craft is not about beauty for attention—it is honesty in construction, visible to those who look closely.',
+    },
+    {
+      label: 'Sound',
+      heading: 'Sound isn’t just heard; it is experienced.',
+      body: 'MORAE captures subtle layers and textures that often go unnoticed. We don’t aim for loudness or flashy bass; we seek authenticity. Every note, every frequency, every silence is intentional. Listening becomes a conscious act, a moment to focus on what really matters.',
+    },
+  ];
+
   return (
     <section id="approach" className="px-6 md:px-10 py-24 md:py-36 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
-        <div>
-          <Reveal>
-            <p
-              className="text-xs uppercase tracking-widest text-neutral-500 mb-6"
-              style={{ fontFamily: "'Fragment Mono', monospace" }}
-            >
-              Craft
-            </p>
-          </Reveal>
-          <Reveal delay={100}>
-            <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6">
-              Precision matters more than extravagance.
-            </h3>
-          </Reveal>
-          <Reveal delay={200}>
-            <p className="text-base md:text-lg text-neutral-400 leading-relaxed">
-              Every material is chosen for function first, form second. Metals are cool to the touch, plastics durable yet unassuming. Even the smallest joint is considered for both performance and longevity. Craft is not about beauty for attention—it is honesty in construction, visible to those who look closely.
-            </p>
-          </Reveal>
-        </div>
-
-        <div>
-          <Reveal>
-            <p
-              className="text-xs uppercase tracking-widest text-neutral-500 mb-6"
-              style={{ fontFamily: "'Fragment Mono', monospace" }}
-            >
-              Sound
-            </p>
-          </Reveal>
-          <Reveal delay={100}>
-            <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6">
-              Sound isn’t just heard; it is experienced.
-            </h3>
-          </Reveal>
-          <Reveal delay={200}>
-            <p className="text-base md:text-lg text-neutral-400 leading-relaxed">
-              MORAE captures subtle layers and textures that often go unnoticed. We don’t aim for loudness or flashy bass; we seek authenticity. Every note, every frequency, every silence is intentional. Listening becomes a conscious act, a moment to focus on what really matters.
-            </p>
-          </Reveal>
-        </div>
+        {items.map((item) => (
+          <div key={item.label}>
+            <FadeIn>
+              <Label>{item.label}</Label>
+            </FadeIn>
+            <FadeIn delay={100}>
+              <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6">{item.heading}</h3>
+            </FadeIn>
+            <FadeIn delay={200}>
+              <p className="text-base md:text-lg text-neutral-400 leading-relaxed">{item.body}</p>
+            </FadeIn>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -347,10 +392,10 @@ function Footer() {
   return (
     <footer className="px-6 md:px-10 py-16 md:py-24 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto">
-        <Reveal>
+        <FadeIn>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10 mb-16">
             <div>
-              <p className="text-xs uppercase tracking-widest text-neutral-500 mb-4">Next Project</p>
+              <Label>Next Project</Label>
               <a
                 href="/portfolio.html"
                 className="text-3xl md:text-5xl font-medium text-neutral-100 hover:text-neutral-400 transition-colors"
@@ -360,35 +405,42 @@ function Footer() {
               </a>
             </div>
             <div className="flex items-center gap-6">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-xs font-medium text-neutral-400 hover:text-neutral-100 transition-colors">
-                Instagram
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-xs font-medium text-neutral-400 hover:text-neutral-100 transition-colors">
-                Twitter
-              </a>
-              <a href="mailto:hello@morae.audio" className="text-xs font-medium text-neutral-400 hover:text-neutral-100 transition-colors">
-                Email
-              </a>
+              {['Instagram', 'Twitter', 'Email'].map((social) => (
+                <a
+                  key={social}
+                  href={social === 'Email' ? 'mailto:hello@morae.audio' : `https://${social.toLowerCase()}.com`}
+                  target={social !== 'Email' ? '_blank' : undefined}
+                  rel={social !== 'Email' ? 'noreferrer' : undefined}
+                  className="text-xs font-medium text-neutral-400 hover:text-neutral-100 transition-colors"
+                >
+                  {social}
+                </a>
+              ))}
             </div>
           </div>
-        </Reveal>
+        </FadeIn>
 
-        <Reveal delay={100}>
+        <FadeIn delay={100}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-neutral-600">
-            <p>
-              © {new Date().getFullYear()} MORAE®. All rights reserved.
-            </p>
-            <p>
-              Template replicated for portfolio showcase.
-            </p>
+            <p>© {new Date().getFullYear()} MORAE®. All rights reserved.</p>
+            <p>Template replicated for portfolio showcase.</p>
           </div>
-        </Reveal>
+        </FadeIn>
       </div>
     </footer>
   );
 }
 
+/* ─── Page ─── */
+
 export default function PortfolioWork() {
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = 'smooth';
+    return () => {
+      document.documentElement.style.scrollBehavior = '';
+    };
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
       <Nav />
