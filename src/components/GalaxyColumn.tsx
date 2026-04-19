@@ -5,10 +5,11 @@ interface GalaxyColumnProps {
   srcWebm: string;
   srcMov: string;
   label: string;
+  href: string;
   alignTop?: boolean;
 }
 
-export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: GalaxyColumnProps) {
+export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }: GalaxyColumnProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -32,8 +33,9 @@ export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: Galax
   const ringItems = Array(12).fill(label);
 
   return (
-    <div
-      className={`relative flex h-full w-1/3 justify-center overflow-visible ${alignTop ? 'items-start' : 'items-center'}`}
+    <a
+      href={href}
+      className={`relative flex h-full w-1/3 cursor-pointer justify-center overflow-visible ${alignTop ? 'items-start' : 'items-center'}`}
       style={{ zIndex: isHovered ? 20 : 10 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -74,6 +76,6 @@ export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: Galax
 
         <RingText items={ringItems} radius={120} duration={12} />
       </div>
-    </div>
+    </a>
   );
 }
