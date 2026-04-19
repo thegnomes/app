@@ -436,8 +436,10 @@ function Footer() {
 export default function PortfolioWork() {
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
+    document.body.style.overflow = 'auto';
     return () => {
       document.documentElement.style.scrollBehavior = '';
+      document.body.style.overflow = '';
     };
   }, []);
 
