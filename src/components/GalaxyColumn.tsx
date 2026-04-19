@@ -33,7 +33,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: Galax
 
   return (
     <div
-      className={`relative flex h-full w-1/3 justify-center overflow-hidden ${alignTop ? 'items-start' : 'items-center'}`}
+      className={`relative flex h-full w-1/3 justify-center ${alignTop ? 'items-start' : 'items-center'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -71,7 +71,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, alignTop = false }: Galax
           <source src="/webm/target-lock.webm" type="video/webm" />
         </video>
 
-        <RingText items={ringItems} radius={140} duration={12} />
+        <RingText items={ringItems} radius={120} duration={12} />
       </div>
     </div>
   );
