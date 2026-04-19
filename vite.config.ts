@@ -17,6 +17,9 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         portfolio: path.resolve(__dirname, 'portfolio.html'),
+        'toto-portfolio': path.resolve(__dirname, 'toto-portfolio.html'),
+        'nft11-portfolio': path.resolve(__dirname, 'nft11-portfolio.html'),
+        'oxytap-portfolio': path.resolve(__dirname, 'oxytap-portfolio.html'),
       },
     },
   },
