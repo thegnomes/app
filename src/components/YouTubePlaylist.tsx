@@ -75,12 +75,13 @@ export default function YouTubePlaylist({
   subtitle,
   videos,
 }: YouTubePlaylistProps) {
+  const displayVideos = videos.slice(0, 8);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const activeVideo = videos[activeIndex];
+  const activeVideo = displayVideos[activeIndex];
 
   const startProgress = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -249,7 +250,7 @@ export default function YouTubePlaylist({
               {title}
             </h3>
             <div className="space-y-1">
-              {videos.map((video, index) => {
+              {displayVideos.map((video, index) => {
                 const isActive = index === activeIndex;
                 return (
                   <button

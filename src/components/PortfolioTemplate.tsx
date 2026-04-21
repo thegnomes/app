@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 
 /* ─── Hooks ─── */
@@ -45,6 +45,54 @@ function useInView(threshold = 0.15) {
 }
 
 /* ─── Primitives ─── */
+
+function AuroraTextReveal({
+  children,
+  className = '',
+  as: Tag = 'span',
+}: {
+  children: React.ReactNode;
+  className?: string;
+  as?: 'span' | 'h2' | 'p';
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => {
+      const rect = el.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const start = windowH * 0.85;
+      const end = windowH * 0.25;
+      const p = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
+      setProgress(p);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const CustomTag = Tag as React.ElementType;
+
+  return (
+    <div ref={ref} className={className}>
+      <CustomTag
+        className="inline"
+        style={{
+          backgroundImage: `linear-gradient(90deg, #f59e0b 0%, #ea580c ${progress * 100}%, #525252 ${progress * 100}%, #525252 100%)`,
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          color: 'transparent',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        {children}
+      </CustomTag>
+    </div>
+  );
+}
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -158,7 +206,7 @@ function Nav() {
         MORAE<span className="align-super text-[10px] ml-0.5">®</span>
       </a>
       <div className="flex items-center gap-6 md:gap-8">
-        {['Overview', 'Gallery', 'Process'].map((item) => (
+        {['Overview', 'Process'].map((item) => (
           <a
             key={item}
             href={`#${item.toLowerCase()}`}
@@ -250,9 +298,12 @@ function Overview({ project }: { project: PortfolioProject }) {
         </div>
         <div className="md:col-span-8">
           <FadeIn delay={100}>
-            <p className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug text-neutral-100 mb-8">
+            <AuroraTextReveal
+              as="p"
+              className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug mb-8"
+            >
               {project.philosophyHeading}
-            </p>
+            </AuroraTextReveal>
           </FadeIn>
           <FadeIn delay={200}>
             <p className="text-base md:text-lg text-neutral-400 leading-relaxed max-w-2xl">{project.philosophyBody}</p>
@@ -266,7 +317,7 @@ function Overview({ project }: { project: PortfolioProject }) {
 function DualModeView({ project }: { project: PortfolioProject }) {
   const [activeStep, setActiveStep] = useState(0);
   const [prevStep, setPrevStep] = useState(0);
-  const [viewMode, setViewMode] = useState<'Slider' | 'Grid'>('Slider');
+  // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
 
@@ -377,7 +428,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       {/* Text */}
                       <div className="pb-2">
                         <h3
-                          className={`text-base font-semibold mb-1 transition-colors duration-500 ${
+                          className={`text-lg md:text-xl font-semibold mb-1 transition-colors duration-500 ${
                             isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
@@ -401,40 +452,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           {/* Right: Media Viewer */}
           <div className="lg:col-span-7">
             <FadeIn delay={150}>
-              <div className="flex items-start justify-between gap-4 mb-6">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-semibold text-neutral-100">
-                    Visual Steps at a Glance
-                  </h2>
-                  <p className="text-sm text-neutral-500 mt-1">
-                    Swipe through key steps from the project in image format so you can jump straight to the part you need.
-                  </p>
-                </div>
-
-                <div className="relative flex-shrink-0">
-                  <select
-                    value={viewMode}
-                    onChange={(e) => setViewMode(e.target.value as 'Slider' | 'Grid')}
-                    className="appearance-none bg-neutral-900 border border-neutral-800 text-neutral-300 text-sm rounded-lg px-4 py-2.5 pr-10 cursor-pointer hover:border-neutral-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-                  >
-                    <option value="Slider">Slider</option>
-                    <option value="Grid">Grid</option>
-                  </select>
-                  <svg
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </FadeIn>
-
-            <FadeIn delay={200}>
-              {viewMode === 'Slider' ? (
+              {/* Slider only */}
                 <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
                   <div className="relative aspect-[16/10] overflow-hidden">
                     {currentImage && (
@@ -489,28 +507,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div
-                  key={`grid-${activeStep}`}
-                  className="grid grid-cols-2 gap-3"
-                  style={{
-                    animation: slideDir === 'right'
-                      ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
-                      : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                  }}
-                >
-                  {stepImages.map((img, i) => (
-                    <div
-                      key={img.src}
-                      className={`rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950 ${
-                        i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-[4/3]'
-                      }`}
-                    >
-                      <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* /Slider only */}
             </FadeIn>
           </div>
         </div>
@@ -527,19 +524,20 @@ function Vision({ project }: { project: PortfolioProject }) {
           <Label>{project.visionLabel}</Label>
         </FadeIn>
         <FadeIn delay={150}>
-          <h2
-            className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight text-neutral-100"
-            style={{ fontFamily: "'Instrument Serif', serif" }}
+          <AuroraTextReveal
+            as="h2"
+            className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight"
           >
-            “{project.visionQuote}”
-          </h2>
+            &ldquo;{project.visionQuote}&rdquo;
+          </AuroraTextReveal>
         </FadeIn>
       </div>
     </section>
   );
 }
 
-function Gallery({ project }: { project: PortfolioProject }) {
+/* Gallery removed — images now shown in DualModeView */
+function _Gallery({ project }: { project: PortfolioProject }) {
   const halfImages = project.gallery.filter((g) => g.layout === 'half');
   const fullImages = project.gallery.filter((g) => g.layout === 'full');
 
@@ -675,7 +673,7 @@ export default function PortfolioTemplate({ project, children }: { project: Port
       <Overview project={project} />
       <DualModeView project={project} />
       <Vision project={project} />
-      <Gallery project={project} />
+
       <Process project={project} />
       {children}
       <Footer project={project} />
