@@ -1,4 +1,4 @@
-export interface PortfolioProject {
+﻿﻿﻿export interface PortfolioProject {
   slug: string;
   title: string;
   titleAccent: string;
@@ -11,7 +11,8 @@ export interface PortfolioProject {
   philosophyLabel: string;
   philosophyHeading: string;
   philosophyBody: string;
-  proof: { num: string; title: string; desc: string; detail: string }[];
+  proof: { num: string; title: string; desc: string; detail: string; images?: { src: string; alt: string }[]; link?: { href: string; label: string } }[];
+  heroVideo?: string;
   visionLabel: string;
   visionQuote: string;
   gallery: { src: string; alt: string; layout: 'full' | 'half'; speed?: number }[];
@@ -20,6 +21,7 @@ export interface PortfolioProject {
   nextProject: { name: string; accent: string; href: string };
   socials: { label: string; href: string; external?: boolean }[];
   accentColor?: string;
+  scrollFlowTitle?: { top: string; bottom: string };
 }
 
 export const moraeProject: PortfolioProject = {
@@ -148,11 +150,44 @@ export const nft11Project: PortfolioProject = {
     'At NFT11, the work was less about posting content and more about building a world people wanted to keep returning to.',
   philosophyBody:
     'That meant shaping the rhythm of participation through recurring formats, community programming, and narrative continuity. The goal was not to fill channels, but to create enough structure and momentum for people to feel involved in something active and unfolding.',
+  heroVideo: '/portfolio/NFT11/final/nft11-trailer.mp4',
+  scrollFlowTitle: { top: 'NFT11', bottom: 'Universe Building' },
   proof: [
-    { num: '01', title: '~60k', desc: 'Organic community built', detail: 'Built and maintained an audience base through repeatable programming and sustained participation.' },
-    { num: '02', title: '150+', desc: 'Newsletters sent', detail: 'Used newsletters as an editorial backbone to maintain continuity and reinforce the project’s internal rhythm.' },
-    { num: '03', title: '+200%', desc: 'Engagement during quest cycles', detail: 'Structured quest-based activity that materially increased participation when the system was active.' },
-    { num: '04', title: 'US$1.5M', desc: 'Raise supported in <30 days', detail: 'Community momentum and narrative clarity helped support a rapid fundraising window.' },
+    {
+      num: '01',
+      title: '~60k Community + US$1.5M Raise',
+      desc: 'Built organically, funded rapidly',
+      detail: 'Built and maintained an audience base through repeatable programming, then channelled that momentum into a rapid fundraising window.',
+      images: [
+        { src: '/portfolio/NFT11/final/presales.jpg', alt: 'Presales overview' },
+        { src: '/portfolio/NFT11/final/presales02.jpg', alt: 'Presales detail' },
+        { src: '/portfolio/NFT11/final/stats-01.jpg', alt: 'Stats snapshot 01' },
+        { src: '/portfolio/NFT11/final/stats-02.jpg', alt: 'Stats snapshot 02' },
+      ],
+    },
+    {
+      num: '02',
+      title: '150+',
+      desc: 'Newsletters sent',
+      detail: 'Used newsletters as an editorial backbone to maintain continuity and reinforce the project\u2019s internal rhythm.',
+      images: [
+        { src: '/portfolio/NFT11/final/newsletter01%20(1).jpg', alt: 'Newsletter issue 1' },
+        { src: '/portfolio/NFT11/final/newsletter01%20(2).jpg', alt: 'Newsletter issue 2' },
+        { src: '/portfolio/NFT11/final/newsletter01%20(3).jpg', alt: 'Newsletter issue 3' },
+      ],
+      link: { href: 'https://medium.com/@nfteleven', label: 'Read on Medium' },
+    },
+    {
+      num: '03',
+      title: '+200%',
+      desc: 'Engagement during quest cycles',
+      detail: 'Structured quest-based activity that materially increased participation when the system was active.',
+      images: [
+        { src: '/portfolio/NFT11/final/weekly_q01.png', alt: 'Weekly quest 1' },
+        { src: '/portfolio/NFT11/final/weekly_q02.png', alt: 'Weekly quest 2' },
+        { src: '/portfolio/NFT11/final/weekly_q03.png', alt: 'Weekly quest 3' },
+      ],
+    },
   ],
   visionLabel: 'Vision',
   visionQuote:

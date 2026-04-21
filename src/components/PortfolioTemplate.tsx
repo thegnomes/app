@@ -186,6 +186,36 @@ function RevealImage({
   );
 }
 
+function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setOffset(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const repeatedTop = Array(8).fill(top).join(' \u2014 ');
+  const repeatedBottom = Array(8).fill(bottom).join(' \u2014 ');
+
+  return (
+    <div className="overflow-hidden select-none">
+      <div
+        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white will-change-transform"
+        style={{ transform: `translateX(${-offset * 0.25}px)` }}
+      >
+        {repeatedTop}
+      </div>
+      <div
+        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white will-change-transform"
+        style={{ transform: `translateX(${offset * 0.25}px)` }}
+      >
+        {repeatedBottom}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Sections ─── */
 
 function Nav() {
@@ -240,7 +270,18 @@ function Hero({ project }: { project: PortfolioProject }) {
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
       >
-        <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
+        {project.heroVideo ? (
+          <video
+            src={project.heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover opacity-60 scale-105"
+          />
+        ) : (
+          <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/20" />
       </div>
 
@@ -255,18 +296,24 @@ function Hero({ project }: { project: PortfolioProject }) {
           <span className="text-[10px] uppercase tracking-widest text-neutral-500">{project.year}</span>
         </div>
 
-        <h1
-          className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          {project.title}
-          {project.titleAccent && (
-            <>
-              <br />
-              <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>{project.titleAccent}</span>
-            </>
-          )}
-        </h1>
+        {project.scrollFlowTitle ? (
+          <div className="mb-8">
+            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.scrollFlowTitle.bottom} />
+          </div>
+        ) : (
+          <h1
+            className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
+            {project.title}
+            {project.titleAccent && (
+              <>
+                <br />
+                <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>{project.titleAccent}</span>
+              </>
+            )}
+          </h1>
+        )}
 
         <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">{project.description}</p>
 
@@ -322,6 +369,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
 
   const getStepImages = (stepIndex: number) => {
+    const step = project.proof[stepIndex];
+    if (step?.images && step.images.length > 0) return step.images;
     const total = project.gallery.length;
     if (total === 0) return [];
     const perStep = 2;
@@ -403,7 +452,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
                             isActive
-                              ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] scale-110'
+                              ? 'bg-yellow-500 text-black shadow-[0_0_20px_rgba(234,179,8,0.35)] scale-110'
                               : 'bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700'
                           }`}
                           style={{
@@ -415,7 +464,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         {index < project.proof.length - 1 && (
                           <div className="relative w-px flex-1 min-h-[32px] bg-neutral-800 mt-2 overflow-hidden">
                             <div
-                              className="absolute inset-0 bg-blue-600 origin-top transition-transform duration-500 ease-out"
+                              className="absolute inset-0 bg-yellow-500 origin-top transition-transform duration-500 ease-out"
                               style={{
                                 transform: activeStep > index ? 'scaleY(1)' : 'scaleY(0)',
                                 transitionDelay: `${lineDelay(index)}ms`,
@@ -428,7 +477,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       {/* Text */}
                       <div className="pb-2">
                         <h3
-                          className={`text-lg md:text-xl font-semibold mb-1 transition-colors duration-500 ${
+                          className={`text-xl md:text-2xl font-semibold mb-1 transition-colors duration-500 ${
                             isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
@@ -441,6 +490,18 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         <p className="text-sm text-neutral-500 leading-relaxed">
                           {step.detail}
                         </p>
+                        {step.link && (
+                          <a
+                            href={step.link.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-yellow-500 hover:text-yellow-400 mt-2 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {step.link.label}
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                          </a>
+                        )}
                       </div>
                     </button>
                   </FadeIn>
@@ -450,7 +511,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           </div>
 
           {/* Right: Media Viewer */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 flex flex-col justify-center">
             <FadeIn delay={150}>
               {/* Slider only */}
                 <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
@@ -465,11 +526,26 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                         }}
                       >
-                        <img
-                          src={currentImage.src}
-                          alt={currentImage.alt}
-                          className="w-full h-full object-cover"
-                        />
+                        {project.proof[activeStep]?.link ? (
+                          <a
+                            href={project.proof[activeStep].link!.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block w-full h-full"
+                          >
+                            <img
+                              src={currentImage.src}
+                              alt={currentImage.alt}
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        ) : (
+                          <img
+                            src={currentImage.src}
+                            alt={currentImage.alt}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -531,56 +607,6 @@ function Vision({ project }: { project: PortfolioProject }) {
             &ldquo;{project.visionQuote}&rdquo;
           </AuroraTextReveal>
         </FadeIn>
-      </div>
-    </section>
-  );
-}
-
-/* Gallery removed — images now shown in DualModeView */
-function _Gallery({ project }: { project: PortfolioProject }) {
-  const halfImages = project.gallery.filter((g) => g.layout === 'half');
-  const fullImages = project.gallery.filter((g) => g.layout === 'full');
-
-  return (
-    <section id="gallery" className="px-6 md:px-10 pb-16 md:pb-24">
-      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-        {fullImages[0] && (
-          <FadeIn>
-            <ParallaxImage
-              src={fullImages[0].src}
-              alt={fullImages[0].alt}
-              className="rounded-2xl aspect-[16/10]"
-              speed={fullImages[0].speed ?? 0.25}
-            />
-          </FadeIn>
-        )}
-
-        {halfImages.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {halfImages.map((img, i) => (
-              <FadeIn key={img.src} delay={100 + i * 100}>
-                <ParallaxImage
-                  src={img.src}
-                  alt={img.alt}
-                  className="rounded-2xl aspect-[4/5]"
-                  speed={img.speed ?? 0.2 + i * 0.15}
-                />
-              </FadeIn>
-            ))}
-          </div>
-        )}
-
-        {fullImages[1] && (
-          <FadeIn delay={100}>
-            <RevealImage src={fullImages[1].src} alt={fullImages[1].alt} className="rounded-2xl" />
-          </FadeIn>
-        )}
-
-        {fullImages.slice(2).map((img, i) => (
-          <FadeIn key={img.src} delay={200 + i * 100}>
-            <RevealImage src={img.src} alt={img.alt} className="rounded-2xl" />
-          </FadeIn>
-        ))}
       </div>
     </section>
   );
