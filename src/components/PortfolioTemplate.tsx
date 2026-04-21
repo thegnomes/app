@@ -188,27 +188,55 @@ function RevealImage({
 
 function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
   const [offset, setOffset] = useState(0);
+  const velocityRef = useRef(0.4);
+  const boostRef = useRef(0);
+  const lastScrollRef = useRef(0);
+  const rafRef = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setOffset(window.scrollY);
+    let lastTime = performance.now();
+
+    const onScroll = () => {
+      const scrollDelta = window.scrollY - lastScrollRef.current;
+      lastScrollRef.current = window.scrollY;
+      boostRef.current = Math.min(boostRef.current + Math.abs(scrollDelta) * 0.015, 2.5);
+    };
+
+    const animate = (time: number) => {
+      const dt = Math.min((time - lastTime) / 16.67, 3);
+      lastTime = time;
+
+      // Decay boost back toward 0
+      boostRef.current *= 0.96;
+      const speed = (velocityRef.current + boostRef.current) * dt;
+
+      setOffset((prev) => prev + speed);
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
-  const repeatedTop = Array(8).fill(top).join(' \u2014 ');
-  const repeatedBottom = Array(8).fill(bottom).join(' \u2014 ');
+  const repeatedTop = Array(10).fill(top.toUpperCase()).join(' \u2014 ');
+  const repeatedBottom = Array(10).fill(bottom.toUpperCase()).join(' \u2014 ');
 
   return (
-    <div className="overflow-hidden select-none">
+    <div className="overflow-hidden select-none font-russo">
       <div
-        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white will-change-transform"
-        style={{ transform: `translateX(${-offset * 0.25}px)` }}
+        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white will-change-transform"
+        style={{ transform: `translateX(${-offset * 0.6}px)` }}
       >
         {repeatedTop}
       </div>
       <div
-        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white will-change-transform"
-        style={{ transform: `translateX(${offset * 0.25}px)` }}
+        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white will-change-transform"
+        style={{ transform: `translateX(${offset * 0.6}px)` }}
       >
         {repeatedBottom}
       </div>
@@ -282,7 +310,7 @@ function Hero({ project }: { project: PortfolioProject }) {
         ) : (
           <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/40" />
       </div>
 
       <div
@@ -302,14 +330,13 @@ function Hero({ project }: { project: PortfolioProject }) {
           </div>
         ) : (
           <h1
-            className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8 font-russo"
           >
             {project.title}
             {project.titleAccent && (
               <>
                 <br />
-                <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>{project.titleAccent}</span>
+                <span className="font-russo">{project.titleAccent}</span>
               </>
             )}
           </h1>
@@ -347,7 +374,7 @@ function Overview({ project }: { project: PortfolioProject }) {
           <FadeIn delay={100}>
             <AuroraTextReveal
               as="p"
-              className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug mb-8"
+              className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug mb-8 font-russo"
             >
               {project.philosophyHeading}
             </AuroraTextReveal>
@@ -477,14 +504,14 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       {/* Text */}
                       <div className="pb-2">
                         <h3
-                          className={`text-xl md:text-2xl font-semibold mb-1 transition-colors duration-500 ${
+                          className={`text-xl md:text-2xl font-semibold mb-1 transition-colors duration-500 font-russo ${
                             isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
                         >
                           {step.title}
                         </h3>
-                        <p className="text-sm font-medium text-neutral-400 mb-1.5">
+                        <p className="text-xl md:text-2xl font-medium text-neutral-400 mb-1.5 font-russo">
                           {step.desc}
                         </p>
                         <p className="text-sm text-neutral-500 leading-relaxed">
@@ -515,11 +542,10 @@ function DualModeView({ project }: { project: PortfolioProject }) {
             <FadeIn delay={150}>
               {/* Slider only */}
                 <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
-                  <div className="relative aspect-[16/10] overflow-hidden">
+                  <div className="relative overflow-hidden">
                     {currentImage && (
                       <div
                         key={`${activeStep}-${carouselIndex}`}
-                        className="absolute inset-0"
                         style={{
                           animation: slideDir === 'right'
                             ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
@@ -536,14 +562,14 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             <img
                               src={currentImage.src}
                               alt={currentImage.alt}
-                              className="w-full h-full object-cover"
+                              className="w-full h-auto object-contain"
                             />
                           </a>
                         ) : (
                           <img
                             src={currentImage.src}
                             alt={currentImage.alt}
-                            className="w-full h-full object-cover"
+                            className="w-full h-auto object-contain"
                           />
                         )}
                       </div>
@@ -602,7 +628,7 @@ function Vision({ project }: { project: PortfolioProject }) {
         <FadeIn delay={150}>
           <AuroraTextReveal
             as="h2"
-            className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight"
+            className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight font-russo"
           >
             &ldquo;{project.visionQuote}&rdquo;
           </AuroraTextReveal>
@@ -622,7 +648,7 @@ function Process({ project }: { project: PortfolioProject }) {
               <Label>{item.label}</Label>
             </FadeIn>
             <FadeIn delay={100}>
-              <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6">{item.heading}</h3>
+              <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6 font-russo">{item.heading}</h3>
             </FadeIn>
             <FadeIn delay={200}>
               <p className="text-base md:text-lg text-neutral-400 leading-relaxed">{item.body}</p>
@@ -644,10 +670,10 @@ function Footer({ project }: { project: PortfolioProject }) {
               <Label>Next Project</Label>
               <a
                 href={project.nextProject.href}
-                className="text-3xl md:text-5xl font-medium text-neutral-100 hover:text-neutral-400 transition-colors"
+                className="text-3xl md:text-5xl font-medium text-neutral-100 hover:text-neutral-400 transition-colors font-russo"
               >
                 {project.nextProject.name}{' '}
-                <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>
+                <span className="font-russo">
                   {project.nextProject.accent}
                 </span>
                 <span className="inline-block ml-3 align-middle">→</span>
