@@ -55,7 +55,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           playsInline
           loop
           preload="auto"
-          className="h-full w-full object-cover"
+          className="h-full w-full"
         >
           <source src={srcWebm} type="video/webm" />
           <source src={srcMov} type="video/quicktime" />
@@ -67,7 +67,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           playsInline
           loop
           preload="auto"
-          className={`pointer-events-none absolute inset-0 h-full w-full object-cover mix-blend-screen transition-opacity duration-500 ${
+          className={`pointer-events-none absolute inset-0 h-full w-full mix-blend-screen transition-opacity duration-500 ${
             isHovered ? 'opacity-80' : 'opacity-0'
           }`}
         >
