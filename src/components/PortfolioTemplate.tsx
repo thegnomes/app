@@ -263,167 +263,188 @@ function Overview({ project }: { project: PortfolioProject }) {
   );
 }
 
-function BrowserMockup({
-  src,
-  alt,
-  className = '',
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/60 ${className}`}
-    >
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-800 bg-neutral-900/50">
-        <div className="w-3 h-3 rounded-full bg-neutral-700" />
-        <div className="w-3 h-3 rounded-full bg-neutral-700" />
-        <div className="w-3 h-3 rounded-full bg-neutral-700" />
-        <div className="ml-auto flex items-center gap-1.5">
-          <div className="w-24 h-2 rounded-full bg-neutral-800" />
-        </div>
-      </div>
-      <div className="aspect-[16/10] overflow-hidden">
-        <img src={src} alt={alt} className="w-full h-full object-cover" />
-      </div>
-    </div>
-  );
-}
-
-function PhoneMockup({
-  src,
-  alt,
-  className = '',
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
-  return (
-    <div className={`relative mx-auto ${className}`} style={{ maxWidth: 220 }}>
-      <div className="rounded-[2rem] overflow-hidden border-[5px] border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/60">
-        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-14 h-5 rounded-full bg-neutral-800 z-10" />
-        <div className="aspect-[9/19] overflow-hidden">
-          <img src={src} alt={alt} className="w-full h-full object-cover" />
-        </div>
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 rounded-full bg-neutral-700 z-10" />
-      </div>
-    </div>
-  );
-}
-
 function DualModeView({ project }: { project: PortfolioProject }) {
-  const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
-  const fullImages = project.gallery.filter((g) => g.layout === 'full');
-  const halfImages = project.gallery.filter((g) => g.layout === 'half');
-  const displayImages =
-    fullImages.length > 0 || halfImages.length > 0
-      ? [...fullImages, ...halfImages]
-      : project.gallery;
+  const [activeStep, setActiveStep] = useState(0);
+  const [viewMode, setViewMode] = useState<'Slider' | 'Grid'>('Slider');
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const galleryImages = project.gallery.slice(0, 6);
+  const currentImage = galleryImages[carouselIndex] ?? galleryImages[0];
+
+  const stepIcons = [
+    <svg key="1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+    <svg key="2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>,
+    <svg key="3" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+    <svg key="4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+  ];
+
+  const handlePrev = () => {
+    setCarouselIndex((i) => (i === 0 ? galleryImages.length - 1 : i - 1));
+  };
+
+  const handleNext = () => {
+    setCarouselIndex((i) => (i === galleryImages.length - 1 ? 0 : i + 1));
+  };
 
   return (
     <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto">
-        {/* Header + Toggle */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
-          <FadeIn>
-            <div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+          {/* Left: Steps Timeline */}
+          <div className="lg:col-span-5">
+            <FadeIn>
               <Label>Proof of Work</Label>
-              <h2 className="text-2xl md:text-3xl font-medium text-neutral-100 mt-3">
-                Results in context
-              </h2>
-            </div>
-          </FadeIn>
+            </FadeIn>
+            <div className="mt-8 space-y-0">
+              {project.proof.map((step, index) => {
+                const isActive = index === activeStep;
+                return (
+                  <FadeIn key={step.num} delay={index * 100}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveStep(index)}
+                      className={`w-full text-left group flex gap-4 py-5 ${
+                        index < project.proof.length - 1 ? 'border-b border-neutral-800/60' : ''
+                      }`}
+                    >
+                      {/* Icon + line */}
+                      <div className="flex flex-col items-center flex-shrink-0">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                            isActive
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700'
+                          }`}
+                        >
+                          {stepIcons[index] ?? stepIcons[0]}
+                        </div>
+                        {index < project.proof.length - 1 && (
+                          <div className="w-px flex-1 min-h-[24px] bg-neutral-800 mt-2" />
+                        )}
+                      </div>
 
-          <FadeIn delay={100}>
-            <div className="inline-flex items-center gap-1 bg-neutral-900 rounded-full p-1 border border-neutral-800">
-              <button
-                type="button"
-                onClick={() => setMode('desktop')}
-                className={`px-5 py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
-                  mode === 'desktop'
-                    ? 'bg-neutral-100 text-neutral-900 shadow-lg'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                Desktop
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('mobile')}
-                className={`px-5 py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
-                  mode === 'mobile'
-                    ? 'bg-neutral-100 text-neutral-900 shadow-lg'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                Mobile
-              </button>
-            </div>
-          </FadeIn>
-        </div>
-
-        {/* Device showcase */}
-        <div className="relative">
-          {/* Desktop Mode */}
-          <div
-            className={`transition-all duration-500 ease-out ${
-              mode === 'desktop'
-                ? 'opacity-100 translate-y-0 relative'
-                : 'opacity-0 translate-y-4 absolute inset-0 pointer-events-none'
-            }`}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {displayImages.slice(0, 2).map((img, i) => (
-                <FadeIn key={`d-${img.src}`} delay={i * 100}>
-                  <BrowserMockup src={img.src} alt={img.alt} />
-                </FadeIn>
-              ))}
-              {displayImages.slice(2, 4).map((img, i) => (
-                <FadeIn key={`d-${img.src}`} delay={(i + 2) * 100}>
-                  <BrowserMockup src={img.src} alt={img.alt} />
-                </FadeIn>
-              ))}
+                      {/* Text */}
+                      <div className="pb-2">
+                        <h3
+                          className={`text-base font-semibold mb-1 transition-colors ${
+                            isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
+                          }`}
+                        >
+                          {step.title}
+                        </h3>
+                        <p className="text-sm font-medium text-neutral-400 mb-1.5">
+                          {step.desc}
+                        </p>
+                        <p className="text-sm text-neutral-500 leading-relaxed">
+                          {step.detail}
+                        </p>
+                      </div>
+                    </button>
+                  </FadeIn>
+                );
+              })}
             </div>
           </div>
 
-          {/* Mobile Mode */}
-          <div
-            className={`transition-all duration-500 ease-out ${
-              mode === 'mobile'
-                ? 'opacity-100 translate-y-0 relative'
-                : 'opacity-0 translate-y-4 absolute inset-0 pointer-events-none'
-            }`}
-          >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {displayImages.slice(0, 4).map((img, i) => (
-                <FadeIn key={`m-${img.src}`} delay={i * 100}>
-                  <PhoneMockup src={img.src} alt={img.alt} />
-                </FadeIn>
-              ))}
-            </div>
-          </div>
-        </div>
+          {/* Right: Media Viewer */}
+          <div className="lg:col-span-7">
+            <FadeIn delay={150}>
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-semibold text-neutral-100">
+                    Visual Steps at a Glance
+                  </h2>
+                  <p className="text-sm text-neutral-500 mt-1">
+                    Swipe through key steps from the project in image format so you can jump straight to the part you need.
+                  </p>
+                </div>
 
-        {/* Proof stats strip */}
-        <div className="mt-16 pt-12 border-t border-neutral-900">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-            {project.proof.map((s, i) => (
-              <FadeIn key={s.num} delay={i * 100}>
-                <p
-                  className="text-sm text-neutral-600 mb-3"
-                  style={{ fontFamily: "'Doto', sans-serif" }}
-                >
-                  {s.num}
-                </p>
-                <h3 className="text-xl md:text-2xl font-medium text-neutral-100 mb-1">
-                  {s.title}
-                </h3>
-                <p className="text-sm font-medium text-neutral-300 mb-2">{s.desc}</p>
-                <p className="text-xs text-neutral-500 leading-relaxed">{s.detail}</p>
-              </FadeIn>
-            ))}
+                {/* View Mode Dropdown */}
+                <div className="relative flex-shrink-0">
+                  <select
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value as 'Slider' | 'Grid')}
+                    className="appearance-none bg-neutral-900 border border-neutral-800 text-neutral-300 text-sm rounded-lg px-4 py-2.5 pr-10 cursor-pointer hover:border-neutral-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+                  >
+                    <option value="Slider">Slider</option>
+                    <option value="Grid">Grid</option>
+                  </select>
+                  <svg
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              {viewMode === 'Slider' ? (
+                <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    {currentImage && (
+                      <img
+                        key={currentImage.src}
+                        src={currentImage.src}
+                        alt={currentImage.alt}
+                        className="w-full h-full object-cover transition-transform duration-700"
+                      />
+                    )}
+                  </div>
+
+                  {/* Carousel Controls */}
+                  <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
+                    <button
+                      type="button"
+                      onClick={handlePrev}
+                      className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {galleryImages.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setCarouselIndex(i)}
+                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                            i === carouselIndex
+                              ? 'bg-neutral-300 scale-110'
+                              : 'bg-neutral-700 hover:bg-neutral-600'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {galleryImages.map((img, i) => (
+                    <div
+                      key={img.src}
+                      className={`rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950 ${
+                        i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-[4/3]'
+                      }`}
+                    >
+                      <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FadeIn>
           </div>
         </div>
       </div>
