@@ -265,11 +265,39 @@ function Overview({ project }: { project: PortfolioProject }) {
 
 function DualModeView({ project }: { project: PortfolioProject }) {
   const [activeStep, setActiveStep] = useState(0);
+  const [prevStep, setPrevStep] = useState(0);
   const [viewMode, setViewMode] = useState<'Slider' | 'Grid'>('Slider');
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
 
-  const galleryImages = project.gallery.slice(0, 6);
-  const currentImage = galleryImages[carouselIndex] ?? galleryImages[0];
+  const getStepImages = (stepIndex: number) => {
+    const total = project.gallery.length;
+    if (total === 0) return [];
+    const perStep = 2;
+    const start = (stepIndex * perStep) % total;
+    return Array.from({ length: perStep }, (_, i) =>
+      project.gallery[(start + i) % total]
+    ).filter(Boolean);
+  };
+
+  const stepImages = getStepImages(activeStep);
+  const currentImage = stepImages[carouselIndex] ?? stepImages[0];
+
+  const handleStepClick = (index: number) => {
+    if (index === activeStep) return;
+    setPrevStep(activeStep);
+    setSlideDir(index > activeStep ? 'right' : 'left');
+    setActiveStep(index);
+    setCarouselIndex(0);
+  };
+
+  const handlePrev = () => {
+    setCarouselIndex((i) => (i === 0 ? stepImages.length - 1 : i - 1));
+  };
+
+  const handleNext = () => {
+    setCarouselIndex((i) => (i === stepImages.length - 1 ? 0 : i + 1));
+  };
 
   const stepIcons = [
     <svg key="1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
@@ -278,16 +306,28 @@ function DualModeView({ project }: { project: PortfolioProject }) {
     <svg key="4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
   ];
 
-  const handlePrev = () => {
-    setCarouselIndex((i) => (i === 0 ? galleryImages.length - 1 : i - 1));
+  const lineDelay = (index: number) => {
+    const dist = Math.abs(index - Math.min(prevStep, activeStep));
+    return dist * 80;
   };
 
-  const handleNext = () => {
-    setCarouselIndex((i) => (i === galleryImages.length - 1 ? 0 : i + 1));
+  const iconDelay = (index: number) => {
+    const dist = Math.abs(index - prevStep);
+    return dist * 80;
   };
 
   return (
     <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a]">
+      <style>{`
+        @keyframes gallerySlideInRight {
+          from { transform: translateX(60px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes gallerySlideInLeft {
+          from { transform: translateX(-60px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           {/* Left: Steps Timeline */}
@@ -295,14 +335,14 @@ function DualModeView({ project }: { project: PortfolioProject }) {
             <FadeIn>
               <Label>Proof of Work</Label>
             </FadeIn>
-            <div className="mt-8 space-y-0">
+            <div className="mt-8 space-y-0 relative">
               {project.proof.map((step, index) => {
                 const isActive = index === activeStep;
                 return (
                   <FadeIn key={step.num} delay={index * 100}>
                     <button
                       type="button"
-                      onClick={() => setActiveStep(index)}
+                      onClick={() => handleStepClick(index)}
                       className={`w-full text-left group flex gap-4 py-5 ${
                         index < project.proof.length - 1 ? 'border-b border-neutral-800/60' : ''
                       }`}
@@ -310,25 +350,37 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       {/* Icon + line */}
                       <div className="flex flex-col items-center flex-shrink-0">
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
                             isActive
-                              ? 'bg-blue-600 text-white'
+                              ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] scale-110'
                               : 'bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700'
                           }`}
+                          style={{
+                            transitionDelay: `${iconDelay(index)}ms`,
+                          }}
                         >
                           {stepIcons[index] ?? stepIcons[0]}
                         </div>
                         {index < project.proof.length - 1 && (
-                          <div className="w-px flex-1 min-h-[24px] bg-neutral-800 mt-2" />
+                          <div className="relative w-px flex-1 min-h-[32px] bg-neutral-800 mt-2 overflow-hidden">
+                            <div
+                              className="absolute inset-0 bg-blue-600 origin-top transition-transform duration-500 ease-out"
+                              style={{
+                                transform: activeStep > index ? 'scaleY(1)' : 'scaleY(0)',
+                                transitionDelay: `${lineDelay(index)}ms`,
+                              }}
+                            />
+                          </div>
                         )}
                       </div>
 
                       {/* Text */}
                       <div className="pb-2">
                         <h3
-                          className={`text-base font-semibold mb-1 transition-colors ${
+                          className={`text-base font-semibold mb-1 transition-colors duration-500 ${
                             isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
                           }`}
+                          style={{ transitionDelay: `${iconDelay(index)}ms` }}
                         >
                           {step.title}
                         </h3>
@@ -359,7 +411,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                   </p>
                 </div>
 
-                {/* View Mode Dropdown */}
                 <div className="relative flex-shrink-0">
                   <select
                     value={viewMode}
@@ -387,16 +438,24 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                 <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
                   <div className="relative aspect-[16/10] overflow-hidden">
                     {currentImage && (
-                      <img
-                        key={currentImage.src}
-                        src={currentImage.src}
-                        alt={currentImage.alt}
-                        className="w-full h-full object-cover transition-transform duration-700"
-                      />
+                      <div
+                        key={`${activeStep}-${carouselIndex}`}
+                        className="absolute inset-0"
+                        style={{
+                          animation: slideDir === 'right'
+                            ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                            : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        }}
+                      >
+                        <img
+                          src={currentImage.src}
+                          alt={currentImage.alt}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     )}
                   </div>
 
-                  {/* Carousel Controls */}
                   <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
                     <button
                       type="button"
@@ -407,7 +466,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                     </button>
 
                     <div className="flex items-center gap-2">
-                      {galleryImages.map((_, i) => (
+                      {stepImages.map((_, i) => (
                         <button
                           key={i}
                           type="button"
@@ -431,8 +490,16 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {galleryImages.map((img, i) => (
+                <div
+                  key={`grid-${activeStep}`}
+                  className="grid grid-cols-2 gap-3"
+                  style={{
+                    animation: slideDir === 'right'
+                      ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                      : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                  }}
+                >
+                  {stepImages.map((img, i) => (
                     <div
                       key={img.src}
                       className={`rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950 ${
