@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
+import { GravityParticles } from './GravityParticles';
 
 interface Scene02Props {
   isActive: boolean;
@@ -169,6 +170,8 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           }}
         />
       </div>
+      {/* Gravity particles layer - floating interactive particles above nebula */}
+      <GravityParticles isActive={isActive} />
       {/* Galaxy columns - 3 columns spanning full viewport */}
       <div
         className={`absolute inset-0 z-10 flex transition-opacity duration-[1500ms] ease-out ${
