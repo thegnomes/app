@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 
 /* ─── Hooks ─── */
@@ -263,20 +263,169 @@ function Overview({ project }: { project: PortfolioProject }) {
   );
 }
 
-function Proof({ project }: { project: PortfolioProject }) {
+function BrowserMockup({
+  src,
+  alt,
+  className = '',
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
   return (
-    <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
-        {project.proof.map((s, i) => (
-          <FadeIn key={s.num} delay={i * 100}>
-            <p className="text-sm text-neutral-600 mb-6" style={{ fontFamily: "'Doto', sans-serif" }}>
-              {s.num}
-            </p>
-            <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-2">{s.title}</h3>
-            <p className="text-sm font-medium text-neutral-300 mb-3">{s.desc}</p>
-            <p className="text-sm text-neutral-500 leading-relaxed">{s.detail}</p>
+    <div
+      className={`rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/60 ${className}`}
+    >
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-800 bg-neutral-900/50">
+        <div className="w-3 h-3 rounded-full bg-neutral-700" />
+        <div className="w-3 h-3 rounded-full bg-neutral-700" />
+        <div className="w-3 h-3 rounded-full bg-neutral-700" />
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="w-24 h-2 rounded-full bg-neutral-800" />
+        </div>
+      </div>
+      <div className="aspect-[16/10] overflow-hidden">
+        <img src={src} alt={alt} className="w-full h-full object-cover" />
+      </div>
+    </div>
+  );
+}
+
+function PhoneMockup({
+  src,
+  alt,
+  className = '',
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  return (
+    <div className={`relative mx-auto ${className}`} style={{ maxWidth: 220 }}>
+      <div className="rounded-[2rem] overflow-hidden border-[5px] border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/60">
+        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-14 h-5 rounded-full bg-neutral-800 z-10" />
+        <div className="aspect-[9/19] overflow-hidden">
+          <img src={src} alt={alt} className="w-full h-full object-cover" />
+        </div>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-1 rounded-full bg-neutral-700 z-10" />
+      </div>
+    </div>
+  );
+}
+
+function DualModeView({ project }: { project: PortfolioProject }) {
+  const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
+  const fullImages = project.gallery.filter((g) => g.layout === 'full');
+  const halfImages = project.gallery.filter((g) => g.layout === 'half');
+  const displayImages =
+    fullImages.length > 0 || halfImages.length > 0
+      ? [...fullImages, ...halfImages]
+      : project.gallery;
+
+  return (
+    <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto">
+        {/* Header + Toggle */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
+          <FadeIn>
+            <div>
+              <Label>Proof of Work</Label>
+              <h2 className="text-2xl md:text-3xl font-medium text-neutral-100 mt-3">
+                Results in context
+              </h2>
+            </div>
           </FadeIn>
-        ))}
+
+          <FadeIn delay={100}>
+            <div className="inline-flex items-center gap-1 bg-neutral-900 rounded-full p-1 border border-neutral-800">
+              <button
+                type="button"
+                onClick={() => setMode('desktop')}
+                className={`px-5 py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
+                  mode === 'desktop'
+                    ? 'bg-neutral-100 text-neutral-900 shadow-lg'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                Desktop
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('mobile')}
+                className={`px-5 py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-300 ${
+                  mode === 'mobile'
+                    ? 'bg-neutral-100 text-neutral-900 shadow-lg'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                Mobile
+              </button>
+            </div>
+          </FadeIn>
+        </div>
+
+        {/* Device showcase */}
+        <div className="relative">
+          {/* Desktop Mode */}
+          <div
+            className={`transition-all duration-500 ease-out ${
+              mode === 'desktop'
+                ? 'opacity-100 translate-y-0 relative'
+                : 'opacity-0 translate-y-4 absolute inset-0 pointer-events-none'
+            }`}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {displayImages.slice(0, 2).map((img, i) => (
+                <FadeIn key={`d-${img.src}`} delay={i * 100}>
+                  <BrowserMockup src={img.src} alt={img.alt} />
+                </FadeIn>
+              ))}
+              {displayImages.slice(2, 4).map((img, i) => (
+                <FadeIn key={`d-${img.src}`} delay={(i + 2) * 100}>
+                  <BrowserMockup src={img.src} alt={img.alt} />
+                </FadeIn>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile Mode */}
+          <div
+            className={`transition-all duration-500 ease-out ${
+              mode === 'mobile'
+                ? 'opacity-100 translate-y-0 relative'
+                : 'opacity-0 translate-y-4 absolute inset-0 pointer-events-none'
+            }`}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {displayImages.slice(0, 4).map((img, i) => (
+                <FadeIn key={`m-${img.src}`} delay={i * 100}>
+                  <PhoneMockup src={img.src} alt={img.alt} />
+                </FadeIn>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Proof stats strip */}
+        <div className="mt-16 pt-12 border-t border-neutral-900">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+            {project.proof.map((s, i) => (
+              <FadeIn key={s.num} delay={i * 100}>
+                <p
+                  className="text-sm text-neutral-600 mb-3"
+                  style={{ fontFamily: "'Doto', sans-serif" }}
+                >
+                  {s.num}
+                </p>
+                <h3 className="text-xl md:text-2xl font-medium text-neutral-100 mb-1">
+                  {s.title}
+                </h3>
+                <p className="text-sm font-medium text-neutral-300 mb-2">{s.desc}</p>
+                <p className="text-xs text-neutral-500 leading-relaxed">{s.detail}</p>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -421,7 +570,7 @@ function Footer({ project }: { project: PortfolioProject }) {
 
 /* ─── Page ─── */
 
-export default function PortfolioTemplate({ project }: { project: PortfolioProject }) {
+export default function PortfolioTemplate({ project, children }: { project: PortfolioProject; children?: ReactNode }) {
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     document.body.style.overflow = 'auto';
@@ -436,10 +585,11 @@ export default function PortfolioTemplate({ project }: { project: PortfolioProje
       <Nav />
       <Hero project={project} />
       <Overview project={project} />
-      <Proof project={project} />
+      <DualModeView project={project} />
       <Vision project={project} />
       <Gallery project={project} />
       <Process project={project} />
+      {children}
       <Footer project={project} />
     </main>
   );
