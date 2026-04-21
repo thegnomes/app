@@ -158,7 +158,7 @@ function Nav() {
         MORAE<span className="align-super text-[10px] ml-0.5">®</span>
       </a>
       <div className="flex items-center gap-6 md:gap-8">
-        {['Overview', 'Gallery', 'Approach'].map((item) => (
+        {['Overview', 'Gallery', 'Process'].map((item) => (
           <a
             key={item}
             href={`#${item.toLowerCase()}`}
@@ -212,8 +212,12 @@ function Hero({ project }: { project: PortfolioProject }) {
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           {project.title}
-          <br />
-          <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>{project.titleAccent}</span>
+          {project.titleAccent && (
+            <>
+              <br />
+              <span style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic' }}>{project.titleAccent}</span>
+            </>
+          )}
         </h1>
 
         <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">{project.description}</p>
@@ -259,11 +263,11 @@ function Overview({ project }: { project: PortfolioProject }) {
   );
 }
 
-function Stats({ project }: { project: PortfolioProject }) {
+function Proof({ project }: { project: PortfolioProject }) {
   return (
     <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
-        {project.stats.map((s, i) => (
+        {project.proof.map((s, i) => (
           <FadeIn key={s.num} delay={i * 100}>
             <p className="text-sm text-neutral-600 mb-6" style={{ fontFamily: "'Doto', sans-serif" }}>
               {s.num}
@@ -336,14 +340,20 @@ function Gallery({ project }: { project: PortfolioProject }) {
             <RevealImage src={fullImages[1].src} alt={fullImages[1].alt} className="rounded-2xl" />
           </FadeIn>
         )}
+
+        {fullImages.slice(2).map((img, i) => (
+          <FadeIn key={img.src} delay={200 + i * 100}>
+            <RevealImage src={img.src} alt={img.alt} className="rounded-2xl" />
+          </FadeIn>
+        ))}
       </div>
     </section>
   );
 }
 
-function Approach({ project }: { project: PortfolioProject }) {
+function Process({ project }: { project: PortfolioProject }) {
   return (
-    <section id="approach" className="px-6 md:px-10 py-24 md:py-36 border-t border-neutral-900">
+    <section id="process" className="px-6 md:px-10 py-24 md:py-36 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
         {project.approachItems.map((item) => (
           <div key={item.label}>
@@ -426,10 +436,10 @@ export default function PortfolioTemplate({ project }: { project: PortfolioProje
       <Nav />
       <Hero project={project} />
       <Overview project={project} />
-      <Stats project={project} />
+      <Proof project={project} />
       <Vision project={project} />
       <Gallery project={project} />
-      <Approach project={project} />
+      <Process project={project} />
       <Footer project={project} />
     </main>
   );

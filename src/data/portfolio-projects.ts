@@ -11,7 +11,7 @@ export interface PortfolioProject {
   philosophyLabel: string;
   philosophyHeading: string;
   philosophyBody: string;
-  stats: { num: string; title: string; desc: string; detail: string }[];
+  proof: { num: string; title: string; desc: string; detail: string }[];
   visionLabel: string;
   visionQuote: string;
   gallery: { src: string; alt: string; layout: 'full' | 'half'; speed?: number }[];
@@ -38,7 +38,7 @@ export const moraeProject: PortfolioProject = {
     "At MORAE, we don't follow trends. We study the subtle patterns of sound and the ways people interact with it.",
   philosophyBody:
     'Our philosophy is simple: eliminate distractions, highlight essence. Every design decision is deliberate—nothing is accidental. The goal isn’t to impress, but to allow clarity, focus, and awareness to emerge naturally.',
-  stats: [
+  proof: [
     { num: '01', title: '40 Hours', desc: 'Battery Endurance', detail: 'Engineered for long listening sessions without interruptions.' },
     { num: '02', title: '32%', desc: 'Enhanced Noise Reduction', detail: 'Advanced ANC algorithms delivering noticeably deeper isolation.' },
     { num: '03', title: '0.08s', desc: 'Instant Response Time', detail: 'Ultra-fast touch and sensor feedback for seamless control.' },
@@ -76,153 +76,171 @@ export const moraeProject: PortfolioProject = {
 
 export const totoProject: PortfolioProject = {
   slug: 'toto',
-  title: 'Fluid',
-  titleAccent: 'Systems',
-  tag: 'Product Design',
-  year: '2025',
+  title: 'TOTO',
+  titleAccent: '#washnotwipe',
+  tag: 'Creative Direction',
+  year: '2024',
   description:
-    'An immersive Web3 hydration tracker that turns daily water intake into a living, breathing digital ecosystem. Playful precision meets utility.',
-  client: 'Toto Labs',
-  role: 'Product & Frontend',
-  deliverables: 'App, Brand, Motion',
-  philosophyLabel: 'Concept',
+    'Developed a platform idea that could travel across channels while keeping the message, visual identity, and campaign logic coherent.',
+  client: 'TOTO via Onezine',
+  role: 'Creative Direction',
+  deliverables: 'Platform idea, KV, OOH, social, influencer, V2, Home Tour',
+  philosophyLabel: 'Overview',
   philosophyHeading:
-    'Toto believes ritual creates rhythm. We designed an interface that celebrates the quiet act of drinking water as a moment of presence.',
+    'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
   philosophyBody:
-    'Instead of gamification through competition, Toto rewards consistency through visual evolution. Your daily hydration becomes a living world—calm, personal, and entirely yours. Every drop matters, and the interface makes that felt.',
-  stats: [
-    { num: '01', title: '2.4M', desc: 'Active Sessions', detail: 'Monthly engaged users returning to log and reflect.' },
-    { num: '02', title: '98%', desc: 'Retention Rate', detail: 'Users maintaining a 7-day streak within the first month.' },
-    { num: '03', title: '0.4s', desc: 'Entry Time', detail: 'From lock-screen widget to logged drink.' },
-    { num: '04', title: '+64%', desc: 'Daily Intake', detail: 'Average increase in hydration among active users.' },
+    'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
+  proof: [
+    { num: '01', title: '#washnotwipe', desc: 'Platform originated', detail: 'Developed the core idea and message spine that anchored the campaign across formats.' },
+    { num: '02', title: 'Multi-channel', desc: 'Applied across major touchpoints', detail: 'Rolled out across KV, OOH, social, and influencer while maintaining recognisability.' },
+    { num: '03', title: 'V2 + Home Tour', desc: 'Extended beyond launch', detail: 'Built a campaign structure that could evolve into later phases instead of peaking once.' },
+    { num: '04', title: '~S$250k', desc: 'Marketing arm in year one', detail: 'Helped build Onezine’s marketing arm around the account to roughly S$250k in the first year.' },
   ],
-  visionLabel: 'Intent',
+  visionLabel: 'Vision',
   visionQuote:
-    'Toto is not a reminder. It is a ritual. In a world of notifications, we built something that waits quietly—and rewards presence over urgency.',
+    'A good campaign can land once. A strong platform can keep extending without losing its centre.',
   gallery: [
-    { src: '/portfolio/hero.jpg', alt: 'Toto interface', layout: 'full', speed: 0.25 },
-    { src: '/portfolio/lifestyle.jpg', alt: 'Daily ritual', layout: 'half', speed: 0.2 },
-    { src: '/portfolio/feature.png', alt: 'Widget detail', layout: 'half', speed: 0.35 },
-    { src: '/portfolio/detail.png', alt: 'Motion study', layout: 'full' },
+    // TODO: Hero + first full gallery image. Replace with strongest flagship visual from campaign launch.
+    { src: '/portfolio/toto-hero-placeholder.svg', alt: '[Placeholder Image — TOTO master key visual for #washnotwipe]', layout: 'full', speed: 0.25 },
+    // TODO: Show how the central idea translated into large-format media.
+    { src: '/portfolio/toto-gallery-1.svg', alt: '[Placeholder Image — OOH execution]', layout: 'half', speed: 0.2 },
+    // TODO: Show adaptation without losing campaign identity.
+    { src: '/portfolio/toto-gallery-2.svg', alt: '[Placeholder Image — Social campaign rollout]', layout: 'half', speed: 0.35 },
+    // TODO: Demonstrate the platform travelling across channels.
+    { src: '/portfolio/toto-gallery-3.svg', alt: '[Placeholder Image — Influencer or digital extension]', layout: 'full' },
+    // TODO: Should show how the idea evolved after launch. Replace with video if available.
+    { src: '/portfolio/toto-gallery-4.svg', alt: '[Placeholder Video — V2 / Home Tour extension]', layout: 'full' },
   ],
   approachLabel: 'Process',
   approachItems: [
     {
-      label: 'Behavior',
-      heading: 'Habit is invisible until you name it.',
-      body: 'We spent months studying when people actually drink water—not when they think they should. The result is an interface that meets users in the micro-moments: between meetings, after coffee, before sleep.',
+      label: 'Platform',
+      heading: 'The idea has to hold before the executions can travel.',
+      body: 'The first job was to find an idea clear enough to anchor message, tone, and visuals. It needed to be direct enough to work in public-facing channels, while giving the wider campaign enough structure to remain recognisable as it expanded.',
     },
     {
-      label: 'Motion',
-      heading: 'Animation as feedback, not decoration.',
-      body: 'Every interaction in Toto produces a visual ripple. These are not cosmetic flourishes; they are confirmations of action. The liquid physics engine was tuned to feel viscous, responsive, and satisfying.',
+      label: 'System',
+      heading: 'Consistency matters more when more hands are involved.',
+      body: 'A platform becomes more valuable when it can be reused without dilution. Part of the work was turning creative direction into reusable kits and templates so the campaign could scale while keeping its logic intact.',
     },
   ],
-  nextProject: { name: 'NFT11', accent: 'Gallery', href: '/nft11-portfolio.html' },
+  nextProject: { name: 'OxyAffiliate', accent: 'OxyStockist', href: '/oxytap-portfolio.html' },
   socials: [
     { label: 'Instagram', href: 'https://instagram.com', external: true },
     { label: 'Twitter', href: 'https://twitter.com', external: true },
-    { label: 'Email', href: 'mailto:hello@toto.io' },
+    { label: 'Email', href: 'mailto:hello@onezine.co' },
   ],
 };
 
 export const nft11Project: PortfolioProject = {
   slug: 'nft11',
-  title: 'Digital',
-  titleAccent: 'Curators',
-  tag: 'Platform',
-  year: '2025',
+  title: 'NFT11',
+  titleAccent: 'Universe Building',
+  tag: 'Universe Building',
+  year: '2023',
   description:
-    'A minimal, high-performance NFT gallery platform designed for collectors who value curation over noise. Every pixel serves the art.',
-  client: 'NFT11 Studio',
-  role: 'Design & Engineering',
-  deliverables: 'Platform, Identity, 3D',
-  philosophyLabel: 'Ethos',
+    'Built the rituals, programming, and community cadence that gave the project momentum and made participation feel continuous rather than episodic.',
+  client: 'NFT11',
+  role: 'Community Strategy / Narrative Programming',
+  deliverables: 'Quests, AMAs, creator programme, newsletters, engagement systems',
+  philosophyLabel: 'Overview',
   philosophyHeading:
-    'NFT11 treats digital scarcity as an opportunity for editorial clarity. We built a space where the work speaks first.',
+    'At NFT11, the work was less about posting content and more about building a world people wanted to keep returning to.',
   philosophyBody:
-    'Most marketplaces overwhelm. NFT11 does the opposite: one artwork at a time, full-screen, with provenance and detail available on demand. The interface disappears so the collection can breathe.',
-  stats: [
-    { num: '01', title: '11K', desc: 'Works Listed', detail: 'Curated drops from 300+ international artists.' },
-    { num: '02', title: '340ms', desc: 'Load Time', detail: 'Optimized image pipeline with instant previews.' },
-    { num: '03', title: '0 Gas', desc: 'Lazy Minting', detail: 'Creators list free; buyers cover mint on purchase.' },
-    { num: '04', title: '+89%', desc: 'Collector Return', detail: 'Average resale premium within 90 days.' },
+    'That meant shaping the rhythm of participation through recurring formats, community programming, and narrative continuity. The goal was not to fill channels, but to create enough structure and momentum for people to feel involved in something active and unfolding.',
+  proof: [
+    { num: '01', title: '~60k', desc: 'Organic community built', detail: 'Built and maintained an audience base through repeatable programming and sustained participation.' },
+    { num: '02', title: '150+', desc: 'Newsletters sent', detail: 'Used newsletters as an editorial backbone to maintain continuity and reinforce the project’s internal rhythm.' },
+    { num: '03', title: '+200%', desc: 'Engagement during quest cycles', detail: 'Structured quest-based activity that materially increased participation when the system was active.' },
+    { num: '04', title: 'US$1.5M', desc: 'Raise supported in <30 days', detail: 'Community momentum and narrative clarity helped support a rapid fundraising window.' },
   ],
-  visionLabel: 'Perspective',
+  visionLabel: 'Vision',
   visionQuote:
-    'The future of collecting is not louder. It is quieter, slower, and more intentional. NFT11 is built for collectors who look before they buy.',
+    'A strong community is not held together by noise. It is held together by rhythm, meaning, and the sense that something is always in motion.',
   gallery: [
-    { src: '/portfolio/product2.png', alt: 'Gallery view', layout: 'full', speed: 0.25 },
-    { src: '/portfolio/hero.jpg', alt: 'Artist profile', layout: 'half', speed: 0.2 },
-    { src: '/portfolio/product1.png', alt: 'Detail view', layout: 'half', speed: 0.35 },
-    { src: '/portfolio/lifestyle.jpg', alt: 'Exhibition', layout: 'full' },
+    // TODO: Hero + first full gallery image. Replace with strongest visual that conveys scale, participation, or atmosphere.
+    { src: '/portfolio/nft11-hero-placeholder.svg', alt: '[Placeholder Image — NFT11 community ecosystem / event energy / visual world-building key art]', layout: 'full', speed: 0.25 },
+    // TODO: Show actual newsletter or communication artefact.
+    { src: '/portfolio/nft11-gallery-1.svg', alt: '[Placeholder Image — Newsletter issue layout or editorial cadence sample]', layout: 'half', speed: 0.2 },
+    // TODO: Should demonstrate how the ritual was structured.
+    { src: '/portfolio/nft11-gallery-2.svg', alt: '[Placeholder Image — Quest mechanic / weekly participation prompt]', layout: 'half', speed: 0.35 },
+    // TODO: Could be event screen, community post, or creator-facing asset.
+    { src: '/portfolio/nft11-gallery-3.svg', alt: '[Placeholder Image or Video — AMA / creator programme touchpoint]', layout: 'full' },
+    // TODO: Should support the idea of sustained participation.
+    { src: '/portfolio/nft11-gallery-4.svg', alt: '[Placeholder Image — Community activity snapshot / ecosystem map / engagement proof visual]', layout: 'full' },
   ],
-  approachLabel: 'Method',
+  approachLabel: 'Process',
   approachItems: [
     {
-      label: 'Curation',
-      heading: 'Editorial restraint is a feature.',
-      body: 'We designed the submission and review flow to feel like a gallery application, not a upload form. Artists provide context; curators provide placement. The result is a collection with narrative coherence.',
+      label: 'Programming',
+      heading: 'Build reasons to return, not just reasons to notice.',
+      body: 'The foundation of the work was recurring participation. Quests, AMAs, creator activity, and newsletters were designed as recognisable formats that gave the community shape over time. Instead of isolated pushes, the system created return behaviour.',
     },
     {
-      label: 'Performance',
-      heading: 'Speed is respect.',
-      body: 'High-resolution artwork demands intelligent loading. We built a progressive texture pipeline that serves a pixel-perfect preview in under 100ms, then resolves full detail on interaction. No spinner culture.',
+      label: 'Momentum',
+      heading: 'Energy only lasts when there is structure behind it.',
+      body: 'Community activity can spike easily and fade just as fast. The work here focused on turning interest into a repeatable operating rhythm that could hold attention, encourage contribution, and support larger business goals without feeling mechanical.',
     },
   ],
-  nextProject: { name: 'Oxytap', accent: 'Essence', href: '/oxytap-portfolio.html' },
+  nextProject: { name: 'TOTO', accent: '#washnotwipe', href: '/toto-portfolio.html' },
   socials: [
     { label: 'Instagram', href: 'https://instagram.com', external: true },
     { label: 'Twitter', href: 'https://twitter.com', external: true },
-    { label: 'Email', href: 'mailto:hello@nft11.studio' },
+    { label: 'Email', href: 'mailto:hello@nft11.co' },
   ],
 };
 
 export const oxytapProject: PortfolioProject = {
   slug: 'oxytap',
-  title: 'Pure',
-  titleAccent: 'Oxygen',
-  tag: 'Brand Experience',
+  title: 'OxyAffiliate',
+  titleAccent: 'OxyStockist',
+  tag: 'Prototype-to-Ship',
   year: '2024',
   description:
-    'A sensorial brand identity and e-commerce experience for a molecular water company. Science and serenity in equal measure.',
-  client: 'Oxytap',
-  role: 'Brand & Web',
-  deliverables: 'Identity, Web, Packaging',
-  philosophyLabel: 'Belief',
+    'Turned fragmented business rules into a working system by translating logic into UX, operational flow, and a usable MVP.',
+  client: 'OxyTap',
+  role: 'Systems Design / Product Thinking / Build',
+  deliverables: 'MVP, UX, payout logic, SOP, soft launch framework',
+  philosophyLabel: 'Overview',
   philosophyHeading:
-    'Oxytap believes water is the original technology. We gave that belief a visual language: precise, translucent, and alive.',
+    'This project began with business logic that existed in fragments: moving parts, dependencies, and no clear operating structure.',
   philosophyBody:
-    'The brand walks a narrow line between clinical credibility and emotional resonance. Every gradient references dissolved oxygen dispersion. Every type choice balances authority with softness. The result feels like drinking from a mountain stream in a laboratory.',
-  stats: [
-    { num: '01', title: '5×', desc: 'Oxygen Content', detail: 'Proprietary dissolution process vs standard tap.' },
-    { num: '02', title: '12°C', desc: 'Optimal Chill', detail: 'Temperature at which dissolved oxygen peaks.' },
-    { num: '03', title: '0.3s', desc: 'Pour Response', detail: 'Tap-to-flow with laminar stream control.' },
-    { num: '04', title: '-40%', desc: 'Plastic Use', detail: 'Refillable glass system with local exchange.' },
+    'My role was to turn that ambiguity into something runnable. That meant defining the rules, shaping the user-facing flow, connecting it to the underlying logic, and building the surrounding cadence needed for the system to function beyond the interface itself.',
+  proof: [
+    { num: '01', title: '1 quarter', desc: 'MVP built solo', detail: 'Took the system from rough business logic to a working MVP within one quarter.' },
+    { num: '02', title: '~25', desc: 'Affiliates onboarded', detail: 'Soft-launched the platform and brought in the first group of real users.' },
+    { num: '03', title: 'MVP live', desc: 'System in use', detail: 'Moved beyond mockups and shipped a usable product into live testing conditions.' },
+    { num: '04', title: 'SOP piloted', desc: 'Operational cadence drafted', detail: 'Created and tested payout checkpoint and review structure, with adoption still in progress.' },
   ],
-  visionLabel: 'Promise',
+  visionLabel: 'Vision',
   visionQuote:
-    'Oxytap is not selling water. It is selling the moment after thirst—when the body says thank you, and the mind goes quiet.',
+    'A prototype only starts to matter when it can survive real use, not just internal approval.',
   gallery: [
-    { src: '/portfolio/lifestyle.jpg', alt: 'Product hero', layout: 'full', speed: 0.25 },
-    { src: '/portfolio/detail.png', alt: 'Pour detail', layout: 'half', speed: 0.2 },
-    { src: '/portfolio/feature.png', alt: 'Packaging', layout: 'half', speed: 0.35 },
-    { src: '/portfolio/hero.jpg', alt: 'Lifestyle', layout: 'full' },
+    // TODO: Hero + first full gallery image. Replace with clearest visual that explains the product at a glance.
+    { src: '/portfolio/oxytap-hero-placeholder.svg', alt: '[Placeholder Image — OxyAffiliate system map / dashboard / architecture overview]', layout: 'full', speed: 0.25 },
+    // TODO: Show how rules were translated into interface.
+    { src: '/portfolio/oxytap-gallery-1.svg', alt: '[Placeholder Image — UX screen or user flow]', layout: 'half', speed: 0.2 },
+    // TODO: Explain the structural thinking behind the MVP.
+    { src: '/portfolio/oxytap-gallery-2.svg', alt: '[Placeholder Image — System logic diagram / payout flow / architecture]', layout: 'half', speed: 0.35 },
+    // TODO: Can be a demo capture if available.
+    { src: '/portfolio/oxytap-gallery-3.svg', alt: '[Placeholder Video — Soft launch dashboard or product walkthrough]', layout: 'full' },
+    // TODO: Show that the work extended beyond screens into operations.
+    { src: '/portfolio/oxytap-gallery-4.svg', alt: '[Placeholder Image — SOP / weekly checkpoint / operational process artefact]', layout: 'full' },
   ],
-  approachLabel: 'Practice',
+  approachLabel: 'Process',
   approachItems: [
     {
-      label: 'Material',
-      heading: 'Transparency as truth.',
-      body: 'We designed the packaging to reveal rather than conceal. The glass vessel shows oxygen saturation in real time. The label is etched, not printed, because permanence matters more than disposability.',
+      label: 'Structure',
+      heading: 'Business rules are only useful when people can move through them.',
+      body: 'The first challenge was to translate affiliate and stockist logic into a flow users could actually understand. That required mapping rules into states, paths, and a clear MVP structure rather than leaving them as abstract operational intent.',
     },
     {
-      label: 'Digital',
-      heading: 'The site is a sip, not a meal.',
-      body: 'The e-commerce experience is intentionally brief: three screens from landing to checkout. No upsells, no popups. We optimized for decision confidence, not cart value. The numbers followed.',
+      label: 'Operations',
+      heading: 'A working interface is not enough if the surrounding process is unclear.',
+      body: 'The system had to extend beyond the product itself. That is where payout SOP, review checkpoints, and weekly operating cadence came in. The goal was not just to launch a tool, but to make the tool support actual use.',
     },
   ],
-  nextProject: { name: 'Toto', accent: 'Systems', href: '/toto-portfolio.html' },
+  nextProject: { name: 'NFT11', accent: 'Universe Building', href: '/nft11-portfolio.html' },
   socials: [
     { label: 'Instagram', href: 'https://instagram.com', external: true },
     { label: 'Twitter', href: 'https://twitter.com', external: true },

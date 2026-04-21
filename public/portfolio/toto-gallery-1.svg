@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <rect width="800" height="1000" fill="#0f0f0f"/>
+  <rect x="40" y="40" width="720" height="920" rx="16" fill="none" stroke="#2a2a2a" stroke-width="3" stroke-dasharray="16 12"/>
+  <text x="400" y="470" text-anchor="middle" font-family="Inter, sans-serif" font-size="24" font-weight="500" fill="#888">[Placeholder Image]</text>
+  <text x="400" y="515" text-anchor="middle" font-family="Inter, sans-serif" font-size="18" fill="#555">OOH execution</text>
+  <text x="400" y="550" text-anchor="middle" font-family="Inter, sans-serif" font-size="14" fill="#444">TODO: Show how the central idea translated into large-format media.</text>
+</svg>
