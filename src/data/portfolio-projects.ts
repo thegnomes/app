@@ -1,4 +1,4 @@
-﻿﻿﻿export interface PortfolioProject {
+﻿﻿﻿﻿export interface PortfolioProject {
   slug: string;
   title: string;
   titleAccent: string;
@@ -92,11 +92,48 @@ export const totoProject: PortfolioProject = {
     'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
   philosophyBody:
     'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
+  heroVideo: '/portfolio/TOTO/wnw-toilet.mp4',
   proof: [
-    { num: '01', title: '#washnotwipe', desc: 'Platform originated', detail: 'Developed the core idea and message spine that anchored the campaign across formats.' },
-    { num: '02', title: 'Multi-channel', desc: 'Applied across major touchpoints', detail: 'Rolled out across KV, OOH, social, and influencer while maintaining recognisability.' },
-    { num: '03', title: 'V2 + Home Tour', desc: 'Extended beyond launch', detail: 'Built a campaign structure that could evolve into later phases instead of peaking once.' },
-    { num: '04', title: '~S$250k', desc: 'Marketing arm in year one', detail: 'Helped build Onezine’s marketing arm around the account to roughly S$250k in the first year.' },
+    {
+      num: '01',
+      title: '#washnotwipe',
+      desc: 'Platform originated',
+      detail: 'Developed the core idea and message spine that anchored the campaign across formats.',
+      images: [
+        { src: '/portfolio/TOTO/wnwv1.png', alt: 'Wash Not Wipe hero' },
+        { src: '/portfolio/TOTO/feature-01.jpg', alt: 'Feature 01' },
+        { src: '/portfolio/TOTO/feature-02.jpg', alt: 'Feature 02' },
+        { src: '/portfolio/TOTO/feature-03.jpg', alt: 'Feature 03' },
+      ],
+    },
+    {
+      num: '02',
+      title: 'Multi-channel',
+      desc: 'Applied across major touchpoints',
+      detail: 'Rolled out across KV, OOH, social, and influencer while maintaining recognisability.',
+      images: [
+        { src: '/portfolio/TOTO/wnw-toilet.mp4', alt: 'Toilet spot' },
+        { src: '/portfolio/TOTO/wnw-kitchen.mp4', alt: 'Kitchen spot' },
+        { src: '/portfolio/TOTO/wnw-laundry.mp4', alt: 'Laundry spot' },
+      ],
+    },
+    {
+      num: '03',
+      title: 'V2 + Home Tour',
+      desc: 'Extended beyond launch',
+      detail: 'Built a campaign structure that could evolve into later phases instead of peaking once.',
+      images: [
+        { src: '/portfolio/TOTO/wnw2.mp4', alt: 'V2 campaign' },
+        { src: '/portfolio/TOTO/wnw2-home-tour.mp4', alt: 'Home Tour' },
+      ],
+    },
+    {
+      num: '04',
+      title: '~S$250k',
+      desc: 'Marketing arm in year one',
+      detail: 'Helped build Onezine's marketing arm around the account to roughly S$250k in the first year.',
+      images: [],
+    },
   ],
   visionLabel: 'Vision',
   visionQuote:

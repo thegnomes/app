@@ -418,7 +418,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
 
   const getStepImages = (stepIndex: number) => {
     const step = project.proof[stepIndex];
-    if (step?.images && step.images.length > 0) return step.images;
+    if (step?.images !== undefined) return step.images;
     const total = project.gallery.length;
     if (total === 0) return [];
     const perStep = 2;
@@ -427,6 +427,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
       project.gallery[(start + i) % total]
     ).filter(Boolean);
   };
+
+  const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
 
   const stepImages = getStepImages(activeStep);
   const currentImage = stepImages[carouselIndex] ?? stepImages[0];
@@ -562,9 +564,9 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           <div className="lg:col-span-7 flex flex-col justify-center">
             <FadeIn delay={150}>
               {/* Slider only */}
-                <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
-                  <div className="relative overflow-hidden">
-                    {currentImage && (
+                {stepImages.length > 0 && (
+                  <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
+                    <div className="relative overflow-hidden">
                       <div
                         key={`${activeStep}-${carouselIndex}`}
                         style={{
@@ -578,58 +580,82 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={project.proof[activeStep].link!.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="block w-full h-full"
+                            className="block w-full"
                           >
+                            {isVideo(currentImage.src) ? (
+                              <video
+                                src={currentImage.src}
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                className="w-full h-auto object-contain"
+                              />
+                            ) : (
+                              <img
+                                src={currentImage.src}
+                                alt={currentImage.alt}
+                                className="w-full h-auto object-contain"
+                              />
+                            )}
+                          </a>
+                        ) : (
+                          isVideo(currentImage.src) ? (
+                            <video
+                              src={currentImage.src}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              className="w-full h-auto object-contain"
+                            />
+                          ) : (
                             <img
                               src={currentImage.src}
                               alt={currentImage.alt}
                               className="w-full h-auto object-contain"
                             />
-                          </a>
-                        ) : (
-                          <img
-                            src={currentImage.src}
-                            alt={currentImage.alt}
-                            className="w-full h-auto object-contain"
-                          />
+                          )
                         )}
+                      </div>
+                    </div>
+
+                    {stepImages.length > 1 && (
+                      <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
+                        <button
+                          type="button"
+                          onClick={handlePrev}
+                          className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          {stepImages.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setCarouselIndex(i)}
+                              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                                i === carouselIndex
+                                  ? 'bg-neutral-300 scale-110'
+                                  : 'bg-neutral-700 hover:bg-neutral-600'
+                              }`}
+                            />
+                          ))}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleNext}
+                          className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
                       </div>
                     )}
                   </div>
-
-                  <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
-                    <button
-                      type="button"
-                      onClick={handlePrev}
-                      className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      {stepImages.map((_, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setCarouselIndex(i)}
-                          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                            i === carouselIndex
-                              ? 'bg-neutral-300 scale-110'
-                              : 'bg-neutral-700 hover:bg-neutral-600'
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
+                )}
               {/* /Slider only */}
             </FadeIn>
           </div>
