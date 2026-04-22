@@ -575,13 +575,15 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                         }}
                       >
-                        {project.proof[activeStep]?.link ? (
-                          <a
-                            href={project.proof[activeStep].link.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block w-full"
-                          >
+                        {(() => {
+                          const stepLink = project.proof[activeStep]?.link;
+                          return stepLink ? (
+                            <a
+                              href={stepLink.href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block w-full"
+                            >
                             {isVideo(currentImage.src) ? (
                               <video
                                 src={currentImage.src}
@@ -616,7 +618,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                               className="w-full h-auto object-contain"
                             />
                           )
-                        )}
+                        })()}
                       </div>
                     </div>
 
