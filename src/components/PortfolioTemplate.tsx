@@ -564,7 +564,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           <div className="lg:col-span-7 flex flex-col justify-center">
             <FadeIn delay={150}>
               {/* Slider only */}
-                {stepImages.length > 0 && (
+                {stepImages.length > 0 && currentImage && (
                   <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
                     <div className="relative overflow-hidden">
                       <div
@@ -577,7 +577,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       >
                         {project.proof[activeStep]?.link ? (
                           <a
-                            href={project.proof[activeStep].link!.href}
+                            href={project.proof[activeStep].link.href}
                             target="_blank"
                             rel="noreferrer"
                             className="block w-full"
