@@ -289,10 +289,11 @@ function Hero({ project }: { project: PortfolioProject }) {
   const progress = useScrollProgress(sectionRef);
   const heroY = progress * 120;
   const contentY = progress * 60;
+  const contentOp = 1 - progress * 1.5;
   const heroImage = project.gallery[0]?.src ?? '/portfolio/hero.jpg';
 
   return (
-    <section ref={sectionRef} className="relative h-[120vh] flex flex-col justify-end pb-4 md:pb-8 pt-32 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col justify-end pb-4 md:pb-8 pt-32 px-6 md:px-10 overflow-hidden">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
@@ -309,12 +310,12 @@ function Hero({ project }: { project: PortfolioProject }) {
         ) : (
           <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
       </div>
 
       <div
         className="relative z-10 max-w-7xl mx-auto w-full will-change-transform"
-        style={{ transform: `translateY(${contentY}px)`, opacity: Math.max(0, 1 - progress * 0.5) }}
+        style={{ transform: `translateY(${contentY}px)`, opacity: Math.max(0, contentOp) }}
       >
         <div className="flex items-center gap-3 mb-6">
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
