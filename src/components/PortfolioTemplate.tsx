@@ -187,58 +187,79 @@ function RevealImage({
 }
 
 function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
-  const [offset, setOffset] = useState(0);
-  const velocityRef = useRef(0.4);
+  const row1Ref = useRef<HTMLDivElement>(null);
+  const row2Ref = useRef<HTMLDivElement>(null);
+  const pos1Ref = useRef(0);
+  const pos2Ref = useRef(0);
+  const speedRef = useRef(0.5);
   const boostRef = useRef(0);
   const lastScrollRef = useRef(0);
   const rafRef = useRef(0);
 
   useEffect(() => {
-    let lastTime = performance.now();
-
     const onScroll = () => {
       const scrollDelta = window.scrollY - lastScrollRef.current;
       lastScrollRef.current = window.scrollY;
-      boostRef.current = Math.min(boostRef.current + Math.abs(scrollDelta) * 0.015, 2.5);
+      boostRef.current = Math.min(boostRef.current + Math.abs(scrollDelta) * 0.015, 3);
     };
 
-    const animate = (time: number) => {
-      const dt = Math.min((time - lastTime) / 16.67, 3);
-      lastTime = time;
-
-      // Decay boost back toward 0
+    const animate = () => {
       boostRef.current *= 0.96;
-      const speed = (velocityRef.current + boostRef.current) * dt;
+      speedRef.current = 0.5 + boostRef.current;
 
-      setOffset((prev) => prev + speed);
+      const s = speedRef.current;
+
+      // Row 1 moves left
+      const r1 = row1Ref.current;
+      if (r1) {
+        const first = r1.children[0] as HTMLElement | undefined;
+        if (first) {
+          const w = first.offsetWidth;
+          pos1Ref.current -= s;
+          if (Math.abs(pos1Ref.current) >= w) pos1Ref.current += w;
+          r1.style.transform = `translateX(${pos1Ref.current}px)`;
+        }
+      }
+
+      // Row 2 moves right
+      const r2 = row2Ref.current;
+      if (r2) {
+        const first = r2.children[0] as HTMLElement | undefined;
+        if (first) {
+          const w = first.offsetWidth;
+          pos2Ref.current += s;
+          if (pos2Ref.current >= 0) pos2Ref.current -= w;
+          r2.style.transform = `translateX(${pos2Ref.current}px)`;
+        }
+      }
+
       rafRef.current = requestAnimationFrame(animate);
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
     rafRef.current = requestAnimationFrame(animate);
-
     return () => {
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
-  const repeatedTop = Array(10).fill(top.toUpperCase()).join(' \u2014 ');
-  const repeatedBottom = Array(10).fill(bottom.toUpperCase()).join(' \u2014 ');
+  const textTop = Array(6).fill(top.toUpperCase()).join(' \u2014 ') + ' \u2014 ';
+  const textBottom = Array(6).fill(bottom.toUpperCase()).join(' \u2014 ') + ' \u2014 ';
 
   return (
     <div className="overflow-hidden select-none font-russo">
-      <div
-        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white will-change-transform"
-        style={{ transform: `translateX(${-offset * 0.6}px)` }}
-      >
-        {repeatedTop}
+      <div className="relative whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white">
+        <div ref={row1Ref} className="inline-flex will-change-transform">
+          <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
+          <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
+        </div>
       </div>
-      <div
-        className="whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white will-change-transform"
-        style={{ transform: `translateX(${offset * 0.6}px)` }}
-      >
-        {repeatedBottom}
+      <div className="relative whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white">
+        <div ref={row2Ref} className="inline-flex will-change-transform">
+          <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
+          <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
+        </div>
       </div>
     </div>
   );
@@ -310,7 +331,7 @@ function Hero({ project }: { project: PortfolioProject }) {
         ) : (
           <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/80 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[45vh] bg-gradient-to-t from-[#0a0a0a] to-transparent" />
       </div>
 
       <div
