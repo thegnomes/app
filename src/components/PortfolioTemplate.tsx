@@ -432,6 +432,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
 
   const stepImages = getStepImages(activeStep);
   const currentImage = stepImages[carouselIndex] ?? stepImages[0];
+  const activeLink = project.proof[activeStep]?.link;
 
   const handleStepClick = (index: number) => {
     if (index === activeStep) return;
@@ -575,15 +576,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                         }}
                       >
-                        {(() => {
-                          const stepLink = project.proof[activeStep]?.link;
-                          return stepLink ? (
-                            <a
-                              href={stepLink.href}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="block w-full"
-                            >
+                        {activeLink ? (
+                          <a
+                            href={activeLink.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block w-full"
+                          >
                             {isVideo(currentImage.src) ? (
                               <video
                                 src={currentImage.src}
@@ -618,7 +617,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                               className="w-full h-auto object-contain"
                             />
                           )
-                        })()}
+                        )}
                       </div>
                     </div>
 
