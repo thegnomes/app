@@ -50,10 +50,14 @@ function AuroraTextReveal({
   children,
   className = '',
   as: Tag = 'span',
+  fromColor = '#f59e0b',
+  toColor = '#ea580c',
 }: {
   children: React.ReactNode;
   className?: string;
   as?: 'span' | 'h2' | 'p';
+  fromColor?: string;
+  toColor?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -81,7 +85,7 @@ function AuroraTextReveal({
       <CustomTag
         className="inline"
         style={{
-          backgroundImage: `linear-gradient(90deg, #f59e0b 0%, #ea580c ${progress * 100}%, #525252 ${progress * 100}%, #525252 100%)`,
+          backgroundImage: `linear-gradient(90deg, ${fromColor} 0%, ${toColor} ${progress * 100}%, #525252 ${progress * 100}%, #525252 100%)`,
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           color: 'transparent',
@@ -396,6 +400,8 @@ function Overview({ project }: { project: PortfolioProject }) {
             <AuroraTextReveal
               as="p"
               className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug mb-8 font-russo"
+              fromColor={project.accentColor || '#f59e0b'}
+              toColor={project.accentSecondaryColor || '#ea580c'}
             >
               {project.philosophyHeading}
             </AuroraTextReveal>
@@ -503,11 +509,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
                             isActive
-                              ? 'bg-yellow-500 text-black shadow-[0_0_20px_rgba(234,179,8,0.35)] scale-110'
+                              ? 'text-black scale-110'
                               : 'bg-neutral-800 text-neutral-400 group-hover:bg-neutral-700'
                           }`}
                           style={{
                             transitionDelay: `${iconDelay(index)}ms`,
+                            backgroundColor: isActive ? (project.accentColor || '#eab308') : undefined,
+                            boxShadow: isActive ? `0 0 20px ${project.accentColor || '#eab308'}59` : undefined,
                           }}
                         >
                           {stepIcons[index] ?? stepIcons[0]}
@@ -515,7 +523,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         {index < project.proof.length - 1 && (
                           <div className="relative w-px flex-1 min-h-[32px] bg-neutral-800 mt-2 overflow-hidden">
                             <div
-                              className="absolute inset-0 bg-yellow-500 origin-top transition-transform duration-500 ease-out"
+                              className="absolute inset-0 origin-top transition-transform duration-500 ease-out"
+                              style={{ backgroundColor: project.accentColor || '#eab308' }}
                               style={{
                                 transform: activeStep > index ? 'scaleY(1)' : 'scaleY(0)',
                                 transitionDelay: `${lineDelay(index)}ms`,
@@ -546,7 +555,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={step.link.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-sm text-yellow-500 hover:text-yellow-400 mt-2 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-sm mt-2 transition-colors"
+                            style={{ color: project.accentColor || '#eab308' }}
                             onClick={(e) => e.stopPropagation()}
                           >
                             {step.link.label}
@@ -677,6 +687,8 @@ function Vision({ project }: { project: PortfolioProject }) {
           <AuroraTextReveal
             as="h2"
             className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight font-russo"
+            fromColor={project.accentColor || '#f59e0b'}
+            toColor={project.accentSecondaryColor || '#ea580c'}
           >
             &ldquo;{project.visionQuote}&rdquo;
           </AuroraTextReveal>

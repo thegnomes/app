@@ -1,4 +1,4 @@
-﻿﻿﻿﻿export interface PortfolioProject {
+﻿﻿﻿﻿﻿export interface PortfolioProject {
   slug: string;
   title: string;
   titleAccent: string;
@@ -21,6 +21,7 @@
   nextProject: { name: string; accent: string; href: string };
   socials: { label: string; href: string; external?: boolean }[];
   accentColor?: string;
+  accentSecondaryColor?: string;
   scrollFlowTitle?: { top: string; bottom: string };
 }
 
@@ -92,6 +93,8 @@ export const totoProject: PortfolioProject = {
     'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
   philosophyBody:
     'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
+  accentColor: '#06b6d4',
+  accentSecondaryColor: '#2dd4bf',
   heroVideo: '/portfolio/TOTO/wnw-toilet.mp4',
   proof: [
     {
