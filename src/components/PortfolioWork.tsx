@@ -181,30 +181,18 @@ function Nav() {
 }
 
 function Hero() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const progress = useScrollProgress(sectionRef);
-  const heroY = progress * 120;
-  const contentY = progress * 60;
-  const contentOp = 1 - progress * 1.5;
-
   return (
-    <section ref={sectionRef} className="relative flex flex-col justify-start pt-20 pb-6 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
-      <div
-        className="absolute inset-0 z-0 will-change-transform"
-        style={{ transform: `translateY(${heroY}px)` }}
-      >
+    <section className="relative flex flex-col justify-start pt-20 pb-2 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
+      <div className="absolute inset-0 z-0">
         <img
           src="/portfolio/hero.jpg"
           alt="Project hero"
-          className="w-full h-full object-cover opacity-50 scale-105"
+          className="w-full h-full object-cover opacity-80 scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-[#0a0a0a]/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/70 via-transparent to-transparent" />
       </div>
 
-      <div
-        className="relative z-10 max-w-7xl mx-auto w-full will-change-transform"
-        style={{ transform: `translateY(${contentY}px)`, opacity: Math.max(0, contentOp) }}
-      >
+      <div className="relative z-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             Case Study
@@ -244,7 +232,7 @@ function Hero() {
 
 function Overview() {
   return (
-    <section id="overview" className="px-6 md:px-10 py-8 md:py-10">
+    <section id="overview" className="px-6 md:px-10 py-2 md:py-4">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
         <div className="md:col-span-4">
           <FadeIn>
