@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 
 /* ─── Hooks ─── */
@@ -23,6 +23,16 @@ function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const windowH = window.innerHeight;
+    if (rect.top < windowH && rect.bottom > 0) {
+      setInView(true);
+    }
+  }, []);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -329,6 +339,7 @@ function Hero({ project }: { project: PortfolioProject }) {
             className="absolute inset-0 w-full h-full object-cover scale-105"
           />
         ) : null}
+        <div className="absolute inset-0 bg-white/5" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">

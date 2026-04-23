@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /* ─── Hooks ─── */
 
@@ -22,6 +22,16 @@ function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const windowH = window.innerHeight;
+    if (rect.top < windowH && rect.bottom > 0) {
+      setInView(true);
+    }
+  }, []);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -189,6 +199,7 @@ function Hero() {
           alt="Project hero"
           className="w-full h-full object-cover opacity-80 scale-105"
         />
+        <div className="absolute inset-0 bg-white/5" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
