@@ -9,7 +9,7 @@ function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
     if (!el) return;
     const onScroll = () => {
       const rect = el.getBoundingClientRect();
-      const p = Math.min(1, Math.max(0, -rect.top / rect.height));
+      const p = rect.height > 0 ? Math.min(1, Math.max(0, -rect.top / rect.height)) : 0;
       setProgress(p);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -188,7 +188,7 @@ function Hero() {
   const contentOp = 1 - progress * 1.5;
 
   return (
-    <section ref={sectionRef} className="relative min-h-[70vh] flex flex-col justify-start pt-20 pb-10 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative flex flex-col justify-start pt-20 pb-6 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
@@ -245,7 +245,7 @@ function Hero() {
 function Overview() {
   return (
     <section id="overview" className="px-6 md:px-10 py-8 md:py-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
         <div className="md:col-span-4">
           <FadeIn>
             <Label>Philosophy</Label>

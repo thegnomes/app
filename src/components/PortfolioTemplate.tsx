@@ -10,7 +10,7 @@ function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
     if (!el) return;
     const onScroll = () => {
       const rect = el.getBoundingClientRect();
-      const p = Math.min(1, Math.max(0, -rect.top / rect.height));
+      const p = rect.height > 0 ? Math.min(1, Math.max(0, -rect.top / rect.height)) : 0;
       setProgress(p);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -319,23 +319,23 @@ function Hero({ project }: { project: PortfolioProject }) {
   const heroImage = project.gallery[0]?.src ?? '/portfolio/hero.jpg';
 
   return (
-    <section ref={sectionRef} className="relative min-h-[70vh] flex flex-col justify-start pt-20 pb-10 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative flex flex-col justify-start pt-20 pb-6 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
       >
+        <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 scale-105" />
         {project.heroVideo ? (
           <video
             src={project.heroVideo}
+            poster={heroImage}
             autoPlay
             muted
             loop
             playsInline
-            className="w-full h-full object-cover scale-105"
+            className="absolute inset-0 w-full h-full object-cover scale-105"
           />
-        ) : (
-          <img src={heroImage} alt="Project hero" className="w-full h-full object-cover opacity-50 scale-105" />
-        )}
+        ) : null}
         <div className="absolute bottom-0 left-0 right-0 h-[45vh] bg-gradient-to-t from-[#0a0a0a] to-transparent" />
       </div>
 
@@ -390,7 +390,7 @@ function Hero({ project }: { project: PortfolioProject }) {
 function Overview({ project }: { project: PortfolioProject }) {
   return (
     <section id="overview" className="px-6 md:px-10 py-8 md:py-10">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
         <div className="md:col-span-4">
           <FadeIn>
             <Label>{project.philosophyLabel}</Label>
