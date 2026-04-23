@@ -329,7 +329,6 @@ function Hero({ project }: { project: PortfolioProject }) {
             className="absolute inset-0 w-full h-full object-cover scale-105"
           />
         ) : null}
-        <div className="absolute bottom-0 left-0 right-0 h-[45vh] bg-gradient-to-t from-[#0a0a0a] to-transparent" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">

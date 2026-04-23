@@ -189,7 +189,6 @@ function Hero() {
           alt="Project hero"
           className="w-full h-full object-cover opacity-80 scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/70 via-transparent to-transparent" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
