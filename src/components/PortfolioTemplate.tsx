@@ -527,8 +527,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           <div className="relative w-px flex-1 min-h-[32px] bg-neutral-800 mt-2 overflow-hidden">
                             <div
                               className="absolute inset-0 origin-top transition-transform duration-500 ease-out"
-                              style={{ backgroundColor: project.accentColor || '#eab308' }}
                               style={{
+                                backgroundColor: project.accentColor || '#eab308',
                                 transform: activeStep > index ? 'scaleY(1)' : 'scaleY(0)',
                                 transitionDelay: `${lineDelay(index)}ms`,
                               }}
