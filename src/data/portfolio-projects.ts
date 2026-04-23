@@ -166,7 +166,7 @@ export const totoProject: PortfolioProject = {
       body: 'A platform becomes more valuable when it can be reused without dilution. Part of the work was turning creative direction into reusable kits and templates so the campaign could scale while keeping its logic intact.',
     },
   ],
-  nextProject: { name: 'OxyAffiliate', accent: 'OxyStockist', href: '/oxytap-portfolio.html' },
+  nextProject: { name: 'OxyTap', accent: 'Ecosystem', href: '/oxytap-portfolio.html' },
   socials: [
     { label: 'Instagram', href: 'https://instagram.com', external: true },
     { label: 'Twitter', href: 'https://twitter.com', external: true },
@@ -267,52 +267,90 @@ export const nft11Project: PortfolioProject = {
 
 export const oxytapProject: PortfolioProject = {
   slug: 'oxytap',
-  title: 'OxyAffiliate',
-  titleAccent: 'OxyStockist',
+  title: 'OxyTap',
+  titleAccent: 'Ecosystem',
   tag: 'Prototype-to-Ship',
   year: '2024',
   description:
-    'Turned fragmented business rules into a working system by translating logic into UX, operational flow, and a usable MVP.',
+    'Turned fragmented business needs into connected digital systems across brand, support, affiliate operations, and future automation planning.',
   client: 'OxyTap',
   role: 'Systems Design / Product Thinking / Build',
-  deliverables: 'MVP, UX, payout logic, SOP, soft launch framework',
+  deliverables: 'Corporate site, support infrastructure, knowledge base, warranty flow, Botpress planning, affiliate system',
   philosophyLabel: 'Overview',
   philosophyHeading:
-    'This project began with business logic that existed in fragments: moving parts, dependencies, and no clear operating structure.',
+    'This work extended beyond a single product or interface.',
   philosophyBody:
-    'My role was to turn that ambiguity into something runnable. That meant defining the rules, shaping the user-facing flow, connecting it to the underlying logic, and building the surrounding cadence needed for the system to function beyond the interface itself.',
+    'Across OxyTap, the challenge was to translate a growing set of business needs into working digital systems — from the public-facing brand site, to the support and warranty infrastructure, to affiliate operations, and future conversational support planning.\n\nMy role was to turn these moving parts into something more coherent: shaping the user-facing experience, defining system logic, and building the structures needed for the brand to operate more clearly across multiple touchpoints.',
   proof: [
-    { num: '01', title: '1 quarter', desc: 'MVP built solo', detail: 'Took the system from rough business logic to a working MVP within one quarter.' },
-    { num: '02', title: '~25', desc: 'Affiliates onboarded', detail: 'Soft-launched the platform and brought in the first group of real users.' },
-    { num: '03', title: 'MVP live', desc: 'System in use', detail: 'Moved beyond mockups and shipped a usable product into live testing conditions.' },
-    { num: '04', title: 'SOP piloted', desc: 'Operational cadence drafted', detail: 'Created and tested payout checkpoint and review structure, with adoption still in progress.' },
+    {
+      num: '01',
+      title: 'Corporate site',
+      desc: 'Brand presence and landing experience',
+      detail: 'Built the public-facing digital layer for oxytap.com, including branded landing experience and marketing collateral.',
+      images: [
+        { src: '/portfolio/oxytap/oxytap-corporate-hero-placeholder.svg', alt: '[Placeholder Image — OxyTap corporate landing page hero section]' },
+        { src: '/portfolio/oxytap/oxytap-brand-collateral-placeholder.svg', alt: '[Placeholder Image — OxyTap marketing collateral or campaign visual]' },
+        { src: '/portfolio/oxytap/oxytap-site-sections-placeholder.svg', alt: '[Placeholder Image — OxyTap corporate site section layout]' },
+      ],
+    },
+    {
+      num: '02',
+      title: 'Support live',
+      desc: 'Knowledge base and warranty infrastructure',
+      detail: 'Built support.oxytap.com as a structured support environment with articles, guidance, and warranty pathways.',
+      images: [
+        { src: '/portfolio/oxytap/oxytap-support-home-placeholder.svg', alt: '[Placeholder Image — support.oxytap.com homepage or support hub]' },
+        { src: '/portfolio/oxytap/oxytap-knowledgebase-placeholder.svg', alt: '[Placeholder Image — knowledge base article listing or support content structure]' },
+        { src: '/portfolio/oxytap/oxytap-warranty-placeholder.svg', alt: '[Placeholder Image — warranty registration or warranty support flow]' },
+      ],
+    },
+    {
+      num: '03',
+      title: 'OxyBot planned',
+      desc: 'Support automation architecture',
+      detail: 'Planned and designed OxyBot flows in Botpress as part of the wider support ecosystem, though implementation was not fully completed.',
+      images: [
+        { src: '/portfolio/oxytap/oxytap-botpress-flow-placeholder.svg', alt: '[Placeholder Image — Botpress workflow planning for OxyBot]' },
+        { src: '/portfolio/oxytap/oxytap-bot-logic-placeholder.svg', alt: '[Placeholder Image — support automation logic or onboarding flow map]' },
+        { src: '/portfolio/oxytap/oxytap-support-journey-placeholder.svg', alt: '[Placeholder Image — support journey mapping or conversational support design]' },
+      ],
+    },
+    {
+      num: '04',
+      title: 'Affiliate implemented',
+      desc: 'Payout logic to runnable system',
+      detail: 'Designed the payout structure and carried OxyAffiliate through to a working affiliate system.',
+      images: [
+        { src: '/portfolio/oxytap/oxytap-affiliate-dashboard-placeholder.svg', alt: '[Placeholder Image — OxyAffiliate dashboard or user-facing interface]' },
+        { src: '/portfolio/oxytap/oxytap-payout-logic-placeholder.svg', alt: '[Placeholder Image — affiliate payout structure or commission logic diagram]' },
+        { src: '/portfolio/oxytap/oxytap-affiliate-system-placeholder.svg', alt: '[Placeholder Image — implemented affiliate system or architecture overview]' },
+      ],
+    },
   ],
   visionLabel: 'Vision',
   visionQuote:
-    'A prototype only starts to matter when it can survive real use, not just internal approval.',
+    'Digital work becomes valuable when separate functions begin to operate like one system.',
   gallery: [
-    // TODO: Hero + first full gallery image. Replace with clearest visual that explains the product at a glance.
-    { src: '/portfolio/oxytap-hero-placeholder.svg', alt: '[Placeholder Image — OxyAffiliate system map / dashboard / architecture overview]', layout: 'full', speed: 0.25 },
-    // TODO: Show how rules were translated into interface.
-    { src: '/portfolio/oxytap-gallery-1.svg', alt: '[Placeholder Image — UX screen or user flow]', layout: 'half', speed: 0.2 },
-    // TODO: Explain the structural thinking behind the MVP.
-    { src: '/portfolio/oxytap-gallery-2.svg', alt: '[Placeholder Image — System logic diagram / payout flow / architecture]', layout: 'half', speed: 0.35 },
-    // TODO: Can be a demo capture if available.
-    { src: '/portfolio/oxytap-gallery-3.svg', alt: '[Placeholder Video — Soft launch dashboard or product walkthrough]', layout: 'full' },
-    // TODO: Show that the work extended beyond screens into operations.
-    { src: '/portfolio/oxytap-gallery-4.svg', alt: '[Placeholder Image — SOP / weekly checkpoint / operational process artefact]', layout: 'full' },
+    // TODO: Hero + first full gallery image. Replace with strongest overall visual representing brand, support, and systems together.
+    { src: '/portfolio/oxytap/oxytap-ecosystem-hero-placeholder.svg', alt: '[Placeholder Image — OxyTap ecosystem overview or strongest flagship brand/system visual]', layout: 'full', speed: 0.25 },
+    // TODO: Replace with landing page, branding, or corporate presentation screenshot.
+    { src: '/portfolio/oxytap/oxytap-corporate-gallery-placeholder.svg', alt: '[Placeholder Image — oxytap.com landing page or branded corporate presentation]', layout: 'half', speed: 0.2 },
+    // TODO: Replace with support site, KB, or warranty interface screenshot.
+    { src: '/portfolio/oxytap/oxytap-support-gallery-placeholder.svg', alt: '[Placeholder Image — support site / knowledge base / warranty interface]', layout: 'half', speed: 0.35 },
+    // TODO: Replace with Botpress planning, affiliate implementation, or a combined systems collage.
+    { src: '/portfolio/oxytap/oxytap-bot-affiliate-gallery-placeholder.svg', alt: '[Placeholder Image — OxyBot planning and OxyAffiliate implementation collage or representative visual]', layout: 'full' },
   ],
   approachLabel: 'Process',
   approachItems: [
     {
       label: 'Structure',
-      heading: 'Business rules are only useful when people can move through them.',
-      body: 'The first challenge was to translate affiliate and stockist logic into a flow users could actually understand. That required mapping rules into states, paths, and a clear MVP structure rather than leaving them as abstract operational intent.',
+      heading: 'Turning separate needs into connected systems.',
+      body: 'The work began with fragmented requirements across different parts of the business: public-facing brand presence, support infrastructure, affiliate mechanics, and future automation. The challenge was not just execution, but organising these needs into clearer systems that could support actual use.',
     },
     {
-      label: 'Operations',
-      heading: 'A working interface is not enough if the surrounding process is unclear.',
-      body: 'The system had to extend beyond the product itself. That is where payout SOP, review checkpoints, and weekly operating cadence came in. The goal was not just to launch a tool, but to make the tool support actual use.',
+      label: 'Implementation',
+      heading: 'From logic and content to live operational layers.',
+      body: 'This included shaping the corporate site and marketing collateral, building support structures such as knowledge base and warranty flows, planning OxyBot in Botpress, and carrying OxyAffiliate from payout design through to full system implementation. The value was not in a single deliverable, but in how these parts began to work together.',
     },
   ],
   nextProject: { name: 'NFT11', accent: 'Universe Building', href: '/nft11-portfolio.html' },
