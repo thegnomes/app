@@ -191,7 +191,7 @@ function Hero() {
   const contentOp = 1 - progress * 1.5;
 
   return (
-    <section ref={sectionRef} className="relative h-[120vh] flex flex-col justify-end pb-10 md:pb-16 pt-32 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative h-[120vh] flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}

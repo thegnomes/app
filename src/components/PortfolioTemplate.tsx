@@ -322,7 +322,7 @@ function Hero({ project }: { project: PortfolioProject }) {
   const heroImage = project.gallery[0]?.src ?? '/portfolio/hero.jpg';
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col justify-end pb-4 md:pb-8 pt-32 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col justify-end pb-4 md:pb-8 px-6 md:px-10 overflow-hidden">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
