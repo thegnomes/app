@@ -192,7 +192,7 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative flex flex-col justify-start pt-20 pb-2 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
+    <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 z-0">
         <img
           src="/portfolio/hero.jpg"
@@ -203,6 +203,7 @@ function Hero() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent" />
         <div className="flex items-center gap-3 mb-6">
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             Case Study
