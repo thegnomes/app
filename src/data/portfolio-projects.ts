@@ -131,7 +131,7 @@ export const totoProject: PortfolioProject = {
       num: '04',
       title: '~S$250k',
       desc: 'Marketing arm in year one',
-      detail: 'Helped build Onezine's marketing arm around the account to roughly S$250k in the first year.',
+      detail: "Helped build Onezine's marketing arm around the account to roughly S$250k in the first year.",
       images: [],
     },
   ],
