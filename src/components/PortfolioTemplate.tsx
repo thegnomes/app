@@ -285,21 +285,25 @@ function Nav() {
         scrolled ? 'bg-[#0a0a0a]/80 backdrop-blur-md' : 'bg-transparent'
       }`}
     >
-      <a href="/" className="text-sm font-medium tracking-tight text-neutral-100 hover:opacity-70 transition-opacity">
-        MORAE<span className="align-super text-[10px] ml-0.5">®</span>
+      <a href="/" className="text-sm font-medium tracking-tight text-neutral-100 hover:opacity-70 transition-opacity uppercase">
+        LEAVEEVERYTHINGTOCHANCE
       </a>
       <div className="flex items-center gap-6 md:gap-8">
-        {['Overview', 'Process'].map((item) => (
+        {[
+          { label: 'TOTO', href: '/toto-portfolio.html' },
+          { label: 'NFT11', href: '/nft11-portfolio.html' },
+          { label: 'OXYTAP', href: '/oxytap-portfolio.html' },
+        ].map((item) => (
           <a
-            key={item}
-            href={`#${item.toLowerCase()}`}
+            key={item.label}
+            href={item.href}
             className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors"
           >
-            {item}
+            {item.label}
           </a>
         ))}
         <a
-          href="/"
+          href="/scene02"
           className="text-xs font-medium tracking-wide text-neutral-900 bg-neutral-100 px-4 py-2 rounded-full hover:bg-neutral-300 transition-colors"
         >
           Back to site
@@ -757,7 +761,7 @@ function Footer({ project }: { project: PortfolioProject }) {
 
         <FadeIn delay={100}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-neutral-600">
-            <p>© {new Date().getFullYear()} MORAE®. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} LEAVEEVERYTHINGTOCHANCE. All rights reserved.</p>
             <p>Template replicated for portfolio showcase.</p>
           </div>
         </FadeIn>
