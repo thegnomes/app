@@ -202,8 +202,9 @@ function Hero() {
         <div className="absolute inset-0 bg-white/5" />
       </div>
 
+      <div className="absolute bottom-0 left-0 right-0 h-[55vh] bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-[5]" />
+
       <div className="relative z-10 max-w-7xl mx-auto w-full">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent" />
         <div className="flex items-center gap-3 mb-6">
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             Case Study
