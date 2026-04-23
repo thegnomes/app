@@ -10,10 +10,7 @@ function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
     if (!el) return;
     const onScroll = () => {
       const rect = el.getBoundingClientRect();
-      const windowH = window.innerHeight;
-      const start = windowH;
-      const end = -rect.height;
-      const p = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
+      const p = Math.min(1, Math.max(0, -rect.top / rect.height));
       setProgress(p);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -85,7 +82,7 @@ function AuroraTextReveal({
       <CustomTag
         className="inline"
         style={{
-          backgroundImage: `linear-gradient(90deg, ${fromColor} 0%, ${toColor} ${progress * 100}%, #525252 ${progress * 100}%, #525252 100%)`,
+          backgroundImage: `linear-gradient(90deg, ${fromColor} 0%, ${toColor} ${progress * 100}%, #a3a3a3 ${progress * 100}%, #a3a3a3 100%)`,
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           color: 'transparent',
@@ -322,7 +319,7 @@ function Hero({ project }: { project: PortfolioProject }) {
   const heroImage = project.gallery[0]?.src ?? '/portfolio/hero.jpg';
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen flex flex-col justify-end pb-4 md:pb-8 px-6 md:px-10 overflow-hidden">
+    <section ref={sectionRef} className="relative min-h-[70vh] flex flex-col justify-start pt-20 pb-10 px-6 md:px-10 overflow-hidden">
       <div
         className="absolute inset-0 z-0 will-change-transform"
         style={{ transform: `translateY(${heroY}px)` }}
@@ -392,7 +389,7 @@ function Hero({ project }: { project: PortfolioProject }) {
 
 function Overview({ project }: { project: PortfolioProject }) {
   return (
-    <section id="overview" className="px-6 md:px-10 py-24 md:py-36">
+    <section id="overview" className="px-6 md:px-10 py-8 md:py-10">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-16">
         <div className="md:col-span-4">
           <FadeIn>
