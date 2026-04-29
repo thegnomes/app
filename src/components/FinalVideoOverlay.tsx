@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { resolveAssetUrl } from '@/lib/assets';
 import { isSafari } from '@/lib/isSafari';
 
 interface FinalVideoOverlayProps {
@@ -89,8 +90,8 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
         onTimeUpdate={handleTimeUpdate}
         onEnded={onEnded}
       >
-        <source src="/zoom-compiled-edit-latest-web.webm" type="video/webm" />
-        <source src="/zoom-compiled-edit-latest.mp4" type="video/mp4" />
+        <source src={resolveAssetUrl('/zoom-compiled-edit-latest-web.webm')} type="video/webm" />
+        <source src={resolveAssetUrl('/zoom-compiled-edit-latest.mp4')} type="video/mp4" />
       </video>
 
       <div className="fixed inset-0 z-50 pointer-events-none">

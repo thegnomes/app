@@ -1,6 +1,7 @@
 ﻿import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { resolveAssetUrl } from '@/lib/assets';
 
 /* ─── Hooks ─── */
 
@@ -151,7 +152,26 @@ function VideoPlayer({
   className?: string;
   poster?: string;
 }) {
-  const base = src.replace(/\.(mp4|webm|mov|ogg)$/i, '');
+  const resolved = resolveAssetUrl(src);
+  // External URLs (Vercel Blob, CDN) are used directly.
+  // Local paths still try both .webm and .mp4 variants.
+  const isExternal = resolved.startsWith('http');
+  if (isExternal) {
+    return (
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        poster={poster ? resolveAssetUrl(poster) : undefined}
+        className={className}
+      >
+        <source src={resolved} type={`video/${resolved.replace(/.*\./, '')}`} />
+      </video>
+    );
+  }
+  const base = resolved.replace(/\.(mp4|webm|mov|ogg)$/i, '');
   return (
     <video
       autoPlay
@@ -159,7 +179,7 @@ function VideoPlayer({
       loop
       playsInline
       preload="auto"
-      poster={poster}
+      poster={poster ? resolveAssetUrl(poster) : undefined}
       className={className}
     >
       <source src={`${base}.webm`} type="video/webm" />
@@ -353,7 +373,7 @@ function Hero({ project }: { project: PortfolioProject }) {
   return (
     <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 z-0">
-        <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
+        <img src={resolveAssetUrl(heroImage)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
         {project.heroVideo ? (
           <VideoPlayer
             src={project.heroVideo}
@@ -406,27 +426,6 @@ function Hero({ project }: { project: PortfolioProject }) {
             </div>
           ))}
         </div>
-      </div>
-      {/* Scroll hint */}
-      <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
-          hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-      >
-        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
-        <svg
-          className="animate-bounce text-neutral-500"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
       </div>
     </section>
   );
@@ -685,7 +684,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                               />
                             ) : (
                               <img
-                                src={currentImage.src}
+                                src={resolveAssetUrl(currentImage.src)}
                                 alt={currentImage.alt}
                                 className="w-full h-auto object-contain"
                               />
@@ -699,7 +698,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             />
                           ) : (
                             <img
-                              src={currentImage.src}
+                              src={resolveAssetUrl(currentImage.src)}
                               alt={currentImage.alt}
                               className="w-full h-auto object-contain"
                             />

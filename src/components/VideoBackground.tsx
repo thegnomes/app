@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { isSafari } from '@/lib/isSafari';
+import { resolveAssetUrl } from '@/lib/assets';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -90,7 +91,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
       {!isZooming && (
         <>
           <video
-            src="/idle_brain.webm"
+            src={resolveAssetUrl('/idle_brain.webm')}
             autoPlay
             muted
             loop
@@ -107,7 +108,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
       {/* Zoom transition video - plays full with alpha, fades at end */}
       <video
         ref={zoomVideoRef}
-        src="/brain_zoom.webm"
+        src={resolveAssetUrl('/brain_zoom.webm')}
         muted
         playsInline
         preload="auto"

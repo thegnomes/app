@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { resolveAssetUrl } from '@/lib/assets';
 import { RingText } from './RingText';
 import { isSafari } from '@/lib/isSafari';
 
@@ -72,7 +73,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
             isHovered ? 'opacity-80' : 'opacity-0'
           }`}
         >
-          <source src="/webm/target-lock.webm" type="video/webm" />
+          <source src={resolveAssetUrl('/webm/target-lock.webm')} type="video/webm" />
         </video>
 
         <RingText items={ringItems} radius={120} duration={12} />

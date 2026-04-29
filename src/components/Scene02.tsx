@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
 import { isSafari } from '@/lib/isSafari';
+import { resolveAssetUrl } from '@/lib/assets';
 
 interface Scene02Props {
   isActive: boolean;
@@ -162,7 +163,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         }}
       >
         <img
-          src="/scene02/nebula_space_only2x.png"
+          src={resolveAssetUrl('/scene02/nebula_space_only2x.png')}
           alt=""
           className="absolute left-1/2 top-1/2 h-full w-full object-cover"
           style={{
@@ -215,7 +216,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           >
             <video
               ref={astroRef}
-              src="/scene02/looking-astro-loop2.webm"
+              src={resolveAssetUrl('/scene02/looking-astro-loop2.webm')}
               muted
               playsInline
               loop

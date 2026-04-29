@@ -41,3 +41,7 @@ lerna-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Portfolio media assets — deployed via Vercel Blob / CLI, not Git
+public/portfolio/
+public/*.pdf

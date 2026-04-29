@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { resolveAssetUrl } from '@/lib/assets';
 
 /* ─── Hooks ─── */
 
@@ -106,7 +107,7 @@ function ParallaxImage({
   return (
     <div ref={containerRef} className={`overflow-hidden ${className}`}>
       <img
-        src={src}
+        src={resolveAssetUrl(src)}
         alt={alt}
         className="w-full h-full object-cover will-change-transform"
         style={{
@@ -132,7 +133,7 @@ function RevealImage({
   return (
     <div ref={ref} className={`overflow-hidden ${className}`}>
       <img
-        src={src}
+        src={resolveAssetUrl(src)}
         alt={alt}
         className="w-full h-full object-cover will-change-transform transition-transform ease-out"
         style={{
@@ -195,7 +196,7 @@ function Hero() {
     <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 z-0">
         <img
-          src="/portfolio/hero.jpg"
+          src={resolveAssetUrl('/portfolio/hero.jpg')}
           alt="Project hero"
           className="w-full h-full object-cover opacity-80 scale-105"
         />
