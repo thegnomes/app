@@ -562,7 +562,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a] min-h-screen">
+    <section ref={sectionRef} className="relative px-6 md:px-10 py-8 md:py-12 border-y border-neutral-900 bg-[#0a0a0a] h-screen overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -573,10 +573,10 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+      <div className="max-w-7xl mx-auto h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 h-full">
           {/* Left: Steps Timeline */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 h-full overflow-y-auto">
             <FadeIn>
               <Label>Proof of Work</Label>
             </FadeIn>
@@ -660,14 +660,15 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           </div>
 
           {/* Right: Media Viewer */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
-            <FadeIn delay={150}>
+          <div className="lg:col-span-7 flex flex-col justify-center h-full">
+            <FadeIn delay={150} className="h-full flex flex-col justify-center">
               {/* Slider only */}
                 {stepImages.length > 0 && currentImage && (
-                  <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950">
-                    <div className="relative overflow-hidden">
+                  <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950 flex flex-col max-h-full">
+                    <div className="relative flex-1 min-h-0 flex items-center justify-center bg-neutral-950">
                       <div
                         key={`${activeStep}-${carouselIndex}`}
+                        className="w-full h-full flex items-center justify-center"
                         style={{
                           animation: slideDir === 'right'
                             ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
@@ -679,18 +680,18 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={activeLink.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="block w-full"
+                            className="block w-full h-full"
                           >
                             {isVideo(currentImage.src) ? (
                               <VideoPlayer
                                 src={currentImage.src}
-                                className="w-full h-auto object-contain"
+                                className="h-full w-full object-contain"
                               />
                             ) : (
                               <img
                                 src={resolveAssetUrl(currentImage.src)}
                                 alt={currentImage.alt}
-                                className="w-full h-auto object-contain"
+                                className="h-full w-full object-contain"
                               />
                             )}
                           </a>
@@ -698,13 +699,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           isVideo(currentImage.src) ? (
                             <VideoPlayer
                               src={currentImage.src}
-                              className="w-full h-auto object-contain"
+                              className="h-full w-full object-contain"
                             />
                           ) : (
                             <img
                               src={resolveAssetUrl(currentImage.src)}
                               alt={currentImage.alt}
-                              className="w-full h-auto object-contain"
+                              className="h-full w-full object-contain"
                             />
                           )
                         )}
@@ -712,7 +713,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                     </div>
 
                     {stepImages.length > 1 && (
-                      <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800">
+                      <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800 flex-shrink-0">
                         <button
                           type="button"
                           onClick={handlePrev}

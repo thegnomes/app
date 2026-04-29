@@ -32,9 +32,8 @@ export function useScrollLock(
       }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      // Enable when section top is at or above viewport top
-      // and at least half the viewport is still covered by the section
-      isEnabledRef.current = rect.top <= 1 && rect.bottom > vh * 0.5;
+      // Enable when section is entering or in the viewport
+      isEnabledRef.current = rect.top <= vh * 0.5 && rect.bottom >= vh * 0.5;
     };
 
     const onScroll = () => checkPosition();
