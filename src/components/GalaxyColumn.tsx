@@ -51,17 +51,19 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           filter: isHovered ? 'saturate(1)' : 'saturate(0)',
         }}
       >
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          loop
-          preload="auto"
-          className={`h-full w-full ${isSafari ? 'mix-blend-screen' : ''}`}
-        >
-          <source src={srcWebm} type="video/webm" />
-          <source src={srcMov} type="video/quicktime" />
-        </video>
+        <div className={`h-full w-full ${isSafari ? 'mix-blend-screen' : ''}`}>
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            loop
+            preload="auto"
+            className="h-full w-full"
+          >
+            <source src={srcWebm} type="video/webm" />
+            <source src={srcMov} type="video/quicktime" />
+          </video>
+        </div>
 
         <video
           ref={overlayRef}

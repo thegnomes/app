@@ -4,6 +4,7 @@ import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import { FinalVideoOverlay } from './components/FinalVideoOverlay';
+import { AstronautTextOverlay } from './components/AstronautTextOverlay';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import {
@@ -22,6 +23,7 @@ function App() {
   const [autoZoom, setAutoZoom] = useState(false);
   const autoZoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [showAstronautText, setShowAstronautText] = useState(false);
   const redirectedRef = useRef(false);
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
@@ -92,7 +94,7 @@ function App() {
   }, [redirectToScene02]);
 
   const handleAstronautPhase = useCallback(() => {
-    // Astronaut text and Scene02 are now on the standalone page
+    setShowAstronautText(true);
   }, []);
 
   // Explicitly preload critical video assets before starting the experience
@@ -368,6 +370,7 @@ function App() {
       </div>
       {assetsLoaded && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} onAstronautPhase={handleAstronautPhase} />
+      <AstronautTextOverlay isActive={showAstronautText} />
       <Footer />
     </div>
   );

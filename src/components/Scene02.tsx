@@ -201,7 +201,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         />
       </div>
       {/* Astronaut video - centered in viewport, drifts down on entrance, follows mouse */}
-      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-20 h-full w-full">
+      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-20 h-full w-full -translate-x-1/2 -translate-y-1/2">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
             drifted ? 'translate-y-10 opacity-100' : 'translate-y-0 opacity-0'
