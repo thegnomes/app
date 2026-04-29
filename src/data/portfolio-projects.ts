@@ -281,6 +281,7 @@ export const oxytapProject: PortfolioProject = {
     'This work extended beyond a single product or interface.',
   philosophyBody:
     'Across OxyTap, the challenge was to translate a growing set of business needs into working digital systems — from the public-facing brand site, to the support and warranty infrastructure, to affiliate operations, and future conversational support planning.\n\nMy role was to turn these moving parts into something more coherent: shaping the user-facing experience, defining system logic, and building the structures needed for the brand to operate more clearly across multiple touchpoints.',
+  heroVideo: '/portfolio/oxytap/final_media/oxytap-hero.mp4',
   proof: [
     {
       num: '01',
@@ -288,9 +289,9 @@ export const oxytapProject: PortfolioProject = {
       desc: 'Brand presence and landing experience',
       detail: 'Built the public-facing digital layer for oxytap.com, including branded landing experience and marketing collateral.',
       images: [
-        { src: '/portfolio/oxytap/oxytap-corporate-hero-placeholder.svg', alt: '[Placeholder Image — OxyTap corporate landing page hero section]' },
-        { src: '/portfolio/oxytap/oxytap-brand-collateral-placeholder.svg', alt: '[Placeholder Image — OxyTap marketing collateral or campaign visual]' },
-        { src: '/portfolio/oxytap/oxytap-site-sections-placeholder.svg', alt: '[Placeholder Image — OxyTap corporate site section layout]' },
+        { src: '/portfolio/oxytap/final_media/logo-mockup.png', alt: 'OxyTap logo mockup' },
+        { src: '/portfolio/oxytap/final_media/moutai_horizontal_CTA.png', alt: 'OxyTap marketing CTA' },
+        { src: '/portfolio/oxytap/final_media/oxy_energy_v4_fa_vo.mp4', alt: 'OxyTap brand energy video' },
       ],
     },
     {
@@ -299,9 +300,8 @@ export const oxytapProject: PortfolioProject = {
       desc: 'Knowledge base and warranty infrastructure',
       detail: 'Built support.oxytap.com as a structured support environment with articles, guidance, and warranty pathways.',
       images: [
-        { src: '/portfolio/oxytap/oxytap-support-home-placeholder.svg', alt: '[Placeholder Image — support.oxytap.com homepage or support hub]' },
-        { src: '/portfolio/oxytap/oxytap-knowledgebase-placeholder.svg', alt: '[Placeholder Image — knowledge base article listing or support content structure]' },
-        { src: '/portfolio/oxytap/oxytap-warranty-placeholder.svg', alt: '[Placeholder Image — warranty registration or warranty support flow]' },
+        { src: '/portfolio/oxytap/final_media/supportOxytap.mp4', alt: 'OxyTap support video' },
+        { src: '/portfolio/oxytap/final_media/how_to_oxytap_fa_edits.mp4', alt: 'How to OxyTap guide' },
       ],
     },
     {
@@ -310,9 +310,7 @@ export const oxytapProject: PortfolioProject = {
       desc: 'Support automation architecture',
       detail: 'Planned and designed OxyBot flows in Botpress as part of the wider support ecosystem, though implementation was not fully completed.',
       images: [
-        { src: '/portfolio/oxytap/oxytap-botpress-flow-placeholder.svg', alt: '[Placeholder Image — Botpress workflow planning for OxyBot]' },
-        { src: '/portfolio/oxytap/oxytap-bot-logic-placeholder.svg', alt: '[Placeholder Image — support automation logic or onboarding flow map]' },
-        { src: '/portfolio/oxytap/oxytap-support-journey-placeholder.svg', alt: '[Placeholder Image — support journey mapping or conversational support design]' },
+        { src: '/portfolio/oxytap/final_media/drink_fresh_water_extended.mp4', alt: 'OxyTap product demonstration' },
       ],
     },
     {
@@ -321,9 +319,7 @@ export const oxytapProject: PortfolioProject = {
       desc: 'Payout logic to runnable system',
       detail: 'Designed the payout structure and carried OxyAffiliate through to a working affiliate system.',
       images: [
-        { src: '/portfolio/oxytap/oxytap-affiliate-dashboard-placeholder.svg', alt: '[Placeholder Image — OxyAffiliate dashboard or user-facing interface]' },
-        { src: '/portfolio/oxytap/oxytap-payout-logic-placeholder.svg', alt: '[Placeholder Image — affiliate payout structure or commission logic diagram]' },
-        { src: '/portfolio/oxytap/oxytap-affiliate-system-placeholder.svg', alt: '[Placeholder Image — implemented affiliate system or architecture overview]' },
+        { src: '/portfolio/oxytap/final_media/wilson-edit.mp4', alt: 'OxyTap affiliate promotional video' },
       ],
     },
   ],
@@ -331,14 +327,10 @@ export const oxytapProject: PortfolioProject = {
   visionQuote:
     'Digital work becomes valuable when separate functions begin to operate like one system.',
   gallery: [
-    // TODO: Hero + first full gallery image. Replace with strongest overall visual representing brand, support, and systems together.
-    { src: '/portfolio/oxytap/oxytap-ecosystem-hero-placeholder.svg', alt: '[Placeholder Image — OxyTap ecosystem overview or strongest flagship brand/system visual]', layout: 'full', speed: 0.25 },
-    // TODO: Replace with landing page, branding, or corporate presentation screenshot.
-    { src: '/portfolio/oxytap/oxytap-corporate-gallery-placeholder.svg', alt: '[Placeholder Image — oxytap.com landing page or branded corporate presentation]', layout: 'half', speed: 0.2 },
-    // TODO: Replace with support site, KB, or warranty interface screenshot.
-    { src: '/portfolio/oxytap/oxytap-support-gallery-placeholder.svg', alt: '[Placeholder Image — support site / knowledge base / warranty interface]', layout: 'half', speed: 0.35 },
-    // TODO: Replace with Botpress planning, affiliate implementation, or a combined systems collage.
-    { src: '/portfolio/oxytap/oxytap-bot-affiliate-gallery-placeholder.svg', alt: '[Placeholder Image — OxyBot planning and OxyAffiliate implementation collage or representative visual]', layout: 'full' },
+    { src: '/portfolio/oxytap/final_media/oxytap-hero.mp4', alt: 'OxyTap ecosystem hero', layout: 'full', speed: 0.25 },
+    { src: '/portfolio/oxytap/final_media/logo-mockup.png', alt: 'OxyTap brand collateral', layout: 'half', speed: 0.2 },
+    { src: '/portfolio/oxytap/final_media/moutai_horizontal_CTA.png', alt: 'OxyTap marketing CTA', layout: 'half', speed: 0.35 },
+    { src: '/portfolio/oxytap/final_media/oxy_energy_v4_fa_vo.mp4', alt: 'OxyTap brand energy', layout: 'full' },
   ],
   approachLabel: 'Process',
   approachItems: [

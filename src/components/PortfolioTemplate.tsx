@@ -1,5 +1,6 @@
 ﻿import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 /* ─── Hooks ─── */
 
@@ -138,6 +139,32 @@ function FadeIn({
     >
       {children}
     </div>
+  );
+}
+
+function VideoPlayer({
+  src,
+  className = '',
+  poster,
+}: {
+  src: string;
+  className?: string;
+  poster?: string;
+}) {
+  const base = src.replace(/\.(mp4|webm|mov|ogg)$/i, '');
+  return (
+    <video
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      poster={poster}
+      className={className}
+    >
+      <source src={`${base}.webm`} type="video/webm" />
+      <source src={`${base}.mp4`} type="video/mp4" />
+    </video>
   );
 }
 
@@ -328,14 +355,9 @@ function Hero({ project }: { project: PortfolioProject }) {
       <div className="absolute inset-0 z-0">
         <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
         {project.heroVideo ? (
-          <video
+          <VideoPlayer
             src={project.heroVideo}
             poster={heroImage}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
             className="absolute inset-0 w-full h-full object-cover scale-105"
           />
         ) : null}
@@ -385,6 +407,27 @@ function Hero({ project }: { project: PortfolioProject }) {
           ))}
         </div>
       </div>
+      {/* Scroll hint */}
+      <div
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
+          hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
+        <svg
+          className="animate-bounce text-neutral-500"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </div>
     </section>
   );
 }
@@ -424,6 +467,45 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
+  const sectionRef = useRef<HTMLElement>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  const handleNavigate = (dir: 'up' | 'down'): boolean => {
+    if (!hasScrolled) setHasScrolled(true);
+
+    if (dir === 'down') {
+      const images = getStepImages(activeStep);
+      if (carouselIndex < images.length - 1) {
+        setCarouselIndex((i) => i + 1);
+        return true;
+      }
+      if (activeStep < project.proof.length - 1) {
+        setSlideDir('right');
+        setPrevStep(activeStep);
+        setActiveStep((s) => s + 1);
+        setCarouselIndex(0);
+        return true;
+      }
+      return false;
+    } else {
+      if (carouselIndex > 0) {
+        setCarouselIndex((i) => i - 1);
+        return true;
+      }
+      if (activeStep > 0) {
+        const prevStepIndex = activeStep - 1;
+        const prevImages = getStepImages(prevStepIndex);
+        setSlideDir('left');
+        setPrevStep(activeStep);
+        setActiveStep(prevStepIndex);
+        setCarouselIndex(prevImages.length - 1);
+        return true;
+      }
+      return false;
+    }
+  };
+
+  useScrollLock(sectionRef, handleNavigate);
 
   const getStepImages = (stepIndex: number) => {
     const step = project.proof[stepIndex];
@@ -477,7 +559,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section className="px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a]">
+    <section ref={sectionRef} className="relative px-6 md:px-10 py-16 md:py-24 border-y border-neutral-900 bg-[#0a0a0a] min-h-screen">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -597,12 +679,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             className="block w-full"
                           >
                             {isVideo(currentImage.src) ? (
-                              <video
+                              <VideoPlayer
                                 src={currentImage.src}
-                                autoPlay
-                                muted
-                                loop
-                                playsInline
                                 className="w-full h-auto object-contain"
                               />
                             ) : (
@@ -615,12 +693,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           </a>
                         ) : (
                           isVideo(currentImage.src) ? (
-                            <video
+                            <VideoPlayer
                               src={currentImage.src}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
                               className="w-full h-auto object-contain"
                             />
                           ) : (
@@ -674,6 +748,28 @@ function DualModeView({ project }: { project: PortfolioProject }) {
             </FadeIn>
           </div>
         </div>
+      </div>
+
+      {/* Scroll hint */}
+      <div
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
+          hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
+        <svg
+          className="animate-bounce text-neutral-500"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
+import { isSafari } from '@/lib/isSafari';
 
 interface Scene02Props {
   isActive: boolean;
@@ -198,11 +199,11 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           href="/oxytap-portfolio.html"
         />
       </div>
-      {/* Astronaut video - top-middle anchored at screen center, drifts in, follows mouse */}
+      {/* Astronaut video - centered in viewport, drifts down on entrance, follows mouse */}
       <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-20 h-full w-full">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
-            drifted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+            drifted ? 'translate-y-10 opacity-100' : 'translate-y-0 opacity-0'
           }`}
         >
           <div
@@ -219,7 +220,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               playsInline
               loop
               preload="auto"
-              className="h-full w-full origin-top object-contain object-top"
+              className={`h-full w-full origin-center object-contain object-center ${isSafari ? 'mix-blend-screen' : ''}`}
               style={{
                 transform: `scale(${scaleAstro})`,
                 transition: 'transform 10s ease-out',

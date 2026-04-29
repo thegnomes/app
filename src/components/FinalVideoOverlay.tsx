@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isSafari } from '@/lib/isSafari';
 
 interface FinalVideoOverlayProps {
   isActive: boolean;
@@ -84,7 +85,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
         muted
         playsInline
         preload="auto"
-        className="h-full w-full object-cover"
+        className={`h-full w-full object-cover ${isSafari ? 'mix-blend-screen' : ''}`}
         onTimeUpdate={handleTimeUpdate}
         onEnded={onEnded}
       >

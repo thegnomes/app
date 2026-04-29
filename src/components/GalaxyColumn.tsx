@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { RingText } from './RingText';
+import { isSafari } from '@/lib/isSafari';
 
 interface GalaxyColumnProps {
   srcWebm: string;
@@ -55,7 +56,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           playsInline
           loop
           preload="auto"
-          className="h-full w-full"
+          className={`h-full w-full ${isSafari ? 'mix-blend-screen' : ''}`}
         >
           <source src={srcWebm} type="video/webm" />
           <source src={srcMov} type="video/quicktime" />

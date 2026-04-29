@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { isSafari } from '@/lib/isSafari';
 
 interface VideoBackgroundProps {
   isActive: boolean;
@@ -95,7 +96,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
             loop
             playsInline
             preload="auto"
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain ${isSafari ? 'mix-blend-screen' : ''}`}
           />
           <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/70 font-orbitron text-sm tracking-[0.2em] pointer-events-none">
             {loadProgress}%
@@ -113,6 +114,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
         className={`
           absolute inset-0 w-full h-full object-cover
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+          ${isSafari ? 'mix-blend-screen' : ''}
         `}
         style={{
           transition: 'opacity 0.3s ease-out',

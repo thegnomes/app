@@ -4,8 +4,6 @@ import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import { FinalVideoOverlay } from './components/FinalVideoOverlay';
-import { Scene02 } from './components/Scene02';
-import { AstronautTextOverlay } from './components/AstronautTextOverlay';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import {
@@ -24,10 +22,7 @@ function App() {
   const [autoZoom, setAutoZoom] = useState(false);
   const autoZoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
-  const [scene02Active, setScene02Active] = useState(false);
-  const [playAstro, setPlayAstro] = useState(false);
-  const [showAstronautText, setShowAstronautText] = useState(false);
-  
+  const redirectedRef = useRef(false);
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
   useEffect(() => {
@@ -82,17 +77,22 @@ function App() {
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
-    setScene02Active(false);
-    setPlayAstro(false);
+
+  }, []);
+
+  const redirectToScene02 = useCallback(() => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+    window.location.href = '/scene02.html';
   }, []);
 
   const handleFinalVideoEnded = useCallback(() => {
     setShowFinalVideo(false);
-    setPlayAstro(true);
-  }, []);
+    redirectToScene02();
+  }, [redirectToScene02]);
 
   const handleAstronautPhase = useCallback(() => {
-    setShowAstronautText(true);
+    // Astronaut text and Scene02 are now on the standalone page
   }, []);
 
   // Explicitly preload critical video assets before starting the experience
@@ -333,9 +333,7 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
-        setScene02Active(false);
-        setPlayAstro(false);
-        setShowAstronautText(false);
+
       }, 2500);
       return () => clearTimeout(t);
     }
@@ -346,8 +344,6 @@ function App() {
 
     const timerId = setTimeout(() => {
       setShowFinalVideo(true);
-      setScene02Active(true);
-      setPlayAstro(false);
     }, FINAL_VIDEO_DELAY_MS);
 
     return () => clearTimeout(timerId);
@@ -372,8 +368,6 @@ function App() {
       </div>
       {assetsLoaded && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} onAstronautPhase={handleAstronautPhase} />
-      <Scene02 isActive={scene02Active} playAstro={playAstro} />
-      <AstronautTextOverlay isActive={showAstronautText} />
       <Footer />
     </div>
   );
