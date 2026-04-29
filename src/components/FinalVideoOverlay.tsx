@@ -76,7 +76,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
 
   return (
     <div
-      className={`fixed inset-0 z-40 overflow-hidden bg-black ${
+      className={`fixed inset-0 z-40 overflow-hidden ${
         isActive ? 'opacity-100' : 'pointer-events-none opacity-0'
       }`}
       aria-hidden={!isActive}
@@ -86,7 +86,8 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
         muted
         playsInline
         preload="auto"
-        className={`h-full w-full object-cover ${isSafari ? 'mix-blend-screen' : ''}`}
+        className="h-full w-full object-cover"
+        style={isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : undefined}
         onTimeUpdate={handleTimeUpdate}
         onEnded={onEnded}
       >

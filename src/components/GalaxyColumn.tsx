@@ -51,7 +51,10 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           filter: isHovered ? 'saturate(1)' : 'saturate(0)',
         }}
       >
-        <div className={`h-full w-full ${isSafari ? 'mix-blend-screen' : ''}`}>
+        <div
+          className="h-full w-full"
+          style={isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : undefined}
+        >
           <video
             ref={videoRef}
             muted

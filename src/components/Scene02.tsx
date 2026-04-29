@@ -149,7 +149,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   if (!isActive) return null;
 
   return (
-    <div className="fixed inset-0 z-30 overflow-hidden bg-black">
+    <div className="absolute inset-0 z-30 overflow-hidden bg-black">
       {/* Nebula background - starts at 200%, zooms out to 100% */}
       <div
         ref={nebulaParallaxRef}
@@ -221,10 +221,11 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               playsInline
               loop
               preload="auto"
-              className={`h-full w-full origin-center object-contain object-center ${isSafari ? 'mix-blend-screen' : ''}`}
+              className="h-full w-full origin-center object-contain object-center"
               style={{
                 transform: `scale(${scaleAstro})`,
                 transition: 'transform 10s ease-out',
+                ...(isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : {}),
               }}
             />
           </div>

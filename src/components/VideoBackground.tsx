@@ -81,7 +81,6 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
 
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
       style={{
-        backgroundColor: '#000000',
         opacity: isFadingOut ? 0 : 1,
         transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
         pointerEvents: isFadingOut ? 'none' : 'auto',
@@ -115,10 +114,10 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
         className={`
           absolute inset-0 w-full h-full object-cover
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-          ${isSafari ? 'mix-blend-screen' : ''}
         `}
         style={{
           transition: 'opacity 0.3s ease-out',
+          ...(isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : {}),
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleZoomEnded}

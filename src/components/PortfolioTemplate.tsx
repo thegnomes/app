@@ -1,5 +1,6 @@
 ﻿import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
+import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { resolveAssetUrl } from '@/lib/assets';
 
@@ -156,6 +157,7 @@ function VideoPlayer({
   // External URLs (Vercel Blob, CDN) are used directly.
   // Local paths still try both .webm and .mp4 variants.
   const isExternal = resolved.startsWith('http');
+  const safariStyle = isSafari ? { mixBlendMode: 'screen' as const, filter: 'brightness(1)' as const } : undefined;
   if (isExternal) {
     return (
       <video
@@ -166,6 +168,7 @@ function VideoPlayer({
         preload="auto"
         poster={poster ? resolveAssetUrl(poster) : undefined}
         className={className}
+        style={safariStyle}
       >
         <source src={resolved} type={`video/${resolved.replace(/.*\./, '')}`} />
       </video>
@@ -181,6 +184,7 @@ function VideoPlayer({
       preload="auto"
       poster={poster ? resolveAssetUrl(poster) : undefined}
       className={className}
+      style={safariStyle}
     >
       <source src={`${base}.webm`} type="video/webm" />
       <source src={`${base}.mp4`} type="video/mp4" />
