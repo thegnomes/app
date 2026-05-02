@@ -1,7 +1,8 @@
-﻿import { useEffect, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { Preloader } from './Preloader';
 import { resolveAssetUrl } from '@/lib/assets';
 
 /* ─── Hooks ─── */
@@ -805,7 +806,24 @@ function Footer({ project }: { project: PortfolioProject }) {
 
 /* ─── Page ─── */
 
+function extractProjectAssets(project: PortfolioProject): string[] {
+  const assets = new Set<string>();
+
+  if (project.heroVideo) assets.add(project.heroVideo);
+
+  project.gallery.forEach((item) => assets.add(item.src));
+
+  project.proof.forEach((step) => {
+    step.images?.forEach((img) => assets.add(img.src));
+  });
+
+  return Array.from(assets).map(resolveAssetUrl);
+}
+
 export default function PortfolioTemplate({ project, children }: { project: PortfolioProject; children?: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const assets = useMemo(() => extractProjectAssets(project), [project]);
+
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     document.body.style.overflow = 'auto';
@@ -814,6 +832,14 @@ export default function PortfolioTemplate({ project, children }: { project: Port
       document.body.style.overflow = '';
     };
   }, []);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <Preloader assets={assets} onComplete={() => setReady(true)} />
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
