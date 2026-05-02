@@ -21,7 +21,10 @@ export function useScrollLock(
   const cooldownRef = useRef(false);
   const touchStartYRef = useRef<number | null>(null);
   const onNavigateRef = useRef(onNavigate);
-  onNavigateRef.current = onNavigate;
+
+  useEffect(() => {
+    onNavigateRef.current = onNavigate;
+  }, [onNavigate]);
 
   useEffect(() => {
     const checkPosition = () => {
@@ -32,8 +35,8 @@ export function useScrollLock(
       }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      // Enable only when section is fully in view
-      isEnabledRef.current = rect.top >= 0 && rect.bottom <= vh;
+      const tolerance = Math.min(96, vh * 0.12);
+      isEnabledRef.current = rect.top <= tolerance && rect.bottom >= vh - tolerance;
     };
 
     const onScroll = () => checkPosition();

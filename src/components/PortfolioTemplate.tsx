@@ -1,4 +1,4 @@
-﻿import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
@@ -6,34 +6,20 @@ import { resolveAssetUrl } from '@/lib/assets';
 
 /* ─── Hooks ─── */
 
-function useScrollProgress(ref: React.RefObject<HTMLElement | null>) {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const onScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const p = rect.height > 0 ? Math.min(1, Math.max(0, -rect.top / rect.height)) : 0;
-      setProgress(p);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [ref]);
-  return progress;
-}
-
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const windowH = window.innerHeight;
-    if (rect.top < windowH && rect.bottom > 0) {
-      setInView(true);
-    }
+    const frameId = requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      if (rect.top < windowH && rect.bottom > 0) {
+        setInView(true);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
   useEffect(() => {
@@ -192,62 +178,6 @@ function VideoPlayer({
   );
 }
 
-function ParallaxImage({
-  src,
-  alt,
-  className = '',
-  speed = 0.3,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  speed?: number;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(containerRef);
-  const offset = (progress - 0.5) * speed * 100;
-
-  return (
-    <div ref={containerRef} className={`overflow-hidden ${className}`}>
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover will-change-transform"
-        style={{ transform: `translateY(${offset}px) scale(1.08)` }}
-      />
-    </div>
-  );
-}
-
-function RevealImage({
-  src,
-  alt,
-  className = '',
-  delay = 0,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  delay?: number;
-}) {
-  const { ref, inView } = useInView(0.1);
-  return (
-    <div ref={ref} className={`overflow-hidden ${className}`}>
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover will-change-transform transition-transform ease-out"
-        style={{
-          transform: inView ? 'scale(1)' : 'scale(1.12)',
-          opacity: inView ? 1 : 0,
-          transitionDelay: `${delay}ms`,
-          transitionDuration: '1200ms',
-        }}
-      />
-    </div>
-  );
-}
-
 function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
@@ -317,7 +247,7 @@ function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
           <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
         </div>
       </div>
-      <div className="relative whitespace-nowrap text-5xl md:text-7xl lg:text-8xl tracking-tight leading-[0.95] text-white">
+      <div className="relative whitespace-nowrap text-2xl md:text-4xl lg:text-5xl tracking-tight leading-none text-white/90">
         <div ref={row2Ref} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
@@ -401,7 +331,7 @@ function Hero({ project }: { project: PortfolioProject }) {
 
         {project.scrollFlowTitle ? (
           <div className="mb-8">
-            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.scrollFlowTitle.bottom} />
+            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.role} />
           </div>
         ) : (
           <h1
@@ -420,7 +350,6 @@ function Hero({ project }: { project: PortfolioProject }) {
         <div className="flex flex-wrap items-center gap-8 md:gap-12">
           {[
             { label: 'Client', value: project.client },
-            { label: 'Role', value: project.role },
             { label: 'Deliverables', value: project.deliverables },
           ].map((meta) => (
             <div key={meta.label}>
@@ -478,6 +407,18 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
 
+  const getStepImages = (stepIndex: number) => {
+    const step = project.proof[stepIndex];
+    if (step?.images !== undefined) return step.images;
+    const total = project.gallery.length;
+    if (total === 0) return [];
+    const perStep = 2;
+    const start = (stepIndex * perStep) % total;
+    return Array.from({ length: perStep }, (_, i) =>
+      project.gallery[(start + i) % total]
+    ).filter(Boolean);
+  };
+
   const handleNavigate = (dir: 'up' | 'down'): boolean => {
     if (!hasScrolled) setHasScrolled(true);
 
@@ -514,18 +455,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   useScrollLock(sectionRef, handleNavigate);
-
-  const getStepImages = (stepIndex: number) => {
-    const step = project.proof[stepIndex];
-    if (step?.images !== undefined) return step.images;
-    const total = project.gallery.length;
-    if (total === 0) return [];
-    const perStep = 2;
-    const start = (stepIndex * perStep) % total;
-    return Array.from({ length: perStep }, (_, i) =>
-      project.gallery[(start + i) % total]
-    ).filter(Boolean);
-  };
 
   const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
 
