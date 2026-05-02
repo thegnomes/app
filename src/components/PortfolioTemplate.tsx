@@ -377,14 +377,15 @@ function Hero({ project }: { project: PortfolioProject }) {
   return (
     <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 z-0">
-        <img src={resolveAssetUrl(heroImage)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
         {project.heroVideo ? (
           <VideoPlayer
             src={project.heroVideo}
             poster={heroImage}
             className="absolute inset-0 w-full h-full object-cover scale-105"
           />
-        ) : null}
+        ) : (
+          <img src={resolveAssetUrl(heroImage)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
+        )}
         <div className="absolute inset-0 bg-white/5" />
       </div>
 
@@ -416,8 +417,6 @@ function Hero({ project }: { project: PortfolioProject }) {
           </h1>
         )}
 
-        <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">{project.description}</p>
-
         <div className="flex flex-wrap items-center gap-8 md:gap-12">
           {[
             { label: 'Client', value: project.client },
@@ -442,6 +441,12 @@ function Overview({ project }: { project: PortfolioProject }) {
         <div className="md:col-span-4">
           <FadeIn>
             <Label>{project.philosophyLabel}</Label>
+          </FadeIn>
+          <FadeIn delay={100}>
+            <div className="mt-6 space-y-2">
+              <p className="text-3xl md:text-4xl font-medium text-white font-russo">{project.year}</p>
+              <p className="text-xl md:text-2xl font-medium text-white font-russo">{project.coreCompetency}</p>
+            </div>
           </FadeIn>
         </div>
         <div className="md:col-span-8">
@@ -562,7 +567,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-8 md:py-12 border-y border-neutral-900 bg-[#0a0a0a] h-screen overflow-hidden">
+    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] h-[100dvh] overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -576,11 +581,11 @@ function DualModeView({ project }: { project: PortfolioProject }) {
       <div className="max-w-7xl mx-auto h-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 h-full">
           {/* Left: Steps Timeline */}
-          <div className="lg:col-span-5 h-full overflow-y-auto">
+          <div className="lg:col-span-5 h-full overflow-hidden">
             <FadeIn>
               <Label>Proof of Work</Label>
             </FadeIn>
-            <div className="mt-8 space-y-0 relative">
+            <div className="mt-4 space-y-0 relative">
               {project.proof.map((step, index) => {
                 const isActive = index === activeStep;
                 return (
@@ -588,7 +593,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                     <button
                       type="button"
                       onClick={() => handleStepClick(index)}
-                      className={`w-full text-left group flex gap-4 py-5 ${
+                      className={`w-full text-left group flex gap-4 py-3 ${
                         index < project.proof.length - 1 ? 'border-b border-neutral-800/60' : ''
                       }`}
                     >
@@ -632,7 +637,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                         >
                           {step.title}
                         </h3>
-                        <p className="text-xl md:text-2xl font-medium text-neutral-400 mb-1.5 font-russo">
+                        <p className="text-sm md:text-base font-medium mb-1.5 font-russo" style={{ color: project.accentColor || '#eab308' }}>
                           {step.desc}
                         </p>
                         <p className="text-sm text-neutral-500 leading-relaxed">

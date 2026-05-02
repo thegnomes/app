@@ -4,6 +4,7 @@
   titleAccent: string;
   tag: string;
   year: string;
+  coreCompetency: string;
   description: string;
   client: string;
   role: string;
@@ -31,6 +32,7 @@ export const moraeProject: PortfolioProject = {
   titleAccent: 'Identity',
   tag: 'Case Study',
   year: '2026',
+  coreCompetency: 'Design & Development',
   description:
     'A complete brand and digital experience for a single-product audio company. Designed to eliminate distraction and center the listener.',
   client: 'MORAE Audio',
@@ -83,6 +85,7 @@ export const totoProject: PortfolioProject = {
   titleAccent: '#washnotwipe',
   tag: 'Creative Direction',
   year: '2024',
+  coreCompetency: 'Creative Direction',
   description:
     'Developed a platform idea that could travel across channels while keeping the message, visual identity, and campaign logic coherent.',
   client: 'TOTO via Onezine',
@@ -93,9 +96,10 @@ export const totoProject: PortfolioProject = {
     'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
   philosophyBody:
     'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
-  accentColor: '#06b6d4',
-  accentSecondaryColor: '#2dd4bf',
+  accentColor: '#1e3a8a',
+  accentSecondaryColor: '#2563eb',
   heroVideo: '/portfolio/TOTO/wnw-toilet.mp4',
+  scrollFlowTitle: { top: 'TOTO', bottom: '#washnotwipe' },
   proof: [
     {
       num: '01',
@@ -180,6 +184,7 @@ export const nft11Project: PortfolioProject = {
   titleAccent: 'Universe Building',
   tag: 'Universe Building',
   year: '2023',
+  coreCompetency: 'Community Strategy',
   description:
     'Built the rituals, programming, and community cadence that gave the project momentum and made participation feel continuous rather than episodic.',
   client: 'NFT11',
@@ -271,6 +276,7 @@ export const oxytapProject: PortfolioProject = {
   titleAccent: 'Ecosystem',
   tag: 'Prototype-to-Ship',
   year: '2024',
+  coreCompetency: 'Systems Design',
   description:
     'Turned fragmented business needs into connected digital systems across brand, support, affiliate operations, and future automation planning.',
   client: 'OxyTap',
@@ -281,7 +287,10 @@ export const oxytapProject: PortfolioProject = {
     'This work extended beyond a single product or interface.',
   philosophyBody:
     'Across OxyTap, the challenge was to translate a growing set of business needs into working digital systems — from the public-facing brand site, to the support and warranty infrastructure, to affiliate operations, and future conversational support planning.\n\nMy role was to turn these moving parts into something more coherent: shaping the user-facing experience, defining system logic, and building the structures needed for the brand to operate more clearly across multiple touchpoints.',
+  accentColor: '#67e8f9',
+  accentSecondaryColor: '#22d3ee',
   heroVideo: 'https://chnsb9h6s6psbc0a.public.blob.vercel-storage.com/oxytap/oxytap-hero.webm',
+  scrollFlowTitle: { top: 'OxyTap', bottom: 'Ecosystem' },
   proof: [
     {
       num: '01',
