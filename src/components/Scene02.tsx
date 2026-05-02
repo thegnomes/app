@@ -161,7 +161,7 @@ function Scene02BottomMarquee({
 
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 bottom-5 z-30 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out sm:bottom-7 md:bottom-8 ${
+      className={`pointer-events-none absolute inset-x-0 bottom-[100px] z-30 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       aria-hidden="true"
@@ -318,7 +318,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           className="absolute left-1/2 top-1/2 h-full w-full object-cover"
           style={{
             transform: `translate(-50%, -50%) scale(${scaleNebula})`,
-            transition: 'transform 10s ease-out',
+            transition: 'transform 5s ease-out',
           }}
         />
       </div>

@@ -67,15 +67,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     wordStagger: 55,
   },
   4: {
-    header: 'Ignition.',
-    subtext: 'What becomes a centre begins to draw others into orbit.',
+    header: '',
+    subtext: '',
     revealMode: 'payoff',
-    headerDelay: 180,
-    subtextDelay: 560,
-    subtextTypeDuration: 1400,
+    headerDelay: 0,
+    subtextDelay: 0,
+    subtextTypeDuration: 0,
     transitionDuration: 800,
     lingerPrevious: 260,
-    wordStagger: 65,
+    wordStagger: 0,
   },
   5: {
     header: 'Formation collapses.',
@@ -220,26 +220,24 @@ function renderWordReveal(
 }
 
 function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; isExiting?: boolean }) {
-  const [visibleWords, setVisibleWords] = useState(0);
-  const [visibleLines, setVisibleLines] = useState(0);
+  const [wordState, setWordState] = useState({ current: -1, previous: -1 });
+  const [lineState, setLineState] = useState({ current: -1, previous: -1 });
 
   useEffect(() => {
     if (!isVisible) {
-      const raf = requestAnimationFrame(() => {
-        setVisibleWords(0);
-        setVisibleLines(0);
-      });
-      return () => cancelAnimationFrame(raf);
+      setWordState({ current: -1, previous: -1 });
+      setLineState({ current: -1, previous: -1 });
+      return;
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
-    // Header words: Time @ 0ms, Pressure @ 3000ms, Intent @ 6000ms
-    timers.push(setTimeout(() => setVisibleWords(1), 0));
-    timers.push(setTimeout(() => setVisibleWords(2), 3000));
-    timers.push(setTimeout(() => setVisibleWords(3), 6000));
-    // Subtext lines start 1000ms after their header word
-    timers.push(setTimeout(() => setVisibleLines(1), 1000));
-    timers.push(setTimeout(() => setVisibleLines(2), 4000));
-    timers.push(setTimeout(() => setVisibleLines(3), 7000));
+    // Header words replace sequentially: Time. → Pressure. → Intent.
+    timers.push(setTimeout(() => setWordState({ current: 0, previous: -1 }), 0));
+    timers.push(setTimeout(() => setWordState({ current: 1, previous: 0 }), 3000));
+    timers.push(setTimeout(() => setWordState({ current: 2, previous: 1 }), 6000));
+    // Subtext lines replace sequentially
+    timers.push(setTimeout(() => setLineState({ current: 0, previous: -1 }), 1000));
+    timers.push(setTimeout(() => setLineState({ current: 1, previous: 0 }), 4000));
+    timers.push(setTimeout(() => setLineState({ current: 2, previous: 1 }), 7000));
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
@@ -250,56 +248,66 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
     'To hold is not to possess. Too much grip, and nothing becomes.',
   ];
 
-  const exitY = -10;
-  const enterY = 10;
+  const exitY = -12;
+  const enterY = 16;
 
   return (
     <div className="flex flex-col items-center justify-center text-center px-5 py-2">
+      {/* Header word — single active word with replacement animation */}
       <h1
-        className="font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none"
+        className="relative font-russo flex min-h-[1.6em] w-full items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
-          animation: 'text-color-morph 1200ms ease-out both',
-          '--text-color-from': '#a855f7',
-          '--text-color-to': '#22d3ee',
-        } as CSSProperties}
+        }}
       >
-        {words.map((word, i) => (
-          <span
-            key={i}
-            className="inline-block mr-[0.28em] transition-all ease-out"
-            style={{
-              opacity: isExiting ? 0 : i < visibleWords ? 1 : 0,
-              transform: `translate3d(0, ${isExiting ? exitY : i < visibleWords ? 0 : enterY}px, 0)`,
-              filter: `blur(${isExiting ? '6px' : i < visibleWords ? '0px' : '8px'})`,
-              transitionDuration: '800ms',
-              transitionDelay: isExiting ? '0ms' : `${i * 60}ms`,
-              transitionProperty: 'opacity, transform, filter',
-            }}
-          >
-            {word}
-          </span>
-        ))}
+        {words.map((word, i) => {
+          const isActive = i === wordState.current;
+          const wasActive = i === wordState.previous;
+          return (
+            <span
+              key={word}
+              className="absolute inset-0 flex items-center justify-center transition-all ease-out"
+              style={{
+                opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
+                transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
+                filter: `blur(${isExiting ? '6px' : isActive ? '0px' : wasActive ? '6px' : '8px'})`,
+                transitionDuration: '700ms',
+                transitionProperty: 'opacity, transform, filter',
+                pointerEvents: 'none',
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
       </h1>
-      <div className="mt-1 flex flex-col items-center gap-2">
-        {lines.map((line, i) => (
-          <p
-            key={i}
-            className="font-russo flex min-h-[1.2em] items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
-            style={{
-              opacity: isExiting ? 0 : i < visibleLines ? 1 : 0,
-              transform: `translate3d(0, ${isExiting ? exitY : i < visibleLines ? 0 : enterY}px, 0)`,
-              filter: `blur(${isExiting ? '6px' : i < visibleLines ? '0px' : '8px'})`,
-              transitionDuration: '1000ms',
-              transitionDelay: isExiting ? '0ms' : `${i * 80}ms`,
-              transitionProperty: 'opacity, transform, filter',
-              textShadow: getSubtextShadow('firm'),
-            }}
-          >
-            {line}
-          </p>
-        ))}
+
+      {/* Subtext line — single active line with replacement animation */}
+      <div className="relative mt-3 min-h-[2em] w-full flex items-center justify-center">
+        {lines.map((line, i) => {
+          const isActive = i === lineState.current;
+          const wasActive = i === lineState.previous;
+          return (
+            <p
+              key={i}
+              className="absolute font-russo flex items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+              style={{
+                opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
+                transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
+                filter: `blur(${isExiting ? '6px' : isActive ? '0px' : wasActive ? '6px' : '8px'})`,
+                transitionDuration: '900ms',
+                transitionProperty: 'opacity, transform, filter',
+                textShadow: getSubtextShadow('firm'),
+                pointerEvents: 'none',
+                maxWidth: 'min(80vw, 600px)',
+                padding: '0 1rem',
+              }}
+            >
+              {line}
+            </p>
+          );
+        })}
       </div>
     </div>
   );
@@ -416,6 +424,9 @@ export function StateText({ state }: { state: TextSceneState }) {
     const subtextVisible = instance.subtextVisible && !isExiting;
     const accentStyle = getAccentStyle(config);
     const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
+    const headerUsesGradient = headerTone === 'gradient-text';
+    const headerContainerTone = headerUsesGradient ? '' : headerTone;
+    const headerWordTone = headerUsesGradient ? headerTone : '';
 
     if (instance.state === '2') {
       return (
@@ -445,15 +456,12 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionDuration: `${duration}ms`,
         }}
       >
-        {/* Subtext - above center, overlapping the subject */}
-        {config.subtext && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ top: '36%', maxWidth: 'min(90vw, 720px)', width: '100%' }}
-          >
-            {config.subtextAsHeader ? (
+        <div className="relative flex w-full max-w-[min(90vw,720px)] flex-col items-center px-5 text-center">
+          {/* Subtext - above center, overlapping the subject */}
+          {config.subtext && (
+            config.subtextAsHeader ? (
               <h2
-                className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none ${headerTone} tracking-[0.15em]`}
+                className={`relative z-10 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone} tracking-[0.15em]`}
                 style={{
                   textShadow: getHeaderShadow(config.revealMode),
                   ...accentStyle,
@@ -467,12 +475,12 @@ export function StateText({ state }: { state: TextSceneState }) {
                   config.wordStagger,
                   enterY + 4,
                   -8,
-                  'transition-all ease-out'
+                  `transition-all ease-out ${headerWordTone}`
                 )}
               </h2>
             ) : (
               <p
-                className="font-russo flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+                className="relative z-10 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
                 style={{
                   textShadow: getSubtextShadow(config.revealMode),
                 }}
@@ -488,18 +496,13 @@ export function StateText({ state }: { state: TextSceneState }) {
                   'transition-all ease-out'
                 )}
               </p>
-            )}
-          </div>
-        )}
+            )
+          )}
 
-        {/* Header - below the subject */}
-        {config.header && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ bottom: '36%', maxWidth: 'min(90vw, 720px)', width: '100%' }}
-          >
+          {/* Header - below the subject */}
+          {config.header && (
             <h1
-              className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none ${headerTone}`}
+              className={`relative z-20 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
               style={{
                 textShadow: getHeaderShadow(config.revealMode),
                 ...accentStyle,
@@ -513,11 +516,11 @@ export function StateText({ state }: { state: TextSceneState }) {
                 config.wordStagger,
                 enterY,
                 -8,
-                'transition-all ease-out'
+                `transition-all ease-out ${headerWordTone}`
               )}
             </h1>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };

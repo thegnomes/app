@@ -29,7 +29,7 @@ export function AstronautTextOverlay({ isActive }: AstronautTextOverlayProps) {
           }}
         >
           <h1
-            className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[24px] font-normal leading-relaxed gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)]"
+            className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-relaxed gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] uppercase"
             style={{ textShadow: '0 0 30px rgba(168, 85, 247, 0.6)' }}
           >
             At the edge of fantasy and reality,

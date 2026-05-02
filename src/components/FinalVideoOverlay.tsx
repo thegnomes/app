@@ -108,7 +108,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
               }}
             >
               <h1
-                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[24px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out"
+                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out uppercase"
                 style={{
                   textShadow: '0 0 30px rgba(168, 85, 247, 0.6)',
                   transitionDuration: `${TEXT_TRANSITION_MS}ms`,
@@ -117,7 +117,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
                 Its influence becomes order.
               </h1>
               <h1
-                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[24px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out"
+                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out uppercase"
                 style={{
                   opacity: showZoomHeader2 ? 1 : 0,
                   transform: `translate3d(0, ${showZoomHeader2 ? 0 : 14}px, 0)`,
