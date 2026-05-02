@@ -35,8 +35,21 @@ export function useScrollLock(
       }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      const tolerance = Math.min(96, vh * 0.12);
-      isEnabledRef.current = rect.top <= tolerance && rect.bottom >= vh - tolerance;
+      const viewportCenter = vh / 2;
+      isEnabledRef.current = rect.top <= viewportCenter && rect.bottom >= viewportCenter;
+    };
+
+    const lockSectionToViewport = () => {
+      const el = ref.current;
+      if (!el) return;
+
+      const top = window.scrollY + el.getBoundingClientRect().top;
+      if (Math.abs(window.scrollY - top) < 1) return;
+
+      const previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = 'auto';
+      window.scrollTo({ top });
+      document.documentElement.style.scrollBehavior = previousScrollBehavior;
     };
 
     const onScroll = () => checkPosition();
@@ -52,12 +65,14 @@ export function useScrollLock(
 
       if (cooldownRef.current) {
         e.preventDefault();
+        lockSectionToViewport();
         return;
       }
 
       const consumed = onNavigateRef.current(dir);
       if (consumed) {
         e.preventDefault();
+        lockSectionToViewport();
         cooldownRef.current = true;
         setTimeout(() => {
           cooldownRef.current = false;
@@ -82,12 +97,14 @@ export function useScrollLock(
 
       if (cooldownRef.current) {
         e.preventDefault();
+        lockSectionToViewport();
         return;
       }
 
       const consumed = onNavigateRef.current(dir);
       if (consumed) {
         e.preventDefault();
+        lockSectionToViewport();
         touchStartYRef.current = e.touches[0].clientY;
         cooldownRef.current = true;
         setTimeout(() => {
@@ -111,12 +128,14 @@ export function useScrollLock(
 
       if (cooldownRef.current) {
         e.preventDefault();
+        lockSectionToViewport();
         return;
       }
 
       const consumed = onNavigateRef.current(dir);
       if (consumed) {
         e.preventDefault();
+        lockSectionToViewport();
         cooldownRef.current = true;
         setTimeout(() => {
           cooldownRef.current = false;

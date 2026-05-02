@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿export interface PortfolioProject {
+export interface PortfolioProject {
   slug: string;
   title: string;
   titleAccent: string;
@@ -96,8 +96,8 @@ export const totoProject: PortfolioProject = {
     'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
   philosophyBody:
     'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
-  accentColor: '#1e3a8a',
-  accentSecondaryColor: '#2563eb',
+  accentColor: '#3b82f6',
+  accentSecondaryColor: '#60a5fa',
   heroVideo: '/portfolio/TOTO/wnw-toilet.mp4',
   scrollFlowTitle: { top: 'TOTO', bottom: '#washnotwipe' },
   proof: [
