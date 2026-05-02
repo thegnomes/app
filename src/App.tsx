@@ -5,6 +5,7 @@ import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import { FinalVideoOverlay } from './components/FinalVideoOverlay';
 import { AstronautTextOverlay } from './components/AstronautTextOverlay';
+import { DisclaimerDialog } from './components/DisclaimerDialog';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import { resolveAssetUrl } from '@/lib/assets';
@@ -25,6 +26,11 @@ function App() {
   const autoZoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [showAstronautText, setShowAstronautText] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const showDisclaimerRef = useRef(true);
+  useEffect(() => {
+    showDisclaimerRef.current = showDisclaimer;
+  }, [showDisclaimer]);
   const redirectedRef = useRef(false);
   const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Use refs to track current state to avoid closure issues
@@ -89,6 +95,11 @@ function App() {
     redirectedRef.current = true;
     window.location.href = '/scene02.html';
   }, []);
+
+  const handleSkipToScene02 = useCallback(() => {
+    setShowDisclaimer(false);
+    redirectToScene02();
+  }, [redirectToScene02]);
 
   const handleFinalVideoEnded = useCallback(() => {
     setShowFinalVideo(false);
@@ -199,6 +210,7 @@ function App() {
     autoZoomTimerRef.current = setTimeout(() => {
       autoZoomTimerRef.current = null;
       if (stateRef.current !== 0) return; // user already transitioned manually
+      if (showDisclaimerRef.current) return; // wait until disclaimer is dismissed
       setAutoZoom(true);
       setState(1);
       setTextState(1);
@@ -426,6 +438,11 @@ function App() {
       {assetsLoaded && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} onAstronautPhase={handleAstronautPhase} />
       <AstronautTextOverlay isActive={showAstronautText} />
+      <DisclaimerDialog
+        open={showDisclaimer}
+        onClose={() => setShowDisclaimer(false)}
+        onSkip={handleSkipToScene02}
+      />
       <Footer />
     </div>
   );
