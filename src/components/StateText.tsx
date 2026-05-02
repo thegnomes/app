@@ -254,9 +254,9 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
   const enterY = 10;
 
   return (
-    <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
+    <div className="flex flex-col items-center justify-center text-center px-5 py-2">
       <h1
-        className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none"
+        className="font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
@@ -282,11 +282,11 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
           </span>
         ))}
       </h1>
-      <div className="mt-1 flex flex-col items-start gap-2">
+      <div className="mt-1 flex flex-col items-center gap-2">
         {lines.map((line, i) => (
           <p
             key={i}
-            className="font-orbitron flex min-h-[1.2em] items-center justify-start text-left text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+            className="font-russo flex min-h-[1.2em] items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
             style={{
               opacity: isExiting ? 0 : i < visibleLines ? 1 : 0,
               transform: `translate3d(0, ${isExiting ? exitY : i < visibleLines ? 0 : enterY}px, 0)`,
@@ -421,14 +421,16 @@ export function StateText({ state }: { state: TextSceneState }) {
       return (
         <div
           key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute left-0 top-0 grid w-full grid-cols-[minmax(0,1fr)_clamp(72px,16vw,220px)_minmax(0,1fr)] items-center transition-all ease-out"
+          className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
           style={{
             opacity: blockOpacity,
             transform: `translate3d(0, ${blockY}px, 0)`,
             transitionDuration: `${duration}ms`,
           }}
         >
-          <State2CumulativeText isVisible={headerVisible} isExiting={isExiting} />
+          <div style={{ transform: 'translateY(60px)' }}>
+            <State2CumulativeText isVisible={headerVisible} isExiting={isExiting} />
+          </div>
         </div>
       );
     }
@@ -436,38 +438,22 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute left-0 top-0 grid w-full grid-cols-[minmax(0,1fr)_clamp(72px,16vw,220px)_minmax(0,1fr)] items-center transition-all ease-out"
+        className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
         style={{
           opacity: blockOpacity,
           transform: `translate3d(0, ${blockY}px, 0)`,
           transitionDuration: `${duration}ms`,
         }}
       >
-        <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
-          {config.header && (
-            <h1
-              className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone}`}
-              style={{
-                textShadow: getHeaderShadow(config.revealMode),
-                ...accentStyle,
-              }}
-            >
-              {renderWordReveal(
-                config.header,
-                headerVisible,
-                isExiting,
-                config.transitionDuration,
-                config.wordStagger,
-                enterY,
-                -8,
-                'transition-all ease-out'
-              )}
-            </h1>
-          )}
-          {config.subtext && (
-            config.subtextAsHeader ? (
+        {/* Subtext - above center, overlapping the subject */}
+        {config.subtext && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ top: '36%', maxWidth: 'min(90vw, 720px)', width: '100%' }}
+          >
+            {config.subtextAsHeader ? (
               <h2
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} tracking-[0.15em]`}
+                className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none ${headerTone} tracking-[0.15em]`}
                 style={{
                   textShadow: getHeaderShadow(config.revealMode),
                   ...accentStyle,
@@ -486,7 +472,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               </h2>
             ) : (
               <p
-                className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+                className="font-russo flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
                 style={{
                   textShadow: getSubtextShadow(config.revealMode),
                 }}
@@ -502,20 +488,45 @@ export function StateText({ state }: { state: TextSceneState }) {
                   'transition-all ease-out'
                 )}
               </p>
-            )
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {/* Header - below the subject */}
+        {config.header && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ bottom: '36%', maxWidth: 'min(90vw, 720px)', width: '100%' }}
+          >
+            <h1
+              className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[24px] font-normal leading-none ${headerTone}`}
+              style={{
+                textShadow: getHeaderShadow(config.revealMode),
+                ...accentStyle,
+              }}
+            >
+              {renderWordReveal(
+                config.header,
+                headerVisible,
+                isExiting,
+                config.transitionDuration,
+                config.wordStagger,
+                enterY,
+                -8,
+                'transition-all ease-out'
+              )}
+            </h1>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <div className="fixed inset-0 z-20 pointer-events-none">
-      <div className="absolute left-1/2 top-1/2 w-[min(92vw,1120px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
-        <div className="relative min-h-fit">
-          {previous && renderTextBlock(previous, 'previous')}
-          {active && renderTextBlock(active, 'active')}
-        </div>
+      <div className="relative w-full h-full">
+        {previous && renderTextBlock(previous, 'previous')}
+        {active && renderTextBlock(active, 'active')}
       </div>
     </div>
   );

@@ -73,13 +73,21 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
     };
   }, []);
 
+  const handleClick = () => {
+    if (!isZooming && isActive) {
+      setIsZooming(true);
+      zoomVideoRef.current?.play();
+      onTransition();
+    }
+  };
+
   // Keep mounted while zoom video is playing/fading, even after parent switches to state 1
   if (!isActive && !isVisible && !isZooming) return null;
 
   return (
     <div
-
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
+      onClick={handleClick}
       style={{
         opacity: isFadingOut ? 0 : 1,
         transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
@@ -90,15 +98,16 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
       {!isZooming && (
         <>
           <video
-            src={resolveAssetUrl('/idle_brain.webm')}
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
             className={`w-full h-full object-contain ${isSafari ? 'mix-blend-screen' : ''}`}
-          />
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/70 font-orbitron text-sm tracking-[0.2em] pointer-events-none">
+          >
+            <source src={resolveAssetUrl('/idle_brain.webm')} type="video/webm" />
+          </video>
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/70 font-russo text-sm tracking-[0.2em] pointer-events-none">
             {loadProgress}%
           </div>
         </>
@@ -107,7 +116,6 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
       {/* Zoom transition video - plays full with alpha, fades at end */}
       <video
         ref={zoomVideoRef}
-        src={resolveAssetUrl('/brain_zoom.webm')}
         muted
         playsInline
         preload="auto"
@@ -121,9 +129,10 @@ export function VideoBackground({ isActive, onTransition, autoTrigger, loadProgr
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleZoomEnded}
-      />
-      
-
+      >
+        <source src={resolveAssetUrl('/brain_zoom.webm')} type="video/webm" />
+        <source src={resolveAssetUrl('/brain_zoom.mp4')} type="video/mp4" />
+      </video>
     </div>
   );
 }
