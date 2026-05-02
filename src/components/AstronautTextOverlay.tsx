@@ -34,21 +34,17 @@ export function AstronautTextOverlay({ isActive }: AstronautTextOverlayProps) {
           >
             At the edge of fantasy and reality,
             <br />
-            a traveller bears witness
+            a traveller appears.
           </h1>
           <p
             className="font-orbitron flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[12px] sm:text-[13.5px] font-normal leading-loose text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] tracking-[0.15em]"
             style={{ textShadow: '0 0 20px rgba(0, 0, 0, 0.8)' }}
           >
-            I plot coordinates for ideas
+            Plotting coordinates for ideas —
             <br />
-            — navigating narrative,
+            through narrative, platforms,
             <br />
-            platforms,
-            <br />
-            and the systems
-            <br />
-            that bring them into form.
+            and the systems that bring them into form.
           </p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7;
 
 type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'collapse' | 'silence';
 
@@ -17,28 +17,31 @@ interface StateTextConfig {
   autoExitDelay?: number;
   visibleHeaderWords?: number;
   subtextAsHeader?: boolean;
+  wordStagger: number;
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
-    header: 'I have a theory',
+    header: 'I have a theory.',
     subtext: 'That what we call the universe is our collective mind made visible.',
     revealMode: 'soft',
     headerDelay: 180,
-    subtextDelay: 720,
+    subtextDelay: 900,
     subtextTypeDuration: 2100,
-    transitionDuration: 900,
+    transitionDuration: 800,
     lingerPrevious: 0,
+    wordStagger: 70,
   },
   1: {
-    header: 'Every idea begins as drift',
-    subtext: 'Waiting for the click of inspiration.',
+    header: 'Dust lies dormant in darkness.',
+    subtext: 'Waiting to matter with the first click.',
     revealMode: 'airy',
     headerDelay: 180,
-    subtextDelay: 900,
+    subtextDelay: 720,
     subtextTypeDuration: 1400,
-    transitionDuration: 1100,
+    transitionDuration: 800,
     lingerPrevious: 420,
+    wordStagger: 70,
   },
   '2': {
     header: 'Time. Pressure. Intent.',
@@ -48,49 +51,65 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     headerDelay: 0,
     subtextDelay: 0,
     subtextTypeDuration: 0,
-    transitionDuration: 1200,
+    transitionDuration: 1000,
     lingerPrevious: 0,
+    wordStagger: 0,
   },
   3: {
-    header: 'What gathers, begins to last.',
-    subtext: '',
+    header: 'The orbit forms naturally.',
+    subtext: 'What carries enough gravity begins to influence everything around it.',
     revealMode: 'bridge',
-    headerDelay: 40,
-    subtextDelay: 0,
+    headerDelay: 180,
+    subtextDelay: 600,
     subtextTypeDuration: 0,
-    transitionDuration: 320,
-    lingerPrevious: 180,
+    transitionDuration: 700,
+    lingerPrevious: 260,
+    wordStagger: 55,
   },
   4: {
-    header: 'Commitment ignites the core.',
-    subtext: 'Its gravity draws others into orbit.',
+    header: 'Ignition.',
+    subtext: 'What becomes a centre begins to draw others into orbit.',
     revealMode: 'payoff',
-    headerDelay: 90,
+    headerDelay: 180,
     subtextDelay: 560,
     subtextTypeDuration: 1400,
-    transitionDuration: 1050,
+    transitionDuration: 800,
     lingerPrevious: 260,
+    wordStagger: 65,
   },
   5: {
-    header: 'Some ideas burn brightly at first,',
-    subtext: 'but fade back into the dark.',
+    header: 'Formation collapses.',
+    subtext: 'Some things burn brightly, then fade back into the dark.',
     revealMode: 'collapse',
     headerDelay: 80,
-    subtextDelay: 360,
+    subtextDelay: 400,
     subtextTypeDuration: 900,
-    transitionDuration: 780,
+    transitionDuration: 700,
     lingerPrevious: 320,
     autoExitDelay: 1650,
+    wordStagger: 55,
   },
   6: {
     header: 'But not every star endures.',
     subtext: '',
     revealMode: 'reflection',
-    headerDelay: 420,
+    headerDelay: 180,
     subtextDelay: 0,
     subtextTypeDuration: 0,
-    transitionDuration: 900,
+    transitionDuration: 800,
     lingerPrevious: 420,
+    wordStagger: 60,
+  },
+  7: {
+    header: 'Its influence becomes order.',
+    subtext: 'Setting its universe in motion.',
+    revealMode: 'soft',
+    headerDelay: 180,
+    subtextDelay: 600,
+    subtextTypeDuration: 0,
+    transitionDuration: 700,
+    lingerPrevious: 260,
+    wordStagger: 55,
   },
 };
 
@@ -101,7 +120,6 @@ interface TextBlockInstance {
   phase: 'enter' | 'visible' | 'exit';
   headerVisible: boolean;
   subtextVisible: boolean;
-  subtextCount: number;
   exitDuration?: number;
 }
 
@@ -129,50 +147,6 @@ const EXIT_Y_BY_MODE: Record<RevealMode, number> = {
 
 function hasText(config: StateTextConfig): boolean {
   return Boolean(config.header || config.subtext);
-}
-
-function renderMultiline(text: string): ReactNode {
-  return text.split('\n').map((line, index, lines) => (
-    <span key={`${line}-${index}`}>
-      {line}
-      {index < lines.length - 1 && <br />}
-    </span>
-  ));
-}
-
-function renderPartialMultiline(text: string, count: number): ReactNode {
-  return renderMultiline(text.slice(0, Math.max(0, Math.min(text.length, count))));
-}
-
-function renderHeaderText(config: StateTextConfig): ReactNode {
-  if (!config.visibleHeaderWords) return renderMultiline(config.header);
-
-  const words = config.header.split(' ');
-  return words.map((word, index) => (
-    <span
-      key={`${word}-${index}`}
-      className="inline-block px-1 transition-opacity ease-out"
-      style={{
-        opacity: index < config.visibleHeaderWords! ? 1 : 0,
-        transitionDuration: `${config.transitionDuration}ms`,
-      }}
-    >
-      {index > 0 && ' '}
-      {word}
-    </span>
-  ));
-}
-
-function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
-  return {
-    id,
-    state,
-    config: STATE_TEXT_CONFIG[state],
-    phase: 'enter',
-    headerVisible: false,
-    subtextVisible: false,
-    subtextCount: 0,
-  };
 }
 
 function getHeaderTone(revealMode: RevealMode): string {
@@ -208,7 +182,44 @@ function getAccentStyle(config: StateTextConfig): CSSProperties {
   } as CSSProperties;
 }
 
-function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
+function renderWordReveal(
+  text: string,
+  isVisible: boolean,
+  isExiting: boolean,
+  transitionDuration: number,
+  staggerMs: number,
+  enterY: number,
+  exitY: number,
+  className?: string,
+  inlineStyle?: CSSProperties
+): ReactNode {
+  if (!text) return null;
+  const words = text.trim().split(/\s+/);
+  return words.map((word, i) => {
+    const delay = isExiting ? 0 : i * staggerMs;
+    return (
+      <span
+        key={`${word}-${i}`}
+        className={`inline-block ${className || ''}`}
+        style={{
+          opacity: isExiting ? 0 : isVisible ? 1 : 0,
+          transform: `translate3d(0, ${isExiting ? exitY : isVisible ? 0 : enterY}px, 0)`,
+          filter: `blur(${isExiting ? '6px' : isVisible ? '0px' : '8px'})`,
+          transitionDuration: `${transitionDuration}ms`,
+          transitionDelay: `${delay}ms`,
+          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+          transitionProperty: 'opacity, transform, filter',
+          marginRight: '0.28em',
+          ...inlineStyle,
+        }}
+      >
+        {word}
+      </span>
+    );
+  });
+}
+
+function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; isExiting?: boolean }) {
   const [visibleWords, setVisibleWords] = useState(0);
   const [visibleLines, setVisibleLines] = useState(0);
 
@@ -234,15 +245,18 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
 
   const words = ['Time.', 'Pressure.', 'Intent.'];
   const lines = [
-    'Something begins to gather.',
-    'Form compresses into focus.',
-    'The moment you commit.',
+    'What receives none remains only a thought.',
+    'What is worth forming must first endure the hold.',
+    'To hold is not to possess. Too much grip, and nothing becomes.',
   ];
+
+  const exitY = -10;
+  const enterY = 10;
 
   return (
     <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
       <h1
-        className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none transition-all ease-out"
+        className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
@@ -254,10 +268,14 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
         {words.map((word, i) => (
           <span
             key={i}
-            className="inline-block px-1 transition-opacity ease-out"
+            className="inline-block mr-[0.28em] transition-all ease-out"
             style={{
-              opacity: i < visibleWords ? 1 : 0,
-              transitionDuration: '1000ms',
+              opacity: isExiting ? 0 : i < visibleWords ? 1 : 0,
+              transform: `translate3d(0, ${isExiting ? exitY : i < visibleWords ? 0 : enterY}px, 0)`,
+              filter: `blur(${isExiting ? '6px' : i < visibleWords ? '0px' : '8px'})`,
+              transitionDuration: '800ms',
+              transitionDelay: isExiting ? '0ms' : `${i * 60}ms`,
+              transitionProperty: 'opacity, transform, filter',
             }}
           >
             {word}
@@ -268,11 +286,14 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
         {lines.map((line, i) => (
           <p
             key={i}
-            className="font-orbitron flex min-h-[1.2em] items-center justify-start text-left text-[13.5px] font-normal leading-none text-white transition-all ease-out tracking-[0.15em]"
+            className="font-orbitron flex min-h-[1.2em] items-center justify-start text-left text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
             style={{
-              opacity: i < visibleLines ? 1 : 0,
-              transform: `translate3d(0, ${i < visibleLines ? 0 : 10}px, 0)`,
-              transitionDuration: '2000ms',
+              opacity: isExiting ? 0 : i < visibleLines ? 1 : 0,
+              transform: `translate3d(0, ${isExiting ? exitY : i < visibleLines ? 0 : enterY}px, 0)`,
+              filter: `blur(${isExiting ? '6px' : i < visibleLines ? '0px' : '8px'})`,
+              transitionDuration: '1000ms',
+              transitionDelay: isExiting ? '0ms' : `${i * 80}ms`,
+              transitionProperty: 'opacity, transform, filter',
               textShadow: getSubtextShadow('firm'),
             }}
           >
@@ -282,6 +303,17 @@ function State2CumulativeText({ isVisible }: { isVisible: boolean }) {
       </div>
     </div>
   );
+}
+
+function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
+  return {
+    id,
+    state,
+    config: STATE_TEXT_CONFIG[state],
+    phase: 'enter',
+    headerVisible: false,
+    subtextVisible: false,
+  };
 }
 
 export function StateText({ state }: { state: TextSceneState }) {
@@ -316,7 +348,6 @@ export function StateText({ state }: { state: TextSceneState }) {
         phase: 'visible',
         headerVisible: true,
         subtextVisible: true,
-        subtextCount: outgoing.config.subtext.length,
         exitDuration: nextConfig.transitionDuration,
       };
       setPrevious(previousInstance);
@@ -344,48 +375,13 @@ export function StateText({ state }: { state: TextSceneState }) {
       }, nextConfig.headerDelay);
     }
 
-    const typeSubtext = () => {
-      const totalChars = nextConfig.subtext.length;
-      if (totalChars === 0) return;
-
-      if (nextConfig.subtextTypeDuration <= 0) {
-        setActive((current) =>
-          current?.id === nextInstance.id
-            ? { ...current, subtextVisible: true, subtextCount: totalChars }
-            : current
-        );
-        return;
-      }
-
-      const startedAt = performance.now();
-      const tickMs = Math.max(28, Math.min(70, nextConfig.subtextTypeDuration / totalChars));
-
-      const tick = () => {
-        const progress = Math.min(1, (performance.now() - startedAt) / nextConfig.subtextTypeDuration);
-        const nextCount = Math.min(totalChars, Math.ceil(totalChars * progress));
-
-        setActive((current) =>
-          current?.id === nextInstance.id
-            ? { ...current, subtextVisible: true, subtextCount: nextCount }
-            : current
-        );
-
-        if (progress < 1) {
-          queueTimer(tick, tickMs);
-        }
-      };
-
-      tick();
-    };
-
     if (nextConfig.subtext) {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
-            ? { ...current, phase: 'visible', subtextVisible: true, subtextCount: 0 }
+            ? { ...current, phase: 'visible', subtextVisible: true }
             : current
         );
-        typeSubtext();
       }, nextConfig.subtextDelay);
     }
 
@@ -398,7 +394,6 @@ export function StateText({ state }: { state: TextSceneState }) {
                 phase: 'exit',
                 headerVisible: true,
                 subtextVisible: true,
-                subtextCount: nextConfig.subtext.length,
               }
             : current
         );
@@ -417,11 +412,8 @@ export function StateText({ state }: { state: TextSceneState }) {
     const blockY = isExiting ? EXIT_Y_BY_MODE[config.revealMode] : 0;
     const duration = instance.exitDuration ?? config.transitionDuration;
     const enterY = ENTER_Y_BY_MODE[config.revealMode];
-    const headerOpacity = instance.headerVisible && !isExiting ? 1 : 0;
-    const subtextOpacity = instance.subtextVisible && !isExiting ? 1 : 0;
-    const headerY = instance.headerVisible ? 0 : enterY;
-    const subtextY = instance.subtextVisible ? 0 : enterY + 4;
-    const subtextCount = mode === 'active' && !isExiting ? instance.subtextCount : config.subtext.length;
+    const headerVisible = instance.headerVisible && !isExiting;
+    const subtextVisible = instance.subtextVisible && !isExiting;
     const accentStyle = getAccentStyle(config);
     const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
 
@@ -436,7 +428,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             transitionDuration: `${duration}ms`,
           }}
         >
-          <State2CumulativeText isVisible={instance.headerVisible && !isExiting} />
+          <State2CumulativeText isVisible={headerVisible} isExiting={isExiting} />
         </div>
       );
     }
@@ -454,43 +446,61 @@ export function StateText({ state }: { state: TextSceneState }) {
         <div className="col-start-3 flex flex-col items-start justify-center px-5 py-2">
           {config.header && (
             <h1
-              className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} transition-all ease-out`}
+              className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone}`}
               style={{
-                opacity: headerOpacity,
-                transform: `translate3d(0, ${headerY}px, 0)`,
-                transitionDuration: `${config.transitionDuration}ms`,
                 textShadow: getHeaderShadow(config.revealMode),
                 ...accentStyle,
               }}
             >
-              {renderHeaderText(config)}
+              {renderWordReveal(
+                config.header,
+                headerVisible,
+                isExiting,
+                config.transitionDuration,
+                config.wordStagger,
+                enterY,
+                -8,
+                'transition-all ease-out'
+              )}
             </h1>
           )}
           {config.subtext && (
             config.subtextAsHeader ? (
               <h2
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} transition-all ease-out tracking-[0.15em]`}
+                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[24px] font-normal leading-none ${headerTone} tracking-[0.15em]`}
                 style={{
-                  opacity: subtextOpacity,
-                  transform: `translate3d(0, ${subtextY}px, 0)`,
-                  transitionDuration: `${config.transitionDuration}ms`,
                   textShadow: getHeaderShadow(config.revealMode),
                   ...accentStyle,
                 }}
               >
-                {renderPartialMultiline(config.subtext, subtextCount)}
+                {renderWordReveal(
+                  config.subtext,
+                  subtextVisible,
+                  isExiting,
+                  config.transitionDuration,
+                  config.wordStagger,
+                  enterY + 4,
+                  -8,
+                  'transition-all ease-out'
+                )}
               </h2>
             ) : (
               <p
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white transition-all ease-out tracking-[0.15em]`}
+                className="font-orbitron flex min-h-[1.6em] items-center justify-start text-left text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
                 style={{
-                  opacity: subtextOpacity,
-                  transform: `translate3d(0, ${subtextY}px, 0)`,
-                  transitionDuration: `${config.transitionDuration}ms`,
                   textShadow: getSubtextShadow(config.revealMode),
                 }}
               >
-                {renderPartialMultiline(config.subtext, subtextCount)}
+                {renderWordReveal(
+                  config.subtext,
+                  subtextVisible,
+                  isExiting,
+                  config.transitionDuration,
+                  config.wordStagger,
+                  enterY + 4,
+                  -6,
+                  'transition-all ease-out'
+                )}
               </p>
             )
           )}

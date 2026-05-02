@@ -312,7 +312,7 @@ function App() {
           })
         );
         setState(3);
-        setTextState(4);
+        setTextState(3);
       }
     };
 
@@ -340,6 +340,21 @@ function App() {
       return () => clearTimeout(t);
     }
   }, [state]);
+
+  // Sequence through successful orbit text beats: 3.1 -> 3.2 -> ignition
+  useEffect(() => {
+    if (textState !== 3 && textState !== 7) return;
+
+    const timerId = setTimeout(() => {
+      setTextState((prev) => {
+        if (prev === 3) return 7;
+        if (prev === 7) return 4;
+        return prev;
+      });
+    }, 2600);
+
+    return () => clearTimeout(timerId);
+  }, [textState]);
 
   useEffect(() => {
     if (textState !== 4) return;
