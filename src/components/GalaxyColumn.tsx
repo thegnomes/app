@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { resolveAssetUrl } from '@/lib/assets';
+import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { RingText } from './RingText';
-import { isSafari } from '@/lib/isSafari';
 
 interface GalaxyColumnProps {
   srcWebm: string;
@@ -15,6 +14,8 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const videoSources = getAlphaVideoSources(srcWebm, srcMov);
+  const overlaySources = getAlphaVideoSources('/webm/target-lock.webm', '/webm/target-lock.mov');
 
   useEffect(() => {
     const video = videoRef.current;
@@ -51,10 +52,7 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
           filter: isHovered ? 'saturate(1)' : 'saturate(0)',
         }}
       >
-        <div
-          className="h-full w-full"
-          style={isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : undefined}
-        >
+        <div className="h-full w-full">
           <video
             ref={videoRef}
             muted
@@ -63,8 +61,9 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
             preload="auto"
             className="h-full w-full"
           >
-            <source src={srcWebm} type="video/webm" />
-            <source src={srcMov} type="video/quicktime" />
+            {videoSources.map((source) => (
+              <source key={source.src} src={source.src} type={source.type} />
+            ))}
           </video>
         </div>
 
@@ -78,7 +77,9 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
             isHovered ? 'opacity-80' : 'opacity-0'
           }`}
         >
-          <source src={resolveAssetUrl('/webm/target-lock.webm')} type="video/webm" />
+          {overlaySources.map((source) => (
+            <source key={source.src} src={source.src} type={source.type} />
+          ))}
         </video>
 
         <RingText items={ringItems} radius={120} duration={12} />

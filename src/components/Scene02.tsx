@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
-import { isSafari } from '@/lib/isSafari';
+import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { resolveAssetUrl } from '@/lib/assets';
 
 interface Scene02Props {
@@ -51,6 +51,10 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
+  const astroVideoSources = getAlphaVideoSources(
+    '/scene02/looking-astro-loop2.webm',
+    '/scene02/looking-astro-loop2.mov'
+  );
 
   useEffect(() => {
     const video = astroRef.current;
@@ -216,7 +220,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           >
             <video
               ref={astroRef}
-              src={resolveAssetUrl('/scene02/looking-astro-loop2.webm')}
               muted
               playsInline
               loop
@@ -225,9 +228,12 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               style={{
                 transform: `scale(${scaleAstro})`,
                 transition: 'transform 10s ease-out',
-                ...(isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : {}),
               }}
-            />
+            >
+              {astroVideoSources.map((source) => (
+                <source key={source.src} src={source.src} type={source.type} />
+              ))}
+            </video>
           </div>
         </div>
       </div>
