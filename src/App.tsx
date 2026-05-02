@@ -7,6 +7,7 @@ import { FinalVideoOverlay } from './components/FinalVideoOverlay';
 import { AstronautTextOverlay } from './components/AstronautTextOverlay';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
+import { resolveAssetUrl } from '@/lib/assets';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
@@ -25,6 +26,7 @@ function App() {
   const [loadProgress, setLoadProgress] = useState(0);
   const [showAstronautText, setShowAstronautText] = useState(false);
   const redirectedRef = useRef(false);
+  const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
   useEffect(() => {
@@ -158,6 +160,38 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Preload scene02 assets in background so no preloader is needed on transition
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    const scene02Assets = [
+      '/scene02/nebula_space_only2x.png',
+      '/scene02/looking-astro-loop2.webm',
+      '/scene02/looking-astro-loop2.mov',
+      '/webm/toto-ga2.webm',
+      '/webm/toto-ga2.mov',
+      '/webm/nft11-ga2.webm',
+      '/webm/nft11-ga2.mov',
+      '/webm/oxytap-ga2.webm',
+      '/webm/oxytap-ga2.mov',
+      '/webm/target-lock.webm',
+      '/webm/target-lock.mov',
+    ];
+    scene02Assets.forEach((src) => {
+      const url = resolveAssetUrl(src);
+      const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url);
+      if (isVideo) {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+        video.src = url;
+      } else {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, [assetsLoaded]);
 
   // Auto-play text after assets load, then auto-transition to starfield
   useEffect(() => {
@@ -344,16 +378,22 @@ function App() {
   // Sequence through successful orbit text beats: 3.1 -> 3.2 -> ignition
   useEffect(() => {
     if (textState !== 3 && textState !== 7) return;
+    if (textSequenceTimerRef.current) return;
 
     const timerId = setTimeout(() => {
+      textSequenceTimerRef.current = null;
       setTextState((prev) => {
         if (prev === 3) return 7;
         if (prev === 7) return 4;
         return prev;
       });
-    }, 2600);
+    }, 4000);
 
-    return () => clearTimeout(timerId);
+    textSequenceTimerRef.current = timerId;
+    return () => {
+      clearTimeout(timerId);
+      textSequenceTimerRef.current = null;
+    };
   }, [textState]);
 
   useEffect(() => {

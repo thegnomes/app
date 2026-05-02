@@ -114,7 +114,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
                   transitionDuration: `${TEXT_TRANSITION_MS}ms`,
                 }}
               >
-                Its influence becomes order.
+                The centre holds.
               </h1>
               <h1
                 className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out uppercase"
@@ -125,7 +125,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
                   transitionDuration: `${TEXT_TRANSITION_MS}ms`,
                 }}
               >
-                That order sets a universe in motion.
+                Everything finds its orbit.
               </h1>
             </div>
 

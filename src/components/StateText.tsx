@@ -252,13 +252,14 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
   const enterY = 16;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center px-5 py-2">
+    <div className="flex flex-col items-center justify-center text-center px-5 py-2" style={{ maxWidth: '33vw' }}>
       {/* Header word — single active word with replacement animation */}
       <h1
         className="relative font-russo flex min-h-[1.6em] w-full items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
+          zIndex: 10,
         }}
       >
         {words.map((word, i) => {
@@ -284,14 +285,14 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
       </h1>
 
       {/* Subtext line — single active line with replacement animation */}
-      <div className="relative mt-3 min-h-[2em] w-full flex items-center justify-center">
+      <div className="relative mt-3 min-h-[2em] w-full flex items-center justify-center" style={{ zIndex: 30 }}>
         {lines.map((line, i) => {
           const isActive = i === lineState.current;
           const wasActive = i === lineState.previous;
           return (
             <p
               key={i}
-              className="absolute font-russo flex items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+              className="absolute font-orbitron flex items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
               style={{
                 opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
                 transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
@@ -456,12 +457,42 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionDuration: `${duration}ms`,
         }}
       >
-        <div className="relative flex w-full max-w-[min(90vw,720px)] flex-col items-center px-5 text-center">
-          {/* Subtext - above center, overlapping the subject */}
-          {config.subtext && (
-            config.subtextAsHeader ? (
+        {/* Header — positioned near centre so core overlaps it, lower z-index */}
+        {config.header && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ bottom: '47%', maxWidth: '33vw', width: '100%', zIndex: 10 }}
+          >
+            <h1
+              className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
+              style={{
+                textShadow: getHeaderShadow(config.revealMode),
+                ...accentStyle,
+              }}
+            >
+              {renderWordReveal(
+                config.header,
+                headerVisible,
+                isExiting,
+                config.transitionDuration,
+                config.wordStagger,
+                enterY,
+                -8,
+                `transition-all ease-out ${headerWordTone}`
+              )}
+            </h1>
+          </div>
+        )}
+
+        {/* Subtext — below header, highest z-index */}
+        {config.subtext && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ top: '53%', maxWidth: '33vw', width: '100%', zIndex: 30 }}
+          >
+            {config.subtextAsHeader ? (
               <h2
-                className={`relative z-10 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone} tracking-[0.15em]`}
+                className={`font-orbitron flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone} tracking-[0.15em]`}
                 style={{
                   textShadow: getHeaderShadow(config.revealMode),
                   ...accentStyle,
@@ -480,7 +511,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               </h2>
             ) : (
               <p
-                className="relative z-10 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+                className="font-orbitron flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
                 style={{
                   textShadow: getSubtextShadow(config.revealMode),
                 }}
@@ -496,31 +527,9 @@ export function StateText({ state }: { state: TextSceneState }) {
                   'transition-all ease-out'
                 )}
               </p>
-            )
-          )}
-
-          {/* Header - below the subject */}
-          {config.header && (
-            <h1
-              className={`relative z-20 font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
-              style={{
-                textShadow: getHeaderShadow(config.revealMode),
-                ...accentStyle,
-              }}
-            >
-              {renderWordReveal(
-                config.header,
-                headerVisible,
-                isExiting,
-                config.transitionDuration,
-                config.wordStagger,
-                enterY,
-                -8,
-                `transition-all ease-out ${headerWordTone}`
-              )}
-            </h1>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
