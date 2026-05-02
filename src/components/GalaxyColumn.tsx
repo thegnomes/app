@@ -8,9 +8,19 @@ interface GalaxyColumnProps {
   label: string;
   href: string;
   alignTop?: boolean;
+  hoverId?: string;
+  onHoverChange?: (hoverId: string | null) => void;
 }
 
-export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }: GalaxyColumnProps) {
+export function GalaxyColumn({
+  srcWebm,
+  srcMov,
+  label,
+  href,
+  alignTop = false,
+  hoverId,
+  onHoverChange,
+}: GalaxyColumnProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLVideoElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -40,8 +50,22 @@ export function GalaxyColumn({ srcWebm, srcMov, label, href, alignTop = false }:
       href={href}
       className={`relative flex h-full w-1/3 cursor-pointer justify-center overflow-visible ${alignTop ? 'items-start' : 'items-center'}`}
       style={{ zIndex: isHovered ? 20 : 10 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        onHoverChange?.(hoverId ?? null);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        onHoverChange?.(null);
+      }}
+      onFocus={() => {
+        setIsHovered(true);
+        onHoverChange?.(hoverId ?? null);
+      }}
+      onBlur={() => {
+        setIsHovered(false);
+        onHoverChange?.(null);
+      }}
     >
       <div
         className="relative flex items-center justify-center transition-all duration-700 ease-out"

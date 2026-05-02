@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
@@ -18,6 +18,22 @@ const ASTRO_DRIFT_LAG = 0.055;
 const ASTRO_DESKTOP_DRIFT_PCT = { x: 0.15, y: 0.15 };
 const ASTRO_MOBILE_DRIFT_PCT = { x: 0.1, y: 0.1 };
 const NEBULA_PARALLAX_RATIO = 0.12;
+const MARQUEE_SPEED = 0.42;
+const MARQUEE_LINE_ONE = 'CHANCE WOON';
+
+type CompetencyId = 'creative-direction' | 'universe-building' | 'prototype-to-ship';
+
+interface CompetencyItem {
+  id: CompetencyId;
+  label: string;
+  accent: string;
+}
+
+const MARQUEE_COMPETENCIES: CompetencyItem[] = [
+  { id: 'creative-direction', label: 'Creative Direction', accent: '#60a5fa' },
+  { id: 'universe-building', label: 'Universe Building', accent: '#c084fc' },
+  { id: 'prototype-to-ship', label: 'Prototype-To-Ship', accent: '#67e8f9' },
+];
 
 function getIdleAstronautDriftTarget(clientX: number, clientY: number): DriftPoint {
   const viewportWidth = window.innerWidth || 1;
@@ -40,6 +56,135 @@ function driftIdleAstronautTowardMouse(current: DriftPoint, target: DriftPoint):
   };
 }
 
+function toCompetencyId(hoverId: string | null): CompetencyId | null {
+  if (hoverId === 'creative-direction' || hoverId === 'universe-building' || hoverId === 'prototype-to-ship') {
+    return hoverId;
+  }
+
+  return null;
+}
+
+function Scene02MarqueeLine({
+  hoveredCompetency,
+  copyIndex,
+}: {
+  hoveredCompetency: CompetencyId | null;
+  copyIndex: number;
+}) {
+  const isHovering = hoveredCompetency !== null;
+
+  const getWordStyle = (item?: CompetencyItem): CSSProperties => {
+    const isActive = Boolean(item && item.id === hoveredCompetency);
+
+    return {
+      color: isActive && item ? item.accent : '#ffffff',
+      opacity: isHovering ? (isActive ? 1 : 0.3) : 1,
+      textShadow: isActive && item ? `0 0 24px ${item.accent}` : 'none',
+      transition: 'color 500ms ease, opacity 500ms ease, text-shadow 500ms ease',
+    };
+  };
+
+  return (
+    <span className="inline-flex items-center whitespace-nowrap pr-10">
+      <span style={getWordStyle()}>Creative Strategist</span>
+      <span className="px-3" style={getWordStyle()}>
+        -
+      </span>
+      {MARQUEE_COMPETENCIES.map((item, index) => (
+        <span key={`${copyIndex}-${item.id}`} className="inline-flex items-center">
+          <span style={getWordStyle(item)}>{item.label}</span>
+          {index < MARQUEE_COMPETENCIES.length - 1 && (
+            <span className="px-3" style={getWordStyle()}>
+              |
+            </span>
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function Scene02BottomMarquee({
+  hoveredCompetency,
+  isVisible,
+}: {
+  hoveredCompetency: CompetencyId | null;
+  isVisible: boolean;
+}) {
+  const row1Ref = useRef<HTMLDivElement>(null);
+  const row2Ref = useRef<HTMLDivElement>(null);
+  const pos1Ref = useRef(0);
+  const pos2Ref = useRef(0);
+  const rafRef = useRef(0);
+  const lastTimeRef = useRef(0);
+
+  useEffect(() => {
+    const animate = (time: number) => {
+      const elapsed = lastTimeRef.current === 0 ? 16.67 : Math.min(time - lastTimeRef.current, 50);
+      lastTimeRef.current = time;
+      const frameScale = elapsed / 16.67;
+      const speed = MARQUEE_SPEED * frameScale;
+
+      const row1 = row1Ref.current;
+      if (row1) {
+        const first = row1.children[0] as HTMLElement | undefined;
+        if (first) {
+          const width = first.offsetWidth;
+          pos1Ref.current -= speed;
+          if (Math.abs(pos1Ref.current) >= width) pos1Ref.current += width;
+          row1.style.transform = `translate3d(${pos1Ref.current}px, 0, 0)`;
+        }
+      }
+
+      const row2 = row2Ref.current;
+      if (row2) {
+        const first = row2.children[0] as HTMLElement | undefined;
+        if (first) {
+          const width = first.offsetWidth;
+          pos2Ref.current += speed * 0.78;
+          if (pos2Ref.current >= 0) pos2Ref.current -= width;
+          row2.style.transform = `translate3d(${pos2Ref.current}px, 0, 0)`;
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  const lineOneText = Array(6).fill(MARQUEE_LINE_ONE).join(' - ') + ' - ';
+
+  return (
+    <div
+      className={`pointer-events-none absolute inset-x-0 bottom-5 z-30 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out sm:bottom-7 md:bottom-8 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+      aria-hidden="true"
+    >
+      <div className="font-russo text-white drop-shadow-[0_0_24px_rgba(0,0,0,0.85)]">
+        <div className="relative whitespace-nowrap text-4xl leading-[0.92] tracking-normal sm:text-5xl md:text-7xl lg:text-8xl">
+          <div ref={row1Ref} className="inline-flex will-change-transform">
+            <span className="inline-block whitespace-nowrap pr-10">{lineOneText}</span>
+            <span className="inline-block whitespace-nowrap pr-10">{lineOneText}</span>
+          </div>
+        </div>
+        <div className="relative mt-1 whitespace-nowrap text-sm leading-none tracking-normal sm:text-xl md:mt-2 md:text-2xl lg:text-3xl">
+          <div ref={row2Ref} className="inline-flex will-change-transform">
+            <Scene02MarqueeLine hoveredCompetency={hoveredCompetency} copyIndex={0} />
+            <Scene02MarqueeLine hoveredCompetency={hoveredCompetency} copyIndex={1} />
+            <Scene02MarqueeLine hoveredCompetency={hoveredCompetency} copyIndex={2} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Scene02({ isActive, playAstro }: Scene02Props) {
   const astroRef = useRef<HTMLVideoElement>(null);
   const astroMoveRef = useRef<HTMLDivElement>(null);
@@ -51,6 +196,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const [scaleNebula, setScaleNebula] = useState(2);
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
+  const [hoveredCompetency, setHoveredCompetency] = useState<CompetencyId | null>(null);
   const astroVideoSources = getAlphaVideoSources(
     '/scene02/looking-astro-loop2.webm',
     '/scene02/looking-astro-loop2.mov'
@@ -181,7 +327,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       {/* Galaxy columns - 3 columns spanning full viewport */}
       <div
         className={`absolute inset-0 z-10 flex transition-opacity duration-[1500ms] ease-out ${
-          drifted ? 'opacity-100' : 'opacity-0'
+          drifted ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
         <GalaxyColumn
@@ -189,6 +335,8 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           srcMov="/webm/toto-ga2.mov"
           label="TOTO"
           href="/toto-portfolio.html"
+          hoverId="creative-direction"
+          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
         />
         <GalaxyColumn
           srcWebm="/webm/nft11-ga2.webm"
@@ -196,12 +344,16 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           label="NFT11"
           href="/nft11-portfolio.html"
           alignTop
+          hoverId="universe-building"
+          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
         />
         <GalaxyColumn
           srcWebm="/webm/oxytap-ga2.webm"
           srcMov="/webm/oxytap-ga2.mov"
           label="OXYTAP"
           href="/oxytap-portfolio.html"
+          hoverId="prototype-to-ship"
+          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
         />
       </div>
       {/* Astronaut video - centered in viewport, drifts down on entrance, follows mouse */}
@@ -237,6 +389,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
           </div>
         </div>
       </div>
+      <Scene02BottomMarquee hoveredCompetency={hoveredCompetency} isVisible={drifted} />
     </div>
   );
 }

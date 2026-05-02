@@ -23,15 +23,7 @@ interface GravityParticlesProps {
   attractMode?: boolean;
 }
 
-const COLORS = [
-  '#ffffff',
-  '#a5f3fc',
-  '#c4b5fd',
-  '#fda4af',
-  '#bae6fd',
-  '#e9d5ff',
-  '#fef3c7',
-];
+const PARTICLE_COLOR = '#ffffff';
 
 function rand(min: number, max: number): number {
   return Math.random() * (max - min) + min;
@@ -44,8 +36,7 @@ function createParticle(
 ): Particle {
   const angle = Math.random() * Math.PI * 2;
   const speed = rand(baseSpeed * 0.3, baseSpeed);
-  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-  const radius = rand(1, 2.8);
+  const radius = rand(0.45, 1.15);
 
   return {
     x: Math.random() * width,
@@ -56,8 +47,8 @@ function createParticle(
     baseVy: Math.sin(angle) * speed,
     radius,
     baseRadius: radius,
-    color,
-    alpha: rand(0.4, 0.9),
+    color: PARTICLE_COLOR,
+    alpha: rand(0.28, 0.68),
     glowIntensity: 0,
   };
 }
@@ -172,7 +163,7 @@ export function GravityParticles({
             p.vy -= ny * force * 0.15;
           }
 
-          targetGlow = (1 - dist / radius) * 20;
+          targetGlow = (1 - dist / radius) * 12;
         }
 
         // Return to base velocity (damping towards natural drift)
@@ -201,7 +192,7 @@ export function GravityParticles({
         p.glowIntensity += (targetGlow - p.glowIntensity) * 0.1;
 
         // Draw particle
-        const drawRadius = p.baseRadius + p.glowIntensity * 0.08;
+        const drawRadius = p.baseRadius + p.glowIntensity * 0.04;
         ctx.beginPath();
         ctx.arc(p.x, p.y, drawRadius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
