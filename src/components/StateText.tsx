@@ -271,9 +271,9 @@ function State2CumulativeText({
     <div
       className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
     >
-      {/* Header word — single active word with replacement animation */}
+      {/* Header words — cumulative stack */}
       <h1
-        className="relative font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
+        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
@@ -281,17 +281,16 @@ function State2CumulativeText({
         }}
       >
         {words.map((word, i) => {
-          const isActive = i === wordState.current;
-          const wasActive = i === wordState.previous;
+          const isVisibleWord = i <= wordState.current;
           return (
             <span
               key={word}
-              className="absolute inset-0 flex items-center justify-center transition-all ease-out"
+              className="block transition-all ease-out"
               style={{
-                opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
-                transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
-                filter: `blur(${isExiting ? '6px' : isActive ? '0px' : wasActive ? '6px' : '8px'})`,
-                transitionDuration: `${wasActive || isExiting ? HEADER_FADE_DURATION_MS : 700}ms`,
+                opacity: isExiting ? 0 : isVisibleWord ? 1 : 0,
+                transform: `translate3d(0, ${isExiting ? exitY : isVisibleWord ? 0 : enterY}px, 0)`,
+                filter: `blur(${isExiting ? '6px' : isVisibleWord ? '0px' : '8px'})`,
+                transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 700}ms`,
                 transitionProperty: 'opacity, transform, filter',
                 pointerEvents: 'none',
               }}
@@ -303,7 +302,7 @@ function State2CumulativeText({
       </h1>
 
       {/* Subtext line — single active line with replacement animation */}
-      <div className="relative mt-8 min-h-[2em] w-full flex items-center justify-center" style={{ zIndex: 30 }}>
+      <div className="relative mt-4 min-h-[2em] w-full flex items-center justify-center" style={{ zIndex: 30 }}>
         {lines.map((line, i) => {
           const isActive = i === lineState.current;
           const wasActive = i === lineState.previous;
@@ -501,8 +500,8 @@ export function StateText({ state }: { state: TextSceneState }) {
             <h1
               className={`font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
               style={{
-                opacity: headerReceded ? 0.24 : 1,
-                filter: headerReceded ? 'blur(6px)' : 'blur(0px)',
+                opacity: headerReceded ? 0.6 : 1,
+                filter: headerReceded ? 'blur(2px)' : 'blur(0px)',
                 transform: headerReceded ? 'translate3d(0, -22px, 0) scale(0.96)' : 'translate3d(0, 0, 0) scale(1)',
                 transition: `opacity ${HEADER_FADE_DURATION_MS}ms ease, filter ${HEADER_FADE_DURATION_MS}ms ease, transform ${HEADER_FADE_DURATION_MS}ms ease`,
                 textShadow: getHeaderShadow(config.revealMode),
@@ -527,7 +526,7 @@ export function StateText({ state }: { state: TextSceneState }) {
         {config.subtext && (
           <div
             className="absolute left-1/2 box-border flex w-[33vw] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col items-center px-5 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
-            style={{ top: '57%', zIndex: 30 }}
+            style={{ top: '53.5%', zIndex: 30 }}
           >
             {config.subtextAsHeader ? (
               <h2
@@ -574,7 +573,7 @@ export function StateText({ state }: { state: TextSceneState }) {
   };
 
   return (
-    <div className="fixed inset-0 z-20 pointer-events-none">
+    <div className={`fixed inset-0 pointer-events-none ${state === 7 ? 'z-50' : 'z-20'}`}>
       <div className="relative w-full h-full">
         {previous && renderTextBlock(previous, 'previous')}
         {active && renderTextBlock(active, 'active')}
