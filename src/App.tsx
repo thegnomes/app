@@ -216,7 +216,7 @@ function App() {
       setState(1);
       setTextState(1);
       setShowFinalVideo(false);
-    }, 800);
+    }, 3800);
     return () => {
       if (autoZoomTimerRef.current) {
         clearTimeout(autoZoomTimerRef.current);
