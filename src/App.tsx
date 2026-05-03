@@ -79,6 +79,7 @@ function App() {
 
   // Handle transition from State 0 (video brain) to State 1 (starfield)
   const handleVideoTransition = useCallback(() => {
+    if (showDisclaimerRef.current) return; // block until disclaimer is dismissed
     if (autoZoomTimerRef.current) {
       clearTimeout(autoZoomTimerRef.current);
       autoZoomTimerRef.current = null;
@@ -204,25 +205,25 @@ function App() {
     });
   }, [assetsLoaded]);
 
-  // Auto-play text after assets load, then auto-transition to starfield
+  // Auto-play text after assets load and disclaimer is dismissed, then auto-transition to starfield
   useEffect(() => {
     if (!assetsLoaded) return;
+    if (showDisclaimer) return;
     autoZoomTimerRef.current = setTimeout(() => {
       autoZoomTimerRef.current = null;
       if (stateRef.current !== 0) return; // user already transitioned manually
-      if (showDisclaimerRef.current) return; // wait until disclaimer is dismissed
       setAutoZoom(true);
       setState(1);
       setTextState(1);
       setShowFinalVideo(false);
-    }, 3800);
+    }, 800);
     return () => {
       if (autoZoomTimerRef.current) {
         clearTimeout(autoZoomTimerRef.current);
         autoZoomTimerRef.current = null;
       }
     };
-  }, [assetsLoaded]);
+  }, [assetsLoaded, showDisclaimer]);
 
   // Separate pointer handler for canvas pan (works with mouse + touch)
   useEffect(() => {
