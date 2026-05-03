@@ -119,9 +119,12 @@ interface TextBlockInstance {
   config: StateTextConfig;
   phase: 'enter' | 'visible' | 'exit';
   headerVisible: boolean;
+  headerReceded: boolean;
   subtextVisible: boolean;
   exitDuration?: number;
 }
+
+const HEADER_RECEDES_AFTER_MS = 2000;
 
 const ENTER_Y_BY_MODE: Record<RevealMode, number> = {
   soft: 8,
@@ -219,21 +222,41 @@ function renderWordReveal(
   });
 }
 
-function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; isExiting?: boolean }) {
+function State2CumulativeText({
+  isVisible,
+  isExiting,
+}: {
+  isVisible: boolean;
+  isExiting?: boolean;
+}) {
   const [wordState, setWordState] = useState({ current: -1, previous: -1 });
   const [lineState, setLineState] = useState({ current: -1, previous: -1 });
+  const [wordReceded, setWordReceded] = useState(false);
 
   useEffect(() => {
     if (!isVisible) {
       setWordState({ current: -1, previous: -1 });
       setLineState({ current: -1, previous: -1 });
+      setWordReceded(false);
       return;
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
     // Header words replace sequentially: Time. → Pressure. → Intent.
-    timers.push(setTimeout(() => setWordState({ current: 0, previous: -1 }), 0));
-    timers.push(setTimeout(() => setWordState({ current: 1, previous: 0 }), 3000));
-    timers.push(setTimeout(() => setWordState({ current: 2, previous: 1 }), 6000));
+    timers.push(setTimeout(() => {
+      setWordReceded(false);
+      setWordState({ current: 0, previous: -1 });
+    }, 0));
+    timers.push(setTimeout(() => setWordReceded(true), HEADER_RECEDES_AFTER_MS));
+    timers.push(setTimeout(() => {
+      setWordReceded(false);
+      setWordState({ current: 1, previous: 0 });
+    }, 3000));
+    timers.push(setTimeout(() => setWordReceded(true), 3000 + HEADER_RECEDES_AFTER_MS));
+    timers.push(setTimeout(() => {
+      setWordReceded(false);
+      setWordState({ current: 2, previous: 1 });
+    }, 6000));
+    timers.push(setTimeout(() => setWordReceded(true), 6000 + HEADER_RECEDES_AFTER_MS));
     // Subtext lines replace sequentially
     timers.push(setTimeout(() => setLineState({ current: 0, previous: -1 }), 1000));
     timers.push(setTimeout(() => setLineState({ current: 1, previous: 0 }), 4000));
@@ -261,8 +284,12 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
         className="relative font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
+          opacity: wordReceded ? 0.24 : 1,
+          filter: wordReceded ? 'blur(2.5px)' : 'blur(0px)',
+          transform: wordReceded ? 'translate3d(0, 12px, 0) scale(0.96)' : 'translate3d(0, 0, 0) scale(1)',
           textShadow: '0 0 28px #22d3ee66',
-          zIndex: 10,
+          transition: 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
+          zIndex: wordReceded ? 1 : 10,
         }}
       >
         {words.map((word, i) => {
@@ -295,7 +322,7 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
           return (
             <p
               key={i}
-              className="absolute font-orbitron flex items-center justify-center text-center text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[13.5px] font-normal leading-relaxed text-white tracking-[0.15em]"
               style={{
                 opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
                 transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
@@ -304,8 +331,6 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
                 transitionProperty: 'opacity, transform, filter',
                 textShadow: getSubtextShadow('firm'),
                 pointerEvents: 'none',
-                maxWidth: 'min(80vw, 600px)',
-                padding: '0 1rem',
               }}
             >
               {line}
@@ -324,8 +349,16 @@ function createTextInstance(state: TextSceneState, id: number): TextBlockInstanc
     config: STATE_TEXT_CONFIG[state],
     phase: 'enter',
     headerVisible: false,
+    headerReceded: false,
     subtextVisible: false,
   };
+}
+
+function getHeaderRecedeDelay(config: StateTextConfig): number {
+  if (!config.header) return 0;
+  const wordCount = config.header.trim().split(/\s+/).filter(Boolean).length;
+  const finalWordDelay = Math.max(0, wordCount - 1) * config.wordStagger;
+  return config.headerDelay + finalWordDelay + HEADER_RECEDES_AFTER_MS;
 }
 
 export function StateText({ state }: { state: TextSceneState }) {
@@ -385,6 +418,16 @@ export function StateText({ state }: { state: TextSceneState }) {
             : current
         );
       }, nextConfig.headerDelay);
+
+      if (nextInstance.state !== '2') {
+        queueTimer(() => {
+          setActive((current) =>
+            current?.id === nextInstance.id && current.phase !== 'exit'
+              ? { ...current, headerReceded: true }
+              : current
+          );
+        }, getHeaderRecedeDelay(nextConfig));
+      }
     }
 
     if (nextConfig.subtext) {
@@ -425,6 +468,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     const duration = instance.exitDuration ?? config.transitionDuration;
     const enterY = ENTER_Y_BY_MODE[config.revealMode];
     const headerVisible = instance.headerVisible && !isExiting;
+    const headerReceded = instance.headerReceded && headerVisible;
     const subtextVisible = instance.subtextVisible && !isExiting;
     const accentStyle = getAccentStyle(config);
     const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
@@ -464,11 +508,15 @@ export function StateText({ state }: { state: TextSceneState }) {
         {config.header && (
           <div
             className="absolute left-1/2 box-border -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ bottom: '47%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: 10 }}
+            style={{ bottom: '47%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: headerReceded ? 1 : 10 }}
           >
             <h1
               className={`font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
               style={{
+                opacity: headerReceded ? 0.24 : 1,
+                filter: headerReceded ? 'blur(2.5px)' : 'blur(0px)',
+                transform: headerReceded ? 'translate3d(0, 14px, 0) scale(0.96)' : 'translate3d(0, 0, 0) scale(1)',
+                transition: 'opacity 900ms ease, filter 900ms ease, transform 900ms ease',
                 textShadow: getHeaderShadow(config.revealMode),
                 ...accentStyle,
               }}
@@ -490,12 +538,12 @@ export function StateText({ state }: { state: TextSceneState }) {
         {/* Subtext — below header, highest z-index */}
         {config.subtext && (
           <div
-            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ top: '53%', maxWidth: '33vw', width: '100%', zIndex: 30 }}
+            className="absolute left-1/2 box-border -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ top: '53%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: 30 }}
           >
             {config.subtextAsHeader ? (
               <h2
-                className={`font-orbitron flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone} tracking-[0.15em]`}
+                className={`font-orbitron flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-relaxed uppercase ${headerContainerTone} tracking-[0.15em]`}
                 style={{
                   textShadow: getHeaderShadow(config.revealMode),
                   ...accentStyle,
@@ -514,7 +562,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               </h2>
             ) : (
               <p
-                className="font-orbitron flex min-h-[1.6em] items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-none text-white tracking-[0.15em]"
+                className="font-orbitron flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-relaxed text-white tracking-[0.15em]"
                 style={{
                   textShadow: getSubtextShadow(config.revealMode),
                 }}
