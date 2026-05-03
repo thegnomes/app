@@ -425,11 +425,10 @@ function App() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black select-none">
       <div className="video-background">
-        <VideoBackground 
-          isActive={state === 0} 
+        <VideoBackground
+          isActive={state === 0}
           onTransition={handleVideoTransition}
           autoTrigger={autoZoom}
-          loadProgress={loadProgress}
         />
       </div>
       <div className="particle-canvas-container">
@@ -446,6 +445,8 @@ function App() {
         open={showDisclaimer}
         onClose={() => setShowDisclaimer(false)}
         onSkip={handleSkipToScene02}
+        loadProgress={loadProgress}
+        assetsLoaded={assetsLoaded}
       />
       <Footer />
     </div>
