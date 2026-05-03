@@ -75,9 +75,10 @@ function Scene02MarqueeLine({
 
   const getWordStyle = (item?: CompetencyItem): CSSProperties => {
     const isActive = Boolean(item && item.id === hoveredCompetency);
+    const accentColor = '#c084fc';
 
     return {
-      color: isActive && item ? item.accent : '#ffffff',
+      color: isActive && item ? item.accent : accentColor,
       opacity: isHovering ? (isActive ? 1 : 0.3) : 1,
       textShadow: isActive && item ? `0 0 24px ${item.accent}` : 'none',
       transition: 'color 500ms ease, opacity 500ms ease, text-shadow 500ms ease',

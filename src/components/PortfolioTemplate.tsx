@@ -179,7 +179,7 @@ function VideoPlayer({
   );
 }
 
-function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
+function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: string; accentColor?: string }) {
   const row1Ref = useRef<HTMLDivElement>(null);
   const row2Ref = useRef<HTMLDivElement>(null);
   const pos1Ref = useRef(0);
@@ -248,7 +248,7 @@ function ScrollFlowTextFX({ top, bottom }: { top: string; bottom: string }) {
           <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
         </div>
       </div>
-      <div className="relative whitespace-nowrap text-2xl md:text-4xl lg:text-5xl tracking-tight leading-none text-white/90">
+      <div className="relative whitespace-nowrap text-2xl md:text-4xl lg:text-5xl tracking-tight leading-none" style={{ color: accentColor || 'rgba(255,255,255,0.9)' }}>
         <div ref={row2Ref} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
@@ -332,7 +332,7 @@ function Hero({ project }: { project: PortfolioProject }) {
 
         {project.scrollFlowTitle ? (
           <div className="mb-8">
-            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.role} />
+            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.role} accentColor={project.accentColor} />
           </div>
         ) : (
           <h1
@@ -497,7 +497,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] h-[100dvh] overflow-hidden">
+    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] h-[100dvh] max-h-[100dvh] overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -561,7 +561,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       <div className="pb-2">
                         <h3
                           className={`text-xl md:text-2xl font-semibold mb-1 transition-colors duration-500 font-russo ${
-                            isActive ? 'text-neutral-100' : 'text-neutral-300 group-hover:text-neutral-100'
+                            isActive ? 'text-neutral-100' : 'text-neutral-500 group-hover:text-neutral-300'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
                         >
@@ -603,7 +603,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                     <div className="relative flex-1 min-h-0 flex items-center justify-center bg-neutral-950">
                       <div
                         key={`${activeStep}-${carouselIndex}`}
-                        className="w-full h-full flex items-center justify-center"
+                        className="w-full h-full max-h-full flex items-center justify-center"
                         style={{
                           animation: slideDir === 'right'
                             ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
@@ -615,18 +615,18 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={activeLink.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="block w-full h-full"
+                            className="block w-full h-full max-h-full flex items-center justify-center"
                           >
                             {isVideo(currentImage.src) ? (
                               <VideoPlayer
                                 src={currentImage.src}
-                                className="h-full w-full object-contain"
+                                className="max-h-full max-w-full object-contain"
                               />
                             ) : (
                               <img
                                 src={resolveAssetUrl(currentImage.src)}
                                 alt={currentImage.alt}
-                                className="h-full w-full object-contain"
+                                className="max-h-full max-w-full object-contain"
                               />
                             )}
                           </a>
@@ -634,13 +634,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           isVideo(currentImage.src) ? (
                             <VideoPlayer
                               src={currentImage.src}
-                              className="h-full w-full object-contain"
+                              className="max-h-full max-w-full object-contain"
                             />
                           ) : (
                             <img
                               src={resolveAssetUrl(currentImage.src)}
                               alt={currentImage.alt}
-                              className="h-full w-full object-contain"
+                              className="max-h-full max-w-full object-contain"
                             />
                           )
                         )}
