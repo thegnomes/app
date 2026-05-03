@@ -438,7 +438,7 @@ function App() {
           cameraPanRef={cameraPanRef}
         />
       </div>
-      {assetsLoaded && <StateText state={textState} />}
+      {assetsLoaded && !showDisclaimer && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} onAstronautPhase={handleAstronautPhase} />
       <AstronautTextOverlay isActive={showAstronautText} />
       <DisclaimerDialog
