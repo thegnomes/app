@@ -252,10 +252,13 @@ function State2CumulativeText({ isVisible, isExiting }: { isVisible: boolean; is
   const enterY = 16;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center px-5 py-2" style={{ maxWidth: '33vw' }}>
+    <div
+      className="box-border flex flex-col items-center justify-center text-center px-5 py-2"
+      style={{ width: '33vw', maxWidth: 'calc(100vw - 2rem)' }}
+    >
       {/* Header word — single active word with replacement animation */}
       <h1
-        className="relative font-russo flex min-h-[1.6em] w-full items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
+        className="relative font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
@@ -460,11 +463,11 @@ export function StateText({ state }: { state: TextSceneState }) {
         {/* Header — positioned near centre so core overlaps it, lower z-index */}
         {config.header && (
           <div
-            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ bottom: '47%', maxWidth: '33vw', width: '100%', zIndex: 10 }}
+            className="absolute left-1/2 box-border -translate-x-1/2 flex flex-col items-center text-center px-5"
+            style={{ bottom: '47%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: 10 }}
           >
             <h1
-              className={`font-russo flex min-h-[1.6em] items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
+              className={`font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
               style={{
                 textShadow: getHeaderShadow(config.revealMode),
                 ...accentStyle,
