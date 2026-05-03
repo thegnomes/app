@@ -410,13 +410,16 @@ function App() {
   }, [textState]);
 
   useEffect(() => {
-    if (textState !== 4) return;
+    if (textState !== 7) return;
 
-    const timerId = setTimeout(() => {
-      setShowFinalVideo(true);
-    }, FINAL_VIDEO_DELAY_MS);
+    // Start final video immediately when ignition text (state 7) appears
+    setShowFinalVideo(true);
 
-    return () => clearTimeout(timerId);
+    // Cancel the auto text-sequence timer so state 7 text stays visible during the video
+    if (textSequenceTimerRef.current) {
+      clearTimeout(textSequenceTimerRef.current);
+      textSequenceTimerRef.current = null;
+    }
   }, [textState]);
 
   return (

@@ -13,12 +13,10 @@ type VideoTextPhase = 'zoom' | 'gap' | 'astronaut' | null;
 const GAP_DURATION_MS = 1200;
 
 const ZOOM_OUT_END_S = 5.5;
-const TEXT_TRANSITION_MS = 1400;
 
 export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: FinalVideoOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<VideoTextPhase>(null);
-  const [showZoomHeader2, setShowZoomHeader2] = useState(false);
 
   useEffect(() => {
     videoRef.current?.load();
@@ -32,7 +30,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       video.pause();
       requestAnimationFrame(() => {
         setPhase(null);
-        setShowZoomHeader2(false);
       });
       return;
     }
@@ -40,11 +37,8 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
     video.currentTime = 0;
     requestAnimationFrame(() => {
       setPhase('zoom');
-      setShowZoomHeader2(false);
     });
-    const t = setTimeout(() => setShowZoomHeader2(true), 1400);
     void video.play();
-    return () => clearTimeout(t);
   }, [isActive]);
 
   useEffect(() => {
@@ -94,44 +88,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
         <source src={resolveAssetUrl('/zoom-compiled-edit-latest-web.webm')} type="video/webm" />
         <source src={resolveAssetUrl('/zoom-compiled-edit-latest.mp4')} type="video/mp4" />
       </video>
-
-      <div className="fixed inset-0 z-50 pointer-events-none">
-        <div className="absolute left-1/2 top-1/2 w-[min(92vw,1120px)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2">
-          <div className="relative min-h-fit">
-            {/* Zoom-out sequence: two headers stacked */}
-            <div
-              className="absolute inset-0 flex w-full flex-col items-center justify-center text-center transition-all ease-out"
-              style={{
-                opacity: phase === 'zoom' ? 1 : 0,
-                transform: `translate3d(0, ${phase === 'zoom' ? 0 : 14}px, 0)`,
-                transitionDuration: `${TEXT_TRANSITION_MS}ms`,
-              }}
-            >
-              <h1
-                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out uppercase"
-                style={{
-                  textShadow: '0 0 30px rgba(168, 85, 247, 0.6)',
-                  transitionDuration: `${TEXT_TRANSITION_MS}ms`,
-                }}
-              >
-                The centre holds.
-              </h1>
-              <h1
-                className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] transition-all ease-out uppercase"
-                style={{
-                  opacity: showZoomHeader2 ? 1 : 0,
-                  transform: `translate3d(0, ${showZoomHeader2 ? 0 : 14}px, 0)`,
-                  textShadow: '0 0 30px rgba(168, 85, 247, 0.6)',
-                  transitionDuration: `${TEXT_TRANSITION_MS}ms`,
-                }}
-              >
-                Everything finds its orbit.
-              </h1>
-            </div>
-
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
