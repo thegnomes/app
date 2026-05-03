@@ -269,8 +269,7 @@ function State2CumulativeText({
 
   return (
     <div
-      className="box-border flex flex-col items-center justify-center text-center px-5 py-2"
-      style={{ width: '33vw', maxWidth: 'calc(100vw - 2rem)' }}
+      className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
     >
       {/* Header word — single active word with replacement animation */}
       <h1
@@ -496,13 +495,13 @@ export function StateText({ state }: { state: TextSceneState }) {
         {/* Header — positioned near centre so core overlaps it, lower z-index */}
         {config.header && (
           <div
-            className="absolute left-1/2 box-border -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ bottom: '50%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: headerReceded ? 1 : 10 }}
+            className="absolute left-1/2 box-border flex w-[33vw] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col items-center px-5 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
+            style={{ bottom: '50%', zIndex: headerReceded ? 1 : 10 }}
           >
             <h1
               className={`font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
               style={{
-                opacity: headerReceded ? 0 : 1,
+                opacity: headerReceded ? 0.24 : 1,
                 filter: headerReceded ? 'blur(6px)' : 'blur(0px)',
                 transform: headerReceded ? 'translate3d(0, -22px, 0) scale(0.96)' : 'translate3d(0, 0, 0) scale(1)',
                 transition: `opacity ${HEADER_FADE_DURATION_MS}ms ease, filter ${HEADER_FADE_DURATION_MS}ms ease, transform ${HEADER_FADE_DURATION_MS}ms ease`,
@@ -527,8 +526,8 @@ export function StateText({ state }: { state: TextSceneState }) {
         {/* Subtext — below header, highest z-index */}
         {config.subtext && (
           <div
-            className="absolute left-1/2 box-border -translate-x-1/2 flex flex-col items-center text-center px-5"
-            style={{ top: '57%', width: '33vw', maxWidth: 'calc(100vw - 2rem)', zIndex: 30 }}
+            className="absolute left-1/2 box-border flex w-[33vw] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col items-center px-5 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
+            style={{ top: '57%', zIndex: 30 }}
           >
             {config.subtextAsHeader ? (
               <h2
