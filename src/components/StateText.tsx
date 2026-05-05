@@ -149,7 +149,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[25.6px] sm:text-[33.6px] md:text-[41.6px]',
+            sizeClass: 'text-[48px] sm:text-[63px] md:text-[78px]',
             trackingClass: 'tracking-[0.15em]',
             uppercase: true,
             toneClass: 'gradient-text',
@@ -157,16 +157,16 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[11.2px] sm:text-[12px]',
+            sizeClass: 'text-[21px] sm:text-[23px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
-            toneClass: 'text-white/90',
+            toneClass: 'text-white',
             textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
           };
     case 'atmosphere':
       return {
         fontClass: 'font-russo',
-        sizeClass: 'text-[19.2px] sm:text-[25.6px] md:text-[32px]',
+        sizeClass: 'text-[36px] sm:text-[48px] md:text-[60px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
@@ -176,7 +176,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[22.4px] sm:text-[28.8px] md:text-[35.2px]',
+            sizeClass: 'text-[42px] sm:text-[54px] md:text-[66px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'gradient-text',
@@ -184,17 +184,17 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
+            sizeClass: 'text-[20px] sm:text-[21px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
-            toneClass: 'text-white/85',
+            toneClass: 'text-white',
             textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           };
     case 'payoff':
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[22.4px] sm:text-[28.8px] md:text-[35.2px]',
+            sizeClass: 'text-[42px] sm:text-[54px] md:text-[66px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'text-[#ffd4a3]',
@@ -202,16 +202,16 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
+            sizeClass: 'text-[20px] sm:text-[21px]',
             trackingClass: 'tracking-[0.15em]',
             uppercase: false,
-            toneClass: 'text-white/85',
+            toneClass: 'text-white',
             textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           };
     case 'resolution':
       return {
         fontClass: 'font-russo',
-        sizeClass: 'text-[19.2px] sm:text-[25.6px] md:text-[32px]',
+        sizeClass: 'text-[36px] sm:text-[48px] md:text-[60px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
@@ -221,24 +221,24 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[19.2px] sm:text-[24px] md:text-[28.8px]',
+            sizeClass: 'text-[36px] sm:text-[45px] md:text-[54px]',
             trackingClass: 'tracking-[0.1em]',
             uppercase: true,
-            toneClass: 'text-white/85',
+            toneClass: 'text-white',
             textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
+            sizeClass: 'text-[20px] sm:text-[21px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
-            toneClass: 'text-white/70',
+            toneClass: 'text-white',
             textShadow: '0 0 1px rgba(255, 255, 255, 0.06)',
           };
     default:
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[10.4px]',
+        sizeClass: 'text-[16px]',
         trackingClass: 'tracking-[0.15em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -296,12 +296,17 @@ function getLineGap(role: TextRole): string {
 
 type LinePhase = 'hidden' | 'active' | 'ghost' | 'leaving';
 
+interface EnterOffset {
+  x: number;
+  y: number;
+}
+
 function renderWordReveal(
   text: string,
   linePhase: LinePhase,
   transitionDuration: number,
   staggerMs: number,
-  enterY: number,
+  enterOffset: EnterOffset,
   className?: string
 ): ReactNode {
   if (!text) return null;
@@ -312,13 +317,16 @@ function renderWordReveal(
     const isLeaving = linePhase === 'leaving';
     const delay = isHidden || isGhost || isLeaving ? 0 : i * staggerMs;
 
+    const tx = isHidden ? enterOffset.x : isGhost ? 0 : isLeaving ? 0 : 0;
+    const ty = isHidden ? enterOffset.y : isGhost ? -3 : isLeaving ? -6 : 0;
+
     return (
       <span
         key={`${word}-${i}`}
         className={`inline-block ${className || ''}`}
         style={{
           opacity: isLeaving ? 0 : isGhost ? 0.2 : isHidden ? 0 : 1,
-          transform: `translate3d(0, ${isLeaving ? -6 : isGhost ? -3 : isHidden ? enterY : 0}px, 0)`,
+          transform: `translate3d(${tx}px, ${ty}px, 0)`,
           filter: `blur(${isLeaving ? 2 : isGhost ? 1 : 0}px)`,
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
@@ -384,7 +392,7 @@ function State2CumulativeText({
   return (
     <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
       <h1
-        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[19.2px] sm:text-[25.6px] md:text-[32px] font-normal leading-none uppercase"
+        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[36px] sm:text-[48px] md:text-[60px] font-normal leading-none uppercase"
         style={{ zIndex: 10 }}
       >
         {words.map((word, i) => {
@@ -433,7 +441,7 @@ function State2CumulativeText({
           return (
             <p
               key={i}
-              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[9.6px] sm:text-[10.4px] font-normal leading-relaxed text-white tracking-[0.15em]"
+              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[18px] sm:text-[20px] font-normal leading-relaxed text-white tracking-[0.15em]"
               style={{
                 opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
                 transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
@@ -601,7 +609,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       return (
         <div
           key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
+          className="absolute inset-0 flex items-center justify-center transition-all ease-out"
           style={{
             opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
@@ -619,52 +627,61 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
+        className="absolute inset-0 flex items-center justify-center transition-all ease-out"
         style={{
           opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
           transitionDuration: `${duration}ms`,
         }}
       >
-        <div className="flex flex-col items-center justify-center text-center px-5">
-          {config.lines.map((line, i) => {
-            const lineWasVisible = instance.lineVisibilities[i];
-            const linePhase: LinePhase = !lineWasVisible
-              ? 'hidden'
-              : isLeaving
-                ? 'leaving'
-                : isGhost
-                  ? 'ghost'
-                  : 'active';
-            const typography = getRoleTypography(config.role, i);
-            const lineEnterY = motion.enterY + i * 2;
-            const textShadow =
-              linePhase === 'ghost'
-                ? '0 0 1px rgba(255,255,255,0.04)'
-                : linePhase === 'leaving'
-                  ? '0 0 1px rgba(255,255,255,0.02)'
-                  : typography.textShadow;
+        {/* Desktop: 2-column layout */}
+        <div className="hidden md:flex w-full max-w-[min(90vw,1200px)] items-start justify-center gap-6 lg:gap-12 px-5">
+          {/* Left column: line 0 (header) */}
+          {config.lines.length > 0 && (
+            <div className="flex-1 text-left">
+              <LineBlock
+                line={config.lines[0]}
+                lineIndex={0}
+                instance={instance}
+                motion={motion}
+                config={config}
+                enterOffset={{ x: -28, y: 0 }}
+              />
+            </div>
+          )}
+          {/* Right column: lines 1+ (subtext) */}
+          {config.lines.length > 1 && (
+            <div className="flex-1 text-right">
+              {config.lines.slice(1).map((line, i) => (
+                <div key={i + 1} style={{ marginTop: i > 0 ? getLineGap(config.role) : 0 }}>
+                  <LineBlock
+                    line={line}
+                    lineIndex={i + 1}
+                    instance={instance}
+                    motion={motion}
+                    config={config}
+                    enterOffset={{ x: 28, y: 0 }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-            return (
-              <div
-                key={i}
-                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
-                style={{
-                  textShadow,
-                  marginTop: i > 0 ? getLineGap(config.role) : 0,
-                }}
-              >
-                {renderWordReveal(
-                  line,
-                  linePhase,
-                  config.transitionDuration,
-                  config.wordStagger,
-                  lineEnterY,
-                  'transition-all ease-out'
-                )}
-              </div>
-            );
-          })}
+        {/* Mobile: stacked rows */}
+        <div className="flex md:hidden flex-col items-center text-center px-5">
+          {config.lines.map((line, i) => (
+            <div key={i} style={{ marginTop: i > 0 ? getLineGap(config.role) : 0 }}>
+              <LineBlock
+                line={line}
+                lineIndex={i}
+                instance={instance}
+                motion={motion}
+                config={config}
+                enterOffset={{ x: 0, y: motion.enterY + i * 2 }}
+              />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -676,6 +693,57 @@ export function StateText({ state }: { state: TextSceneState }) {
         {previous && renderTextBlock(previous, 'previous')}
         {active && renderTextBlock(active, 'active')}
       </div>
+    </div>
+  );
+}
+
+/* Extracted line rendering to keep the main component readable */
+function LineBlock({
+  line,
+  lineIndex,
+  instance,
+  motion,
+  config,
+  enterOffset,
+}: {
+  line: string;
+  lineIndex: number;
+  instance: TextBlockInstance;
+  motion: MotionSpec;
+  config: StateTextConfig;
+  enterOffset: EnterOffset;
+}) {
+  const lineWasVisible = instance.lineVisibilities[lineIndex];
+  const isGhost = instance.phase === 'exit';
+  const isLeaving = instance.phase === 'leaving';
+  const linePhase: LinePhase = !lineWasVisible
+    ? 'hidden'
+    : isLeaving
+      ? 'leaving'
+      : isGhost
+        ? 'ghost'
+        : 'active';
+  const typography = getRoleTypography(config.role, lineIndex);
+  const textShadow =
+    linePhase === 'ghost'
+      ? '0 0 1px rgba(255,255,255,0.04)'
+      : linePhase === 'leaving'
+        ? '0 0 1px rgba(255,255,255,0.02)'
+        : typography.textShadow;
+
+  return (
+    <div
+      className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
+      style={{ textShadow }}
+    >
+      {renderWordReveal(
+        line,
+        linePhase,
+        config.transitionDuration,
+        config.wordStagger,
+        enterOffset,
+        'transition-all ease-out'
+      )}
     </div>
   );
 }

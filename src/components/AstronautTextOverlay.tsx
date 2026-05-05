@@ -33,12 +33,12 @@ export function AstronautTextOverlay({ isActive }: AstronautTextOverlayProps) {
             className="transition-all ease-out duration-1000"
             style={{
               opacity: phase !== 'hidden' ? 1 : 0,
-              transform: `translate3d(0, ${phase !== 'hidden' ? 0 : 18}px, 0)`,
+              transform: `translate3d(0, ${phase !== 'hidden' ? 0 : 24}px, 0)`,
               filter: `blur(${phase !== 'hidden' ? '0px' : '6px'})`,
             }}
           >
             <h1
-              className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[25.6px] sm:text-[33.6px] md:text-[41.6px] font-normal leading-relaxed gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] uppercase"
+              className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[38px] sm:text-[50px] md:text-[62px] font-normal leading-relaxed gradient-text drop-shadow-[0_0_16px_rgba(168,85,247,0.85)] uppercase"
               style={{ textShadow: '0 0 30px rgba(168, 85, 247, 0.6)' }}
             >
               At the edge of fantasy and reality,
@@ -50,13 +50,13 @@ export function AstronautTextOverlay({ isActive }: AstronautTextOverlayProps) {
             className="transition-all ease-out duration-1000"
             style={{
               opacity: phase === 'block2' ? 1 : 0,
-              transform: `translate3d(0, ${phase === 'block2' ? 0 : 14}px, 0)`,
+              transform: `translate3d(0, ${phase === 'block2' ? 0 : 18}px, 0)`,
               filter: `blur(${phase === 'block2' ? '0px' : '5px'})`,
               transitionDelay: '200ms',
             }}
           >
             <p
-              className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[9.6px] sm:text-[10.8px] font-normal leading-loose text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] tracking-[0.15em]"
+              className="font-russo flex min-h-[1.6em] items-center justify-center px-5 py-2 text-center text-[14px] sm:text-[16px] font-normal leading-loose text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] tracking-[0.15em]"
               style={{ textShadow: '0 0 20px rgba(0, 0, 0, 0.8)' }}
             >
               Plotting coordinates for ideas —
