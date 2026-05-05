@@ -38,13 +38,13 @@ function App() {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-  
+
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   const planetEntryReadyRef = useRef(false); // Set when State 2 completes, triggers planets on mouse up
-  
+
   // Camera pan state
   const panStateRef = useRef({
     isDragging: false,
@@ -306,12 +306,27 @@ function App() {
       panStateRef.current.isDragging = false;
       cameraPanRef.current.isDragging = false;
 
+      // Cancel any lingering text sequence timers
+      if (textSequenceTimerRef.current) {
+        clearTimeout(textSequenceTimerRef.current);
+        textSequenceTimerRef.current = null;
+      }
+
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
       setState(2);
-      setTextState('2');
+      setTextState(8); // spark beat
       setShowFinalVideo(false);
       inState2Ref.current = true;
+
+      // Transition from spark to State 2 marker text after brief beat
+      substateTimersRef.current.push(
+        setTimeout(() => {
+          if (stateRef.current === 2 && inState2Ref.current) {
+            setTextState('2');
+          }
+        }, 1200)
+      );
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
       const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;

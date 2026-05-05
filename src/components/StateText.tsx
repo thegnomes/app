@@ -1,114 +1,119 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8;
 
-type RevealMode = 'soft' | 'airy' | 'firm' | 'bridge' | 'payoff' | 'reflection' | 'collapse' | 'silence';
+type TextRole =
+  | 'thesis'
+  | 'atmosphere'
+  | 'spark'
+  | 'marker'
+  | 'payoff'
+  | 'resolution'
+  | 'collapse'
+  | 'reveal';
 
 interface StateTextConfig {
-  header: string;
-  subtext: string;
-  revealMode: RevealMode;
-  accentColor?: string;
-  headerDelay: number;
-  subtextDelay: number;
-  subtextTypeDuration: number;
+  role: TextRole;
+  lines: string[];
   transitionDuration: number;
   lingerPrevious: number;
   autoExitDelay?: number;
-  visibleHeaderWords?: number;
-  subtextAsHeader?: boolean;
+  lineDelay: number;
   wordStagger: number;
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
-    header: 'I have a theory.',
-    subtext: 'That what we call the universe is our collective mind made visible.',
-    revealMode: 'soft',
-    headerDelay: 180,
-    subtextDelay: 900,
-    subtextTypeDuration: 2100,
-    transitionDuration: 800,
+    role: 'thesis',
+    lines: [
+      'I have a theory.',
+      'Our shared universe is our collective mind made visible.',
+    ],
+    transitionDuration: 900,
     lingerPrevious: 0,
+    lineDelay: 900,
     wordStagger: 70,
   },
   1: {
-    header: 'Dust lies dormant in darkness.',
-    subtext: 'Waiting to matter with the first click.',
-    revealMode: 'airy',
-    headerDelay: 180,
-    subtextDelay: 720,
-    subtextTypeDuration: 1400,
-    transitionDuration: 800,
+    role: 'atmosphere',
+    lines: [
+      'Drifting across endless darkness,',
+      'every thought moves without direction.',
+    ],
+    transitionDuration: 900,
     lingerPrevious: 420,
-    wordStagger: 70,
+    lineDelay: 720,
+    wordStagger: 65,
+  },
+  8: {
+    role: 'spark',
+    lines: [
+      'Inspiration clicks.',
+      'Something begins to gather.',
+    ],
+    transitionDuration: 500,
+    lingerPrevious: 0,
+    lineDelay: 280,
+    wordStagger: 40,
+    autoExitDelay: 1800,
   },
   '2': {
-    header: 'Time. Pressure. Intent.',
-    subtext: '',
-    revealMode: 'firm',
-    accentColor: '#22d3ee',
-    headerDelay: 0,
-    subtextDelay: 0,
-    subtextTypeDuration: 0,
-    transitionDuration: 1000,
+    role: 'marker',
+    lines: [],
+    transitionDuration: 600,
     lingerPrevious: 0,
+    lineDelay: 0,
     wordStagger: 0,
   },
   3: {
-    header: 'The orbit forms naturally.',
-    subtext: 'What carries enough gravity begins to influence everything around it.',
-    revealMode: 'bridge',
-    headerDelay: 180,
-    subtextDelay: 600,
-    subtextTypeDuration: 0,
+    role: 'payoff',
+    lines: [
+      'Orbit takes hold.',
+      'What once drifted begins to gather around a centre.',
+    ],
     transitionDuration: 700,
     lingerPrevious: 260,
-    wordStagger: 55,
+    lineDelay: 600,
+    wordStagger: 40,
   },
   4: {
-    header: '',
-    subtext: '',
-    revealMode: 'payoff',
-    headerDelay: 0,
-    subtextDelay: 0,
-    subtextTypeDuration: 0,
+    role: 'marker',
+    lines: [],
     transitionDuration: 800,
     lingerPrevious: 260,
+    lineDelay: 0,
     wordStagger: 0,
   },
   5: {
-    header: 'Formation collapses.',
-    subtext: 'Some things burn brightly, then fade back into the dark.',
-    revealMode: 'collapse',
-    headerDelay: 80,
-    subtextDelay: 400,
-    subtextTypeDuration: 900,
+    role: 'collapse',
+    lines: [
+      'Formation collapses.',
+      'Some things burn brightly,',
+      'then fade back into the dark.',
+    ],
     transitionDuration: 700,
     lingerPrevious: 320,
-    autoExitDelay: 1650,
-    wordStagger: 55,
+    lineDelay: 480,
+    wordStagger: 25,
+    autoExitDelay: 3400,
   },
   6: {
-    header: 'But not every star endures.',
-    subtext: '',
-    revealMode: 'reflection',
-    headerDelay: 180,
-    subtextDelay: 0,
-    subtextTypeDuration: 0,
+    role: 'marker',
+    lines: [],
     transitionDuration: 800,
     lingerPrevious: 420,
-    wordStagger: 60,
+    lineDelay: 0,
+    wordStagger: 0,
   },
   7: {
-    header: 'Its influence becomes order.',
-    subtext: 'Setting its universe in motion.',
-    revealMode: 'soft',
-    headerDelay: 180,
-    subtextDelay: 600,
-    subtextTypeDuration: 0,
-    transitionDuration: 700,
+    role: 'resolution',
+    lines: [
+      'Its influence becomes order,',
+      'setting its universe in motion.',
+    ],
+    transitionDuration: 800,
     lingerPrevious: 260,
+    lineDelay: 650,
     wordStagger: 55,
   },
 };
@@ -118,73 +123,176 @@ interface TextBlockInstance {
   state: TextSceneState;
   config: StateTextConfig;
   phase: 'enter' | 'visible' | 'exit';
-  headerVisible: boolean;
-  headerReceded: boolean;
-  subtextVisible: boolean;
+  lineVisibilities: boolean[];
   exitDuration?: number;
 }
 
-const HEADER_RECEDES_AFTER_MS = 2000;
 const HEADER_FADE_DURATION_MS = 1400;
 const STATE2_TEXT_STEP_MS = 3000;
 
-const ENTER_Y_BY_MODE: Record<RevealMode, number> = {
-  soft: 8,
-  airy: 18,
-  firm: 10,
-  bridge: 4,
-  payoff: 10,
-  reflection: 8,
-  collapse: 8,
-  silence: 0,
-};
-
-const EXIT_Y_BY_MODE: Record<RevealMode, number> = {
-  soft: -8,
-  airy: -24,
-  firm: -16,
-  bridge: -10,
-  payoff: -18,
-  reflection: -10,
-  collapse: -18,
-  silence: -14,
-};
-
-function hasText(config: StateTextConfig): boolean {
-  return Boolean(config.header || config.subtext);
+function hasText(config: StateTextConfig, state: TextSceneState): boolean {
+  return config.lines.length > 0 || state === '2';
 }
 
-function getHeaderTone(revealMode: RevealMode): string {
-  if (revealMode === 'payoff') return 'text-[#ffd4a3]';
-  if (revealMode === 'reflection') return 'text-white/90';
-  if (revealMode === 'collapse') return 'text-white/85';
-  if (revealMode === 'silence') return 'text-transparent';
-  return 'gradient-text';
+interface TypographySpec {
+  fontClass: string;
+  sizeClass: string;
+  trackingClass: string;
+  uppercase: boolean;
+  toneClass: string;
+  textShadow: string;
 }
 
-function getHeaderShadow(revealMode: RevealMode): string {
-  if (revealMode === 'payoff') return '0 0 34px rgba(249, 115, 22, 0.52)';
-  if (revealMode === 'reflection') return '0 0 24px rgba(255, 255, 255, 0.18)';
-  if (revealMode === 'collapse') return '0 0 24px rgba(255, 255, 255, 0.14)';
-  return '0 0 30px rgba(168, 85, 247, 0.5)';
+function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
+  switch (role) {
+    case 'thesis':
+      return lineIndex === 0
+        ? {
+            fontClass: 'font-russo',
+            sizeClass: 'text-[32px] sm:text-[42px] md:text-[52px]',
+            trackingClass: 'tracking-[0.15em]',
+            uppercase: true,
+            toneClass: 'gradient-text',
+            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+          }
+        : {
+            fontClass: 'font-orbitron',
+            sizeClass: 'text-[14px] sm:text-[15px]',
+            trackingClass: 'tracking-[0.12em]',
+            uppercase: false,
+            toneClass: 'text-white/90',
+            textShadow: '0 0 20px rgba(255, 255, 255, 0.18)',
+          };
+    case 'atmosphere':
+      return {
+        fontClass: 'font-russo',
+        sizeClass: 'text-[24px] sm:text-[32px] md:text-[40px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: true,
+        toneClass: 'gradient-text',
+        textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+      };
+    case 'spark':
+      return lineIndex === 0
+        ? {
+            fontClass: 'font-russo',
+            sizeClass: 'text-[28px] sm:text-[36px] md:text-[44px]',
+            trackingClass: 'tracking-[0.12em]',
+            uppercase: true,
+            toneClass: 'gradient-text',
+            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+          }
+        : {
+            fontClass: 'font-orbitron',
+            sizeClass: 'text-[13px] sm:text-[14px]',
+            trackingClass: 'tracking-[0.12em]',
+            uppercase: false,
+            toneClass: 'text-white/85',
+            textShadow: '0 0 18px rgba(255, 255, 255, 0.14)',
+          };
+    case 'payoff':
+      return lineIndex === 0
+        ? {
+            fontClass: 'font-russo',
+            sizeClass: 'text-[28px] sm:text-[36px] md:text-[44px]',
+            trackingClass: 'tracking-[0.12em]',
+            uppercase: true,
+            toneClass: 'text-[#ffd4a3]',
+            textShadow: '0 0 34px rgba(249, 115, 22, 0.52)',
+          }
+        : {
+            fontClass: 'font-orbitron',
+            sizeClass: 'text-[13px] sm:text-[14px]',
+            trackingClass: 'tracking-[0.15em]',
+            uppercase: false,
+            toneClass: 'text-white/85',
+            textShadow: '0 0 18px rgba(255, 255, 255, 0.14)',
+          };
+    case 'resolution':
+      return {
+        fontClass: 'font-russo',
+        sizeClass: 'text-[24px] sm:text-[32px] md:text-[40px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: true,
+        toneClass: 'gradient-text',
+        textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+      };
+    case 'collapse':
+      return lineIndex === 0
+        ? {
+            fontClass: 'font-russo',
+            sizeClass: 'text-[24px] sm:text-[30px] md:text-[36px]',
+            trackingClass: 'tracking-[0.1em]',
+            uppercase: true,
+            toneClass: 'text-white/85',
+            textShadow: '0 0 24px rgba(255, 255, 255, 0.14)',
+          }
+        : {
+            fontClass: 'font-orbitron',
+            sizeClass: 'text-[13px] sm:text-[14px]',
+            trackingClass: 'tracking-[0.12em]',
+            uppercase: false,
+            toneClass: 'text-white/70',
+            textShadow: '0 0 14px rgba(255, 255, 255, 0.1)',
+          };
+    default:
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[13px]',
+        trackingClass: 'tracking-[0.15em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: 'none',
+      };
+  }
 }
 
-function getSubtextShadow(revealMode: RevealMode): string {
-  if (revealMode === 'payoff') return '0 0 24px rgba(251, 146, 60, 0.32)';
-  if (revealMode === 'collapse') return '0 0 18px rgba(255, 255, 255, 0.1)';
-  return '0 0 20px rgba(255, 255, 255, 0.18)';
+interface MotionSpec {
+  enterY: number;
+  exitY: number;
+  blurEnter: number;
+  blurExit: number;
+  containerY: number;
 }
 
-function getAccentStyle(config: StateTextConfig): CSSProperties {
-  if (!config.accentColor) return {};
+function getRoleMotion(role: TextRole): MotionSpec {
+  switch (role) {
+    case 'thesis':
+      return { enterY: 8, exitY: -8, blurEnter: 8, blurExit: 6, containerY: 0 };
+    case 'atmosphere':
+      return { enterY: 12, exitY: -18, blurEnter: 6, blurExit: 6, containerY: 0 };
+    case 'spark':
+      return { enterY: 6, exitY: -10, blurEnter: 4, blurExit: 6, containerY: 0 };
+    case 'marker':
+      return { enterY: 5, exitY: -10, blurEnter: 3, blurExit: 6, containerY: 60 };
+    case 'payoff':
+      return { enterY: 6, exitY: -10, blurEnter: 4, blurExit: 6, containerY: 0 };
+    case 'resolution':
+      return { enterY: 10, exitY: -12, blurEnter: 6, blurExit: 6, containerY: 0 };
+    case 'collapse':
+      return { enterY: 4, exitY: -8, blurEnter: 3, blurExit: 6, containerY: 0 };
+    default:
+      return { enterY: 8, exitY: -8, blurEnter: 8, blurExit: 6, containerY: 0 };
+  }
+}
 
-  return {
-    color: config.accentColor,
-    textShadow: `0 0 28px ${config.accentColor}66`,
-    animation: `text-color-morph ${config.transitionDuration}ms ease-out both`,
-    '--text-color-from': '#a855f7',
-    '--text-color-to': config.accentColor,
-  } as CSSProperties;
+function getLineGap(role: TextRole): string {
+  switch (role) {
+    case 'thesis':
+      return '0.6em';
+    case 'atmosphere':
+      return '0.25em';
+    case 'spark':
+      return '0.5em';
+    case 'payoff':
+      return '0.6em';
+    case 'resolution':
+      return '0.25em';
+    case 'collapse':
+      return '0.5em';
+    default:
+      return '0.5em';
+  }
 }
 
 function renderWordReveal(
@@ -195,8 +303,9 @@ function renderWordReveal(
   staggerMs: number,
   enterY: number,
   exitY: number,
-  className?: string,
-  inlineStyle?: CSSProperties
+  blurEnter: number,
+  blurExit: number,
+  className?: string
 ): ReactNode {
   if (!text) return null;
   const words = text.trim().split(/\s+/);
@@ -209,13 +318,12 @@ function renderWordReveal(
         style={{
           opacity: isExiting ? 0 : isVisible ? 1 : 0,
           transform: `translate3d(0, ${isExiting ? exitY : isVisible ? 0 : enterY}px, 0)`,
-          filter: `blur(${isExiting ? '6px' : isVisible ? '0px' : '8px'})`,
+          filter: `blur(${isExiting ? `${blurExit}px` : isVisible ? '0px' : `${blurEnter}px`})`,
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
           transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
           transitionProperty: 'opacity, transform, filter',
           marginRight: '0.28em',
-          ...inlineStyle,
         }}
       >
         {word}
@@ -241,39 +349,41 @@ function State2CumulativeText({
       return;
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
-    // Header words replace sequentially: Time. → Pressure. → Intent.
-    timers.push(setTimeout(() => {
-      setWordState({ current: 0, previous: -1 });
-      setLineState({ current: 0, previous: -1 });
-    }, 0 * STATE2_TEXT_STEP_MS));
-    timers.push(setTimeout(() => {
-      setWordState({ current: 1, previous: 0 });
-      setLineState({ current: 1, previous: 0 });
-    }, 1 * STATE2_TEXT_STEP_MS));
-    timers.push(setTimeout(() => {
-      setWordState({ current: 2, previous: 1 });
-      setLineState({ current: 2, previous: 1 });
-    }, 2 * STATE2_TEXT_STEP_MS));
+    timers.push(
+      setTimeout(() => {
+        setWordState({ current: 0, previous: -1 });
+        setLineState({ current: 0, previous: -1 });
+      }, 0 * STATE2_TEXT_STEP_MS)
+    );
+    timers.push(
+      setTimeout(() => {
+        setWordState({ current: 1, previous: 0 });
+        setLineState({ current: 1, previous: 0 });
+      }, 1 * STATE2_TEXT_STEP_MS)
+    );
+    timers.push(
+      setTimeout(() => {
+        setWordState({ current: 2, previous: 1 });
+        setLineState({ current: 2, previous: 1 });
+      }, 2 * STATE2_TEXT_STEP_MS)
+    );
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
   const words = ['Time.', 'Pressure.', 'Intent.'];
   const lines = [
-    'What receives none remains only a thought.',
-    'What is worth forming must first endure the hold.',
-    'To hold is not to possess. Too much grip, and nothing becomes.',
+    'A spark disappears unless it is returned to.',
+    'What survives the hold begins to take shape.',
+    'To grow beyond its first form, it must be released.',
   ];
 
-  const exitY = -12;
-  const enterY = 16;
+  const exitY = -8;
+  const enterY = 5;
 
   return (
-    <div
-      className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
-    >
-      {/* Header words — cumulative stack */}
+    <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
       <h1
-        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase"
+        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[24px] sm:text-[32px] md:text-[40px] font-normal leading-none uppercase"
         style={{
           color: '#22d3ee',
           textShadow: '0 0 28px #22d3ee66',
@@ -289,8 +399,8 @@ function State2CumulativeText({
               style={{
                 opacity: isExiting ? 0 : isVisibleWord ? 1 : 0,
                 transform: `translate3d(0, ${isExiting ? exitY : isVisibleWord ? 0 : enterY}px, 0)`,
-                filter: `blur(${isExiting ? '6px' : isVisibleWord ? '0px' : '8px'})`,
-                transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 700}ms`,
+                filter: `blur(${isExiting ? '4px' : isVisibleWord ? '0px' : '3px'})`,
+                transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
                 transitionProperty: 'opacity, transform, filter',
                 pointerEvents: 'none',
               }}
@@ -301,22 +411,24 @@ function State2CumulativeText({
         })}
       </h1>
 
-      {/* Subtext line — single active line with replacement animation */}
-      <div className="relative mt-4 min-h-[2em] w-full flex items-center justify-center" style={{ zIndex: 30 }}>
+      <div
+        className="relative mt-3 min-h-[2em] w-full flex items-center justify-center"
+        style={{ zIndex: 30 }}
+      >
         {lines.map((line, i) => {
           const isActive = i === lineState.current;
           const wasActive = i === lineState.previous;
           return (
             <p
               key={i}
-              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[13.5px] font-normal leading-relaxed text-white tracking-[0.15em]"
+              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[12px] sm:text-[13px] font-normal leading-relaxed text-white tracking-[0.15em]"
               style={{
                 opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
                 transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
-                filter: `blur(${isExiting ? '6px' : isActive ? '0px' : wasActive ? '6px' : '8px'})`,
-                transitionDuration: `${wasActive || isExiting ? HEADER_FADE_DURATION_MS : 900}ms`,
+                filter: `blur(${isExiting ? '4px' : isActive ? '0px' : wasActive ? '4px' : '3px'})`,
+                transitionDuration: `${wasActive || isExiting ? HEADER_FADE_DURATION_MS : 600}ms`,
                 transitionProperty: 'opacity, transform, filter',
-                textShadow: getSubtextShadow('firm'),
+                textShadow: '0 0 18px rgba(255, 255, 255, 0.1)',
                 pointerEvents: 'none',
               }}
             >
@@ -330,22 +442,14 @@ function State2CumulativeText({
 }
 
 function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
+  const config = STATE_TEXT_CONFIG[state];
   return {
     id,
     state,
-    config: STATE_TEXT_CONFIG[state],
+    config,
     phase: 'enter',
-    headerVisible: false,
-    headerReceded: false,
-    subtextVisible: false,
+    lineVisibilities: state === '2' ? [false] : config.lines.map(() => false),
   };
-}
-
-function getHeaderRecedeDelay(config: StateTextConfig): number {
-  if (!config.header) return 0;
-  const wordCount = config.header.trim().split(/\s+/).filter(Boolean).length;
-  const finalWordDelay = Math.max(0, wordCount - 1) * config.wordStagger;
-  return config.headerDelay + finalWordDelay + HEADER_RECEDES_AFTER_MS;
 }
 
 export function StateText({ state }: { state: TextSceneState }) {
@@ -374,20 +478,29 @@ export function StateText({ state }: { state: TextSceneState }) {
 
     const nextConfig = STATE_TEXT_CONFIG[state];
     const outgoing = activeRef.current;
-    if (outgoing && outgoing.phase !== 'exit' && hasText(outgoing.config) && nextConfig.lingerPrevious > 0) {
+
+    if (
+      outgoing &&
+      outgoing.phase !== 'exit' &&
+      hasText(outgoing.config, outgoing.state) &&
+      nextConfig.lingerPrevious > 0
+    ) {
       const previousInstance: TextBlockInstance = {
         ...outgoing,
         phase: 'visible',
-        headerVisible: true,
-        subtextVisible: true,
+        lineVisibilities: outgoing.lineVisibilities.map(() => true),
         exitDuration: nextConfig.transitionDuration,
       };
       setPrevious(previousInstance);
       queueTimer(() => {
-        setPrevious((prev) => (prev?.id === previousInstance.id ? { ...prev, phase: 'exit' } : prev));
+        setPrevious((prev) =>
+          prev?.id === previousInstance.id ? { ...prev, phase: 'exit' } : prev
+        );
       }, 20);
       queueTimer(() => {
-        setPrevious((prev) => (prev?.id === previousInstance.id ? null : prev));
+        setPrevious((prev) =>
+          prev?.id === previousInstance.id ? null : prev
+        );
       }, nextConfig.transitionDuration + nextConfig.lingerPrevious);
     } else {
       setPrevious(null);
@@ -397,34 +510,32 @@ export function StateText({ state }: { state: TextSceneState }) {
     nextIdRef.current += 1;
     setActive(nextInstance);
 
-    if (nextConfig.header) {
+    if (nextInstance.state === '2') {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
-            ? { ...current, phase: 'visible', headerVisible: true }
+            ? { ...current, phase: 'visible', lineVisibilities: [true] }
             : current
         );
-      }, nextConfig.headerDelay);
-
-      if (nextInstance.state !== '2') {
+      }, 0);
+    } else {
+      nextConfig.lines.forEach((_, i) => {
+        const delay =
+          i === 0 ? Math.min(nextConfig.lineDelay, 200) : nextConfig.lineDelay * i;
         queueTimer(() => {
           setActive((current) =>
-            current?.id === nextInstance.id && current.phase !== 'exit'
-              ? { ...current, headerReceded: true }
+            current?.id === nextInstance.id
+              ? {
+                  ...current,
+                  phase: 'visible',
+                  lineVisibilities: current.lineVisibilities.map(
+                    (v, idx) => v || idx === i
+                  ),
+                }
               : current
           );
-        }, getHeaderRecedeDelay(nextConfig));
-      }
-    }
-
-    if (nextConfig.subtext) {
-      queueTimer(() => {
-        setActive((current) =>
-          current?.id === nextInstance.id
-            ? { ...current, phase: 'visible', subtextVisible: true }
-            : current
-        );
-      }, nextConfig.subtextDelay);
+        }, delay);
+      });
     }
 
     if (nextConfig.autoExitDelay) {
@@ -434,8 +545,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             ? {
                 ...current,
                 phase: 'exit',
-                headerVisible: true,
-                subtextVisible: true,
+                lineVisibilities: current.lineVisibilities.map(() => true),
               }
             : current
         );
@@ -445,23 +555,18 @@ export function StateText({ state }: { state: TextSceneState }) {
     return clearTimers;
   }, [state]);
 
-  const renderTextBlock = (instance: TextBlockInstance, mode: 'previous' | 'active') => {
-    if (!hasText(instance.config)) return null;
+  const renderTextBlock = (
+    instance: TextBlockInstance,
+    mode: 'previous' | 'active'
+  ) => {
+    if (!hasText(instance.config, instance.state)) return null;
 
     const { config, phase } = instance;
     const isExiting = phase === 'exit';
     const blockOpacity = isExiting ? 0 : 1;
-    const blockY = isExiting ? EXIT_Y_BY_MODE[config.revealMode] : 0;
     const duration = instance.exitDuration ?? config.transitionDuration;
-    const enterY = ENTER_Y_BY_MODE[config.revealMode];
-    const headerVisible = instance.headerVisible && !isExiting;
-    const headerReceded = instance.headerReceded && headerVisible;
-    const subtextVisible = instance.subtextVisible && !isExiting;
-    const accentStyle = getAccentStyle(config);
-    const headerTone = config.accentColor ? '' : getHeaderTone(config.revealMode);
-    const headerUsesGradient = headerTone === 'gradient-text';
-    const headerContainerTone = headerUsesGradient ? '' : headerTone;
-    const headerWordTone = headerUsesGradient ? headerTone : '';
+    const motion = getRoleMotion(config.role);
+    const blockY = isExiting ? motion.exitY : motion.containerY;
 
     if (instance.state === '2') {
       return (
@@ -474,9 +579,10 @@ export function StateText({ state }: { state: TextSceneState }) {
             transitionDuration: `${duration}ms`,
           }}
         >
-          <div style={{ transform: 'translateY(60px)' }}>
-            <State2CumulativeText isVisible={headerVisible} isExiting={isExiting} />
-          </div>
+          <State2CumulativeText
+            isVisible={instance.lineVisibilities[0] ?? false}
+            isExiting={isExiting}
+          />
         </div>
       );
     }
@@ -491,83 +597,37 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionDuration: `${duration}ms`,
         }}
       >
-        {/* Header — positioned near centre so core overlaps it, lower z-index */}
-        {config.header && (
-          <div
-            className="absolute left-1/2 box-border flex w-[33vw] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col items-center px-5 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
-            style={{ bottom: '50%', zIndex: headerReceded ? 1 : 10 }}
-          >
-            <h1
-              className={`font-russo flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-none uppercase ${headerContainerTone}`}
-              style={{
-                opacity: headerReceded ? 0.6 : 1,
-                filter: headerReceded ? 'blur(2px)' : 'blur(0px)',
-                transform: headerReceded ? 'translate3d(0, -22px, 0) scale(0.96)' : 'translate3d(0, 0, 0) scale(1)',
-                transition: `opacity ${HEADER_FADE_DURATION_MS}ms ease, filter ${HEADER_FADE_DURATION_MS}ms ease, transform ${HEADER_FADE_DURATION_MS}ms ease`,
-                textShadow: getHeaderShadow(config.revealMode),
-                ...accentStyle,
-              }}
-            >
-              {renderWordReveal(
-                config.header,
-                headerVisible,
-                isExiting,
-                config.transitionDuration,
-                config.wordStagger,
-                enterY,
-                -8,
-                `transition-all ease-out ${headerWordTone}`
-              )}
-            </h1>
-          </div>
-        )}
+        <div className="flex flex-col items-center justify-center text-center px-5">
+          {config.lines.map((line, i) => {
+            const isLineVisible = instance.lineVisibilities[i] && !isExiting;
+            const typography = getRoleTypography(config.role, i);
+            const lineEnterY = motion.enterY + i * 2;
 
-        {/* Subtext — below header, highest z-index */}
-        {config.subtext && (
-          <div
-            className="absolute left-1/2 box-border flex w-[33vw] max-w-[calc(100vw-2rem)] -translate-x-1/2 flex-col items-center px-5 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]"
-            style={{ top: '53.5%', zIndex: 30 }}
-          >
-            {config.subtextAsHeader ? (
-              <h2
-                className={`font-orbitron flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[32px] sm:text-[42px] md:text-[52px] font-normal leading-relaxed uppercase ${headerContainerTone} tracking-[0.15em]`}
+            return (
+              <div
+                key={i}
+                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
                 style={{
-                  textShadow: getHeaderShadow(config.revealMode),
-                  ...accentStyle,
+                  textShadow: typography.textShadow,
+                  marginTop: i > 0 ? getLineGap(config.role) : 0,
                 }}
               >
                 {renderWordReveal(
-                  config.subtext,
-                  subtextVisible,
+                  line,
+                  isLineVisible,
                   isExiting,
                   config.transitionDuration,
                   config.wordStagger,
-                  enterY + 4,
-                  -8,
-                  `transition-all ease-out ${headerWordTone}`
-                )}
-              </h2>
-            ) : (
-              <p
-                className="font-orbitron flex min-h-[1.6em] w-full flex-wrap items-center justify-center text-center text-[12px] sm:text-[13.5px] font-normal leading-relaxed text-white tracking-[0.15em]"
-                style={{
-                  textShadow: getSubtextShadow(config.revealMode),
-                }}
-              >
-                {renderWordReveal(
-                  config.subtext,
-                  subtextVisible,
-                  isExiting,
-                  config.transitionDuration,
-                  config.wordStagger,
-                  enterY + 4,
-                  -6,
+                  lineEnterY,
+                  motion.exitY,
+                  motion.blurEnter,
+                  motion.blurExit,
                   'transition-all ease-out'
                 )}
-              </p>
-            )}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
