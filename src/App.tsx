@@ -111,9 +111,24 @@ function App() {
     setShowAstronautText(true);
   }, []);
 
-  // Explicitly preload critical video assets before starting the experience
+  // Explicitly preload all critical assets before starting the experience
+  // (main app videos + scene02 videos/images so transition is instant)
   useEffect(() => {
-    const sources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
+    const mainSources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
+    const scene02Sources = [
+      '/scene02/nebula_space_only2x.png',
+      '/scene02/looking-astro-loop2.webm',
+      '/scene02/looking-astro-loop2.mov',
+      '/webm/toto-ga2.webm',
+      '/webm/toto-ga2.mov',
+      '/webm/nft11-ga2.webm',
+      '/webm/nft11-ga2.mov',
+      '/webm/oxytap-ga2.webm',
+      '/webm/oxytap-ga2.mov',
+      '/webm/target-lock.webm',
+      '/webm/target-lock.mov',
+    ];
+    const allSources = [...mainSources, ...scene02Sources];
     const videos: HTMLVideoElement[] = [];
     let fontsReady = false;
 
@@ -128,33 +143,44 @@ function App() {
         }
       });
       total += fontsReady ? 1 : 0;
-      const pct = Math.min(100, Math.round((total / (sources.length + 1)) * 100));
+      const pct = Math.min(100, Math.round((total / (allSources.length + 1)) * 100));
       setLoadProgress(pct);
     };
 
     const interval = setInterval(updateProgress, 100);
 
-    const promises = sources.map((src) => {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.muted = true;
-      video.playsInline = true;
-      video.src = src;
-      videos.push(video);
+    const promises = allSources.map((src) => {
+      const url = resolveAssetUrl(src);
+      const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url);
+      if (isVideo) {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+        video.src = url;
+        video.load();
+        videos.push(video);
+        return new Promise<void>((resolve) => {
+          const cleanup = () => {
+            video.removeEventListener('canplaythrough', onReady);
+            video.removeEventListener('error', onReady);
+          };
+          const onReady = () => {
+            cleanup();
+            resolve();
+          };
+          video.addEventListener('canplaythrough', onReady);
+          video.addEventListener('error', onReady);
+          if (video.readyState >= 4) {
+            onReady();
+          }
+        });
+      }
       return new Promise<void>((resolve) => {
-        const cleanup = () => {
-          video.removeEventListener('canplaythrough', onReady);
-          video.removeEventListener('error', onReady);
-        };
-        const onReady = () => {
-          cleanup();
-          resolve();
-        };
-        video.addEventListener('canplaythrough', onReady);
-        video.addEventListener('error', onReady);
-        if (video.readyState >= 4) {
-          onReady();
-        }
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = url;
       });
     });
 
@@ -172,39 +198,6 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
-
-  // Preload scene02 assets in background so no preloader is needed on transition
-  useEffect(() => {
-    if (!assetsLoaded) return;
-    const scene02Assets = [
-      '/scene02/nebula_space_only2x.png',
-      '/scene02/looking-astro-loop2.webm',
-      '/scene02/looking-astro-loop2.mov',
-      '/webm/toto-ga2.webm',
-      '/webm/toto-ga2.mov',
-      '/webm/nft11-ga2.webm',
-      '/webm/nft11-ga2.mov',
-      '/webm/oxytap-ga2.webm',
-      '/webm/oxytap-ga2.mov',
-      '/webm/target-lock.webm',
-      '/webm/target-lock.mov',
-    ];
-    scene02Assets.forEach((src) => {
-      const url = resolveAssetUrl(src);
-      const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url);
-      if (isVideo) {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.playsInline = true;
-        video.src = url;
-        video.load();
-      } else {
-        const img = new Image();
-        img.src = url;
-      }
-    });
-  }, [assetsLoaded]);
 
   // Auto-play text after assets load and disclaimer is dismissed, then auto-transition to starfield
   useEffect(() => {
