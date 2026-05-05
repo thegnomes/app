@@ -153,7 +153,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.15em]',
             uppercase: true,
             toneClass: 'gradient-text',
-            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+            textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
           }
         : {
             fontClass: 'font-orbitron',
@@ -161,7 +161,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/90',
-            textShadow: '0 0 20px rgba(255, 255, 255, 0.18)',
+            textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
           };
     case 'atmosphere':
       return {
@@ -170,7 +170,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
-        textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+        textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
       };
     case 'spark':
       return lineIndex === 0
@@ -180,7 +180,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'gradient-text',
-            textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+            textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
           }
         : {
             fontClass: 'font-orbitron',
@@ -188,7 +188,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/85',
-            textShadow: '0 0 18px rgba(255, 255, 255, 0.14)',
+            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           };
     case 'payoff':
       return lineIndex === 0
@@ -198,7 +198,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'text-[#ffd4a3]',
-            textShadow: '0 0 34px rgba(249, 115, 22, 0.52)',
+            textShadow: '0 0 1px rgba(249, 115, 22, 0.35)',
           }
         : {
             fontClass: 'font-orbitron',
@@ -206,7 +206,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.15em]',
             uppercase: false,
             toneClass: 'text-white/85',
-            textShadow: '0 0 18px rgba(255, 255, 255, 0.14)',
+            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           };
     case 'resolution':
       return {
@@ -215,7 +215,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
-        textShadow: '0 0 30px rgba(168, 85, 247, 0.5)',
+        textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
       };
     case 'collapse':
       return lineIndex === 0
@@ -225,7 +225,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.1em]',
             uppercase: true,
             toneClass: 'text-white/85',
-            textShadow: '0 0 24px rgba(255, 255, 255, 0.14)',
+            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
           }
         : {
             fontClass: 'font-orbitron',
@@ -233,7 +233,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/70',
-            textShadow: '0 0 14px rgba(255, 255, 255, 0.1)',
+            textShadow: '0 0 1px rgba(255, 255, 255, 0.06)',
           };
     default:
       return {
@@ -322,7 +322,7 @@ function renderWordReveal(
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
           transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          transitionProperty: 'opacity, transform, filter',
+          transitionProperty: isGhost ? 'opacity, transform, filter' : 'transform',
           marginRight: '0.28em',
         }}
       >
@@ -390,6 +390,9 @@ function State2CumulativeText({
           const isCurrent = i === currentWord;
           const isGhost = !isExiting && i < currentWord && currentWord >= 0;
           const isFuture = i > currentWord || currentWord < 0;
+          const transitionProps = isExiting || isGhost
+            ? 'opacity, transform, filter'
+            : 'transform';
 
           return (
             <span
@@ -400,9 +403,11 @@ function State2CumulativeText({
                 opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
                 transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
                 filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
-                textShadow: isGhost ? '0 0 6px #22d3ee33' : '0 0 28px #22d3ee66',
+                textShadow: isGhost
+                  ? '0 0 1px #22d3ee22'
+                  : '0 0 1px #22d3ee55',
                 transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
-                transitionProperty: 'opacity, transform, filter',
+                transitionProperty: transitionProps,
                 pointerEvents: 'none',
               }}
             >
@@ -420,6 +425,9 @@ function State2CumulativeText({
           const isCurrent = i === currentLine;
           const isGhost = !isExiting && i < currentLine && currentLine >= 0;
           const isFuture = i > currentLine || currentLine < 0;
+          const transitionProps = isExiting || isGhost
+            ? 'opacity, transform, filter'
+            : 'transform';
 
           return (
             <p
@@ -430,10 +438,10 @@ function State2CumulativeText({
                 transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
                 filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
                 transitionDuration: `${isExiting || isGhost ? HEADER_FADE_DURATION_MS : 600}ms`,
-                transitionProperty: 'opacity, transform, filter',
+                transitionProperty: transitionProps,
                 textShadow: isGhost
-                  ? '0 0 6px rgba(255,255,255,0.06)'
-                  : '0 0 18px rgba(255, 255, 255, 0.1)',
+                  ? '0 0 1px rgba(255,255,255,0.04)'
+                  : '0 0 1px rgba(255, 255, 255, 0.08)',
                 pointerEvents: 'none',
               }}
             >
@@ -598,7 +606,6 @@ export function StateText({ state }: { state: TextSceneState }) {
         style={{
           opacity: 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
-          filter: isGhost ? 'blur(1px)' : 'none',
           transitionDuration: `${duration}ms`,
         }}
       >
@@ -614,7 +621,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             const lineEnterY = motion.enterY + i * 2;
             const textShadow =
               linePhase === 'ghost'
-                ? '0 0 6px rgba(255,255,255,0.06)'
+                ? '0 0 1px rgba(255,255,255,0.04)'
                 : typography.textShadow;
 
             return (
