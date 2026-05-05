@@ -68,22 +68,21 @@ export function GalaxyColumn({
       }}
     >
       <div
-        className="relative flex items-center justify-center transition-all duration-700 ease-out"
+        className="relative z-10 flex aspect-[554/430] items-center justify-center overflow-visible transition-all duration-700 ease-out"
         style={{
-          width: '50%',
-          height: '50%',
-          transform: `scale(${isHovered ? 1 : 0.5})`,
+          width: 'clamp(13rem, 105%, 38rem)',
+          transform: `scale(${isHovered ? 1.08 : 0.72})`,
           filter: isHovered ? 'saturate(1)' : 'saturate(0)',
         }}
       >
-        <div className="h-full w-full">
+        <div className="relative z-10 h-full w-full">
           <video
             ref={videoRef}
             muted
             playsInline
             loop
             preload="auto"
-            className="h-full w-full"
+            className="h-full w-full object-contain"
           >
             {videoSources.map((source) => (
               <source key={source.src} src={source.src} type={source.type} />
@@ -97,7 +96,7 @@ export function GalaxyColumn({
           playsInline
           loop
           preload="auto"
-          className={`pointer-events-none absolute inset-0 h-full w-full mix-blend-screen transition-opacity duration-500 ${
+          className={`pointer-events-none absolute left-1/2 top-1/2 z-20 h-[145%] w-[145%] -translate-x-1/2 -translate-y-1/2 object-contain mix-blend-screen transition-opacity duration-500 ${
             isHovered ? 'opacity-80' : 'opacity-0'
           }`}
         >
@@ -106,7 +105,7 @@ export function GalaxyColumn({
           ))}
         </video>
 
-        <RingText items={ringItems} radius={120} duration={12} />
+        <RingText items={ringItems} radius={150} duration={12} />
       </div>
     </a>
   );
