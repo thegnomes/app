@@ -118,7 +118,7 @@ function DisclaimerTerminal({
     <DialogContent
       showCloseButton={false}
       data-testid="disclaimer-terminal"
-      className="disclaimer-terminal border-0 bg-transparent p-0 shadow-none"
+      className="disclaimer-terminal max-w-none border-0 bg-transparent p-0 shadow-none"
     >
       {/* Monitor frame */}
       <div className="relative mx-auto w-[min(92vw,960px)] max-w-[92vw]" style={{ aspectRatio: '16/9' }}>
