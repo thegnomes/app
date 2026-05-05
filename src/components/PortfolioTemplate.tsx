@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { Preloader } from './Preloader';
 import { resolveAssetUrl } from '@/lib/assets';
 
@@ -404,6 +405,8 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
+  const sectionRef = useRef<HTMLElement>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   const getStepImages = (stepIndex: number) => {
     const step = project.proof[stepIndex];
@@ -416,6 +419,30 @@ function DualModeView({ project }: { project: PortfolioProject }) {
       project.gallery[(start + i) % total]
     ).filter(Boolean);
   };
+
+  const handleNavigate = (dir: 'up' | 'down'): boolean => {
+    if (!hasScrolled) setHasScrolled(true);
+
+    if (dir === 'down' && activeStep < project.proof.length - 1) {
+      setSlideDir('right');
+      setPrevStep(activeStep);
+      setActiveStep((s) => s + 1);
+      setCarouselIndex(0);
+      return true;
+    }
+
+    if (dir === 'up' && activeStep > 0) {
+      setSlideDir('left');
+      setPrevStep(activeStep);
+      setActiveStep((s) => s - 1);
+      setCarouselIndex(0);
+      return true;
+    }
+
+    return false;
+  };
+
+  useScrollLock(sectionRef, handleNavigate);
 
   const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
 
@@ -457,7 +484,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
+    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -660,6 +687,27 @@ function DualModeView({ project }: { project: PortfolioProject }) {
         </div>
       </div>
 
+      {/* Scroll hint */}
+      <div
+        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
+          hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
+        <svg
+          className="animate-bounce text-neutral-500"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 5v14M19 12l-7 7-7-7" />
+        </svg>
+      </div>
     </section>
   );
 }
