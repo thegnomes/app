@@ -29,7 +29,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'I have a theory.',
       'Our shared universe is our collective mind made visible.',
     ],
-    transitionDuration: 900,
+    transitionDuration: 800,
     lingerPrevious: 0,
     lineDelay: 900,
     wordStagger: 70,
@@ -40,7 +40,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'Drifting across endless darkness,',
       'every thought moves without direction.',
     ],
-    transitionDuration: 900,
+    transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 720,
     wordStagger: 65,
@@ -51,7 +51,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'Inspiration clicks.',
       'Something begins to gather.',
     ],
-    transitionDuration: 500,
+    transitionDuration: 450,
     lingerPrevious: 0,
     lineDelay: 280,
     wordStagger: 40,
@@ -71,7 +71,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'Orbit takes hold.',
       'What once drifted begins to gather around a centre.',
     ],
-    transitionDuration: 700,
+    transitionDuration: 650,
     lingerPrevious: 260,
     lineDelay: 600,
     wordStagger: 40,
@@ -91,7 +91,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'Some things burn brightly,',
       'then fade back into the dark.',
     ],
-    transitionDuration: 700,
+    transitionDuration: 650,
     lingerPrevious: 320,
     lineDelay: 480,
     wordStagger: 25,
@@ -111,7 +111,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       'Its influence becomes order,',
       'setting its universe in motion.',
     ],
-    transitionDuration: 800,
+    transitionDuration: 750,
     lingerPrevious: 260,
     lineDelay: 650,
     wordStagger: 55,
@@ -251,28 +251,27 @@ interface MotionSpec {
   enterY: number;
   exitY: number;
   blurEnter: number;
-  blurExit: number;
   containerY: number;
 }
 
 function getRoleMotion(role: TextRole): MotionSpec {
   switch (role) {
     case 'thesis':
-      return { enterY: 8, exitY: -8, blurEnter: 8, blurExit: 6, containerY: 0 };
+      return { enterY: 6, exitY: -4, blurEnter: 2, containerY: 0 };
     case 'atmosphere':
-      return { enterY: 12, exitY: -18, blurEnter: 6, blurExit: 6, containerY: 0 };
+      return { enterY: 8, exitY: -8, blurEnter: 2, containerY: 0 };
     case 'spark':
-      return { enterY: 6, exitY: -10, blurEnter: 4, blurExit: 6, containerY: 0 };
+      return { enterY: 4, exitY: -6, blurEnter: 1, containerY: 0 };
     case 'marker':
-      return { enterY: 5, exitY: -10, blurEnter: 3, blurExit: 6, containerY: 60 };
+      return { enterY: 3, exitY: -6, blurEnter: 1, containerY: 60 };
     case 'payoff':
-      return { enterY: 6, exitY: -10, blurEnter: 4, blurExit: 6, containerY: 0 };
+      return { enterY: 4, exitY: -6, blurEnter: 1, containerY: 0 };
     case 'resolution':
-      return { enterY: 10, exitY: -12, blurEnter: 6, blurExit: 6, containerY: 0 };
+      return { enterY: 6, exitY: -8, blurEnter: 2, containerY: 0 };
     case 'collapse':
-      return { enterY: 4, exitY: -8, blurEnter: 3, blurExit: 6, containerY: 0 };
+      return { enterY: 3, exitY: -4, blurEnter: 1, containerY: 0 };
     default:
-      return { enterY: 8, exitY: -8, blurEnter: 8, blurExit: 6, containerY: 0 };
+      return { enterY: 6, exitY: -4, blurEnter: 2, containerY: 0 };
   }
 }
 
@@ -295,30 +294,31 @@ function getLineGap(role: TextRole): string {
   }
 }
 
+type LinePhase = 'hidden' | 'active' | 'ghost';
+
 function renderWordReveal(
   text: string,
-  isVisible: boolean,
-  isExiting: boolean,
+  linePhase: LinePhase,
   transitionDuration: number,
   staggerMs: number,
   enterY: number,
-  exitY: number,
-  blurEnter: number,
-  blurExit: number,
   className?: string
 ): ReactNode {
   if (!text) return null;
   const words = text.trim().split(/\s+/);
   return words.map((word, i) => {
-    const delay = isExiting ? 0 : i * staggerMs;
+    const isHidden = linePhase === 'hidden';
+    const isGhost = linePhase === 'ghost';
+    const delay = isHidden || isGhost ? 0 : i * staggerMs;
+
     return (
       <span
         key={`${word}-${i}`}
         className={`inline-block ${className || ''}`}
         style={{
-          opacity: isExiting ? 0 : isVisible ? 1 : 0,
-          transform: `translate3d(0, ${isExiting ? exitY : isVisible ? 0 : enterY}px, 0)`,
-          filter: `blur(${isExiting ? `${blurExit}px` : isVisible ? '0px' : `${blurEnter}px`})`,
+          opacity: isGhost ? 0.2 : isHidden ? 0 : 1,
+          transform: `translate3d(0, ${isGhost ? -3 : isHidden ? enterY : 0}px, 0)`,
+          filter: `blur(${isGhost ? 1 : 0}px)`,
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
           transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -377,29 +377,30 @@ function State2CumulativeText({
     'To grow beyond its first form, it must be released.',
   ];
 
-  const exitY = -8;
-  const enterY = 5;
+  const currentWord = wordState.current;
+  const currentLine = lineState.current;
 
   return (
     <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
       <h1
         className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[24px] sm:text-[32px] md:text-[40px] font-normal leading-none uppercase"
-        style={{
-          color: '#22d3ee',
-          textShadow: '0 0 28px #22d3ee66',
-          zIndex: 10,
-        }}
+        style={{ zIndex: 10 }}
       >
         {words.map((word, i) => {
-          const isVisibleWord = i <= wordState.current;
+          const isCurrent = i === currentWord;
+          const isGhost = !isExiting && i < currentWord && currentWord >= 0;
+          const isFuture = i > currentWord || currentWord < 0;
+
           return (
             <span
               key={word}
               className="block transition-all ease-out"
               style={{
-                opacity: isExiting ? 0 : isVisibleWord ? 1 : 0,
-                transform: `translate3d(0, ${isExiting ? exitY : isVisibleWord ? 0 : enterY}px, 0)`,
-                filter: `blur(${isExiting ? '4px' : isVisibleWord ? '0px' : '3px'})`,
+                color: '#22d3ee',
+                opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
+                transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
+                filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
+                textShadow: isGhost ? '0 0 6px #22d3ee33' : '0 0 28px #22d3ee66',
                 transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
                 transitionProperty: 'opacity, transform, filter',
                 pointerEvents: 'none',
@@ -416,19 +417,23 @@ function State2CumulativeText({
         style={{ zIndex: 30 }}
       >
         {lines.map((line, i) => {
-          const isActive = i === lineState.current;
-          const wasActive = i === lineState.previous;
+          const isCurrent = i === currentLine;
+          const isGhost = !isExiting && i < currentLine && currentLine >= 0;
+          const isFuture = i > currentLine || currentLine < 0;
+
           return (
             <p
               key={i}
               className="absolute font-orbitron flex w-full items-center justify-center text-center text-[12px] sm:text-[13px] font-normal leading-relaxed text-white tracking-[0.15em]"
               style={{
-                opacity: isExiting ? 0 : isActive ? 1 : wasActive ? 0 : 0,
-                transform: `translate3d(0, ${isExiting ? exitY : isActive ? 0 : wasActive ? exitY : enterY}px, 0)`,
-                filter: `blur(${isExiting ? '4px' : isActive ? '0px' : wasActive ? '4px' : '3px'})`,
-                transitionDuration: `${wasActive || isExiting ? HEADER_FADE_DURATION_MS : 600}ms`,
+                opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
+                transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
+                filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
+                transitionDuration: `${isExiting || isGhost ? HEADER_FADE_DURATION_MS : 600}ms`,
                 transitionProperty: 'opacity, transform, filter',
-                textShadow: '0 0 18px rgba(255, 255, 255, 0.1)',
+                textShadow: isGhost
+                  ? '0 0 6px rgba(255,255,255,0.06)'
+                  : '0 0 18px rgba(255, 255, 255, 0.1)',
                 pointerEvents: 'none',
               }}
             >
@@ -488,7 +493,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       const previousInstance: TextBlockInstance = {
         ...outgoing,
         phase: 'visible',
-        lineVisibilities: outgoing.lineVisibilities.map(() => true),
+        lineVisibilities: outgoing.lineVisibilities.map((v) => v),
         exitDuration: nextConfig.transitionDuration,
       };
       setPrevious(previousInstance);
@@ -562,11 +567,10 @@ export function StateText({ state }: { state: TextSceneState }) {
     if (!hasText(instance.config, instance.state)) return null;
 
     const { config, phase } = instance;
-    const isExiting = phase === 'exit';
-    const blockOpacity = isExiting ? 0 : 1;
+    const isGhost = phase === 'exit';
     const duration = instance.exitDuration ?? config.transitionDuration;
     const motion = getRoleMotion(config.role);
-    const blockY = isExiting ? motion.exitY : motion.containerY;
+    const blockY = isGhost ? motion.exitY : motion.containerY;
 
     if (instance.state === '2') {
       return (
@@ -574,14 +578,14 @@ export function StateText({ state }: { state: TextSceneState }) {
           key={`${mode}-${instance.id}-${instance.state}`}
           className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
           style={{
-            opacity: blockOpacity,
+            opacity: 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
             transitionDuration: `${duration}ms`,
           }}
         >
           <State2CumulativeText
             isVisible={instance.lineVisibilities[0] ?? false}
-            isExiting={isExiting}
+            isExiting={isGhost}
           />
         </div>
       );
@@ -592,36 +596,42 @@ export function StateText({ state }: { state: TextSceneState }) {
         key={`${mode}-${instance.id}-${instance.state}`}
         className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
         style={{
-          opacity: blockOpacity,
+          opacity: 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
+          filter: isGhost ? 'blur(1px)' : 'none',
           transitionDuration: `${duration}ms`,
         }}
       >
         <div className="flex flex-col items-center justify-center text-center px-5">
           {config.lines.map((line, i) => {
-            const isLineVisible = instance.lineVisibilities[i] && !isExiting;
+            const lineWasVisible = instance.lineVisibilities[i];
+            const linePhase: LinePhase = !lineWasVisible
+              ? 'hidden'
+              : isGhost
+                ? 'ghost'
+                : 'active';
             const typography = getRoleTypography(config.role, i);
             const lineEnterY = motion.enterY + i * 2;
+            const textShadow =
+              linePhase === 'ghost'
+                ? '0 0 6px rgba(255,255,255,0.06)'
+                : typography.textShadow;
 
             return (
               <div
                 key={i}
                 className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
                 style={{
-                  textShadow: typography.textShadow,
+                  textShadow,
                   marginTop: i > 0 ? getLineGap(config.role) : 0,
                 }}
               >
                 {renderWordReveal(
                   line,
-                  isLineVisible,
-                  isExiting,
+                  linePhase,
                   config.transitionDuration,
                   config.wordStagger,
                   lineEnterY,
-                  motion.exitY,
-                  motion.blurEnter,
-                  motion.blurExit,
                   'transition-all ease-out'
                 )}
               </div>
