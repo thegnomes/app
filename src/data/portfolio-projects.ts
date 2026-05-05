@@ -212,8 +212,8 @@ export const nft11Project: PortfolioProject = {
     },
     {
       num: '02',
-      title: '150+',
-      desc: 'Newsletters sent',
+      title: '150+ Newsletters Sent',
+      desc: 'Editorial cadence that kept the community connected',
       detail: 'Used newsletters as an editorial backbone to maintain continuity and reinforce the project\u2019s internal rhythm.',
       images: [
         { src: '/portfolio/NFT11/final/newsletter01%20(1).jpg', alt: 'Newsletter issue 1' },
@@ -224,8 +224,8 @@ export const nft11Project: PortfolioProject = {
     },
     {
       num: '03',
-      title: '+200%',
-      desc: 'Engagement during quest cycles',
+      title: '+200% Unique Engagement During Quest Cycles',
+      desc: 'Quest programming that turned attention into participation',
       detail: 'Structured quest-based activity that materially increased participation when the system was active.',
       images: [
         { src: '/portfolio/NFT11/final/weekly_q01.png', alt: 'Weekly quest 1' },

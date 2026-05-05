@@ -1,7 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
-import { useScrollLock } from '@/hooks/useScrollLock';
 import { Preloader } from './Preloader';
 import { resolveAssetUrl } from '@/lib/assets';
 
@@ -405,8 +404,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
-  const sectionRef = useRef<HTMLElement>(null);
-  const [hasScrolled, setHasScrolled] = useState(false);
 
   const getStepImages = (stepIndex: number) => {
     const step = project.proof[stepIndex];
@@ -419,43 +416,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
       project.gallery[(start + i) % total]
     ).filter(Boolean);
   };
-
-  const handleNavigate = (dir: 'up' | 'down'): boolean => {
-    if (!hasScrolled) setHasScrolled(true);
-
-    if (dir === 'down') {
-      const images = getStepImages(activeStep);
-      if (carouselIndex < images.length - 1) {
-        setCarouselIndex((i) => i + 1);
-        return true;
-      }
-      if (activeStep < project.proof.length - 1) {
-        setSlideDir('right');
-        setPrevStep(activeStep);
-        setActiveStep((s) => s + 1);
-        setCarouselIndex(0);
-        return true;
-      }
-      return false;
-    } else {
-      if (carouselIndex > 0) {
-        setCarouselIndex((i) => i - 1);
-        return true;
-      }
-      if (activeStep > 0) {
-        const prevStepIndex = activeStep - 1;
-        const prevImages = getStepImages(prevStepIndex);
-        setSlideDir('left');
-        setPrevStep(activeStep);
-        setActiveStep(prevStepIndex);
-        setCarouselIndex(prevImages.length - 1);
-        return true;
-      }
-      return false;
-    }
-  };
-
-  useScrollLock(sectionRef, handleNavigate);
 
   const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
 
@@ -497,7 +457,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] h-[100dvh] max-h-[100dvh] overflow-hidden">
+    <section className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -561,16 +521,25 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       <div className="pb-2">
                         <h3
                           className={`text-xl md:text-2xl font-semibold mb-1 transition-colors duration-500 font-russo ${
-                            isActive ? 'text-neutral-100' : 'text-neutral-500 group-hover:text-neutral-300'
+                            isActive ? 'text-neutral-100' : 'text-neutral-600 group-hover:text-neutral-500'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
                         >
                           {step.title}
                         </h3>
-                        <p className="text-sm md:text-base font-medium mb-1.5 font-russo" style={{ color: project.accentColor || '#eab308' }}>
+                        <p
+                          className={`text-sm md:text-base font-medium mb-1.5 transition-colors duration-500 font-russo ${
+                            isActive ? '' : 'text-neutral-600 group-hover:text-neutral-500'
+                          }`}
+                          style={{ color: isActive ? (project.accentColor || '#eab308') : undefined }}
+                        >
                           {step.desc}
                         </p>
-                        <p className="text-sm text-neutral-500 leading-relaxed">
+                        <p
+                          className={`text-sm leading-relaxed transition-colors duration-500 ${
+                            isActive ? 'text-neutral-500' : 'text-neutral-700 group-hover:text-neutral-600'
+                          }`}
+                        >
                           {step.detail}
                         </p>
                         {step.link && (
@@ -578,8 +547,10 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={step.link.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-sm mt-2 transition-colors"
-                            style={{ color: project.accentColor || '#eab308' }}
+                            className={`inline-flex items-center gap-1.5 text-sm mt-2 transition-colors ${
+                              isActive ? '' : 'text-neutral-600 group-hover:text-neutral-500'
+                            }`}
+                            style={{ color: isActive ? (project.accentColor || '#eab308') : undefined }}
                             onClick={(e) => e.stopPropagation()}
                           >
                             {step.link.label}
@@ -595,15 +566,15 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           </div>
 
           {/* Right: Media Viewer */}
-          <div className="lg:col-span-7 flex flex-col justify-center h-full">
-            <FadeIn delay={150} className="h-full flex flex-col justify-center">
+          <div className="lg:col-span-7 flex min-h-0 max-h-[calc(100dvh-2rem)] flex-col justify-center lg:h-full lg:max-h-[calc(100dvh-3rem)]">
+            <FadeIn delay={150} className="flex h-[70dvh] min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col justify-center lg:h-full lg:max-h-[calc(100dvh-3rem)]">
               {/* Slider only */}
                 {stepImages.length > 0 && currentImage && (
-                  <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-950 flex flex-col max-h-full">
-                    <div className="relative flex-1 min-h-0 flex items-center justify-center bg-neutral-950">
+                  <div className="flex h-full min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 lg:max-h-[calc(100dvh-3rem)]">
+                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-neutral-950">
                       <div
                         key={`${activeStep}-${carouselIndex}`}
-                        className="w-full h-full max-h-full flex items-center justify-center"
+                        className="flex h-full max-h-full w-full items-center justify-center"
                         style={{
                           animation: slideDir === 'right'
                             ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
@@ -615,18 +586,18 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={activeLink.href}
                             target="_blank"
                             rel="noreferrer"
-                            className="block w-full h-full max-h-full flex items-center justify-center"
+                            className="flex h-full max-h-full w-full items-center justify-center"
                           >
                             {isVideo(currentImage.src) ? (
                               <VideoPlayer
                                 src={currentImage.src}
-                                className="max-h-full max-w-full object-contain"
+                                className="h-full max-h-full w-full max-w-full object-contain"
                               />
                             ) : (
                               <img
                                 src={resolveAssetUrl(currentImage.src)}
                                 alt={currentImage.alt}
-                                className="max-h-full max-w-full object-contain"
+                                className="h-full max-h-full w-full max-w-full object-contain"
                               />
                             )}
                           </a>
@@ -634,13 +605,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           isVideo(currentImage.src) ? (
                             <VideoPlayer
                               src={currentImage.src}
-                              className="max-h-full max-w-full object-contain"
+                              className="h-full max-h-full w-full max-w-full object-contain"
                             />
                           ) : (
                             <img
                               src={resolveAssetUrl(currentImage.src)}
                               alt={currentImage.alt}
-                              className="max-h-full max-w-full object-contain"
+                              className="h-full max-h-full w-full max-w-full object-contain"
                             />
                           )
                         )}
@@ -689,27 +660,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
         </div>
       </div>
 
-      {/* Scroll hint */}
-      <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
-          hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-      >
-        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
-        <svg
-          className="animate-bounce text-neutral-500"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
-      </div>
     </section>
   );
 }
