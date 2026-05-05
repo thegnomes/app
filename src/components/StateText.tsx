@@ -149,7 +149,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[32px] sm:text-[42px] md:text-[52px]',
+            sizeClass: 'text-[25.6px] sm:text-[33.6px] md:text-[41.6px]',
             trackingClass: 'tracking-[0.15em]',
             uppercase: true,
             toneClass: 'gradient-text',
@@ -157,7 +157,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[14px] sm:text-[15px]',
+            sizeClass: 'text-[11.2px] sm:text-[12px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/90',
@@ -166,7 +166,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
     case 'atmosphere':
       return {
         fontClass: 'font-russo',
-        sizeClass: 'text-[24px] sm:text-[32px] md:text-[40px]',
+        sizeClass: 'text-[19.2px] sm:text-[25.6px] md:text-[32px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
@@ -176,7 +176,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[28px] sm:text-[36px] md:text-[44px]',
+            sizeClass: 'text-[22.4px] sm:text-[28.8px] md:text-[35.2px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'gradient-text',
@@ -184,7 +184,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[13px] sm:text-[14px]',
+            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/85',
@@ -194,7 +194,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[28px] sm:text-[36px] md:text-[44px]',
+            sizeClass: 'text-[22.4px] sm:text-[28.8px] md:text-[35.2px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: true,
             toneClass: 'text-[#ffd4a3]',
@@ -202,7 +202,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[13px] sm:text-[14px]',
+            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
             trackingClass: 'tracking-[0.15em]',
             uppercase: false,
             toneClass: 'text-white/85',
@@ -211,7 +211,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
     case 'resolution':
       return {
         fontClass: 'font-russo',
-        sizeClass: 'text-[24px] sm:text-[32px] md:text-[40px]',
+        sizeClass: 'text-[19.2px] sm:text-[25.6px] md:text-[32px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: true,
         toneClass: 'gradient-text',
@@ -221,7 +221,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
       return lineIndex === 0
         ? {
             fontClass: 'font-russo',
-            sizeClass: 'text-[24px] sm:text-[30px] md:text-[36px]',
+            sizeClass: 'text-[19.2px] sm:text-[24px] md:text-[28.8px]',
             trackingClass: 'tracking-[0.1em]',
             uppercase: true,
             toneClass: 'text-white/85',
@@ -229,7 +229,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
           }
         : {
             fontClass: 'font-orbitron',
-            sizeClass: 'text-[13px] sm:text-[14px]',
+            sizeClass: 'text-[10.4px] sm:text-[11.2px]',
             trackingClass: 'tracking-[0.12em]',
             uppercase: false,
             toneClass: 'text-white/70',
@@ -238,7 +238,7 @@ function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
     default:
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[13px]',
+        sizeClass: 'text-[10.4px]',
         trackingClass: 'tracking-[0.15em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -384,7 +384,7 @@ function State2CumulativeText({
   return (
     <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
       <h1
-        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[24px] sm:text-[32px] md:text-[40px] font-normal leading-none uppercase"
+        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[19.2px] sm:text-[25.6px] md:text-[32px] font-normal leading-none uppercase"
         style={{ zIndex: 10 }}
       >
         {words.map((word, i) => {
@@ -433,7 +433,7 @@ function State2CumulativeText({
           return (
             <p
               key={i}
-              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[12px] sm:text-[13px] font-normal leading-relaxed text-white tracking-[0.15em]"
+              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[9.6px] sm:text-[10.4px] font-normal leading-relaxed text-white tracking-[0.15em]"
               style={{
                 opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
                 transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,

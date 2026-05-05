@@ -28,7 +28,7 @@ export function RingText({ items, radius = 140, duration = 12, className = '' }:
         {items.map((text, i) => (
           <div
             key={i}
-            className="absolute left-1/2 top-1/2 whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.2em] text-white"
+            className="absolute left-1/2 top-1/2 whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.2em] text-white"
             style={{
               transform: `translate(-50%, -50%) rotateY(${i * angleStep}deg) translateZ(${radius}px)`,
               backfaceVisibility: 'hidden',

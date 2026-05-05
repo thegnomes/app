@@ -94,7 +94,7 @@ function ColorPicker({ label, value, onChange }: ColorPickerProps) {
           onChange={(e) => onChange(e.target.value)}
           className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
         />
-        <span className="text-[10px] text-white/40 font-mono">{value}</span>
+        <span className="text-[8px] text-white/40 font-mono">{value}</span>
       </div>
     </div>
   );
@@ -153,7 +153,7 @@ export function ControlPanel({ state, setState, config, setConfig }: ControlPane
       <div className="p-3 border-b border-white/10 flex items-center justify-between">
         <div>
           <h1 className="text-base font-bold text-white">NebulaHero</h1>
-          <p className="text-[10px] text-white/50">{STATE_LABELS[state]}</p>
+          <p className="text-[8px] text-white/50">{STATE_LABELS[state]}</p>
         </div>
         <button
           onClick={() => setIsCollapsed(true)}
@@ -206,7 +206,7 @@ export function ControlPanel({ state, setState, config, setConfig }: ControlPane
           </div>
           
           <div className="mt-3 pt-3 border-t border-white/10">
-            <p className="text-[10px] text-white/40 leading-relaxed">
+            <p className="text-[8px] text-white/40 leading-relaxed">
               Click a state to jump to it. The animation will transition smoothly.
             </p>
           </div>

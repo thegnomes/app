@@ -31,7 +31,7 @@ interface CompetencyItem {
 
 const MARQUEE_COMPETENCIES: CompetencyItem[] = [
   { id: 'creative-direction', label: 'Creative Direction', accent: '#60a5fa' },
-  { id: 'universe-building', label: 'Universe Building', accent: '#c084fc' },
+  { id: 'universe-building', label: 'Universe Building', accent: '#f59e0b' },
   { id: 'prototype-to-ship', label: 'Prototype-To-Ship', accent: '#67e8f9' },
 ];
 
@@ -326,9 +326,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       <GravityParticles isActive={isActive} />
       {/* Galaxy columns - 3 columns spanning full viewport */}
       <div
-        className={`absolute inset-0 flex transition-opacity duration-[1500ms] ease-out ${
-          hoveredCompetency ? 'z-[25]' : 'z-10'
-        } ${
+        className={`absolute inset-0 z-10 flex transition-opacity duration-[1500ms] ease-out ${
           drifted ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >

@@ -3,6 +3,26 @@ module.exports = {
   darkMode: ["class"],
   content: ['./index.html', './portfolio.html', './toto-portfolio.html', './nft11-portfolio.html', './oxytap-portfolio.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    fontFamily: {
+      sans: ["Smooch Sans", "system-ui", "sans-serif"],
+      serif: ["Smooch Sans", "system-ui", "sans-serif"],
+      mono: ["Smooch Sans", "system-ui", "sans-serif"],
+    },
+    fontSize: {
+      xs: ["0.6rem", { lineHeight: "0.8rem" }],
+      sm: ["0.7rem", { lineHeight: "1rem" }],
+      base: ["0.8rem", { lineHeight: "1.2rem" }],
+      lg: ["0.9rem", { lineHeight: "1.4rem" }],
+      xl: ["1rem", { lineHeight: "1.4rem" }],
+      "2xl": ["1.2rem", { lineHeight: "1.6rem" }],
+      "3xl": ["1.5rem", { lineHeight: "1.8rem" }],
+      "4xl": ["1.8rem", { lineHeight: "2rem" }],
+      "5xl": ["2.4rem", { lineHeight: "1" }],
+      "6xl": ["3rem", { lineHeight: "1" }],
+      "7xl": ["3.6rem", { lineHeight: "1" }],
+      "8xl": ["4.8rem", { lineHeight: "1" }],
+      "9xl": ["6.4rem", { lineHeight: "1" }],
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",
