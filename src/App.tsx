@@ -198,6 +198,7 @@ function App() {
         video.muted = true;
         video.playsInline = true;
         video.src = url;
+        video.load();
       } else {
         const img = new Image();
         img.src = url;

@@ -122,7 +122,7 @@ interface TextBlockInstance {
   id: number;
   state: TextSceneState;
   config: StateTextConfig;
-  phase: 'enter' | 'visible' | 'exit';
+  phase: 'enter' | 'visible' | 'exit' | 'leaving';
   lineVisibilities: boolean[];
   exitDuration?: number;
 }
@@ -294,7 +294,7 @@ function getLineGap(role: TextRole): string {
   }
 }
 
-type LinePhase = 'hidden' | 'active' | 'ghost';
+type LinePhase = 'hidden' | 'active' | 'ghost' | 'leaving';
 
 function renderWordReveal(
   text: string,
@@ -309,20 +309,21 @@ function renderWordReveal(
   return words.map((word, i) => {
     const isHidden = linePhase === 'hidden';
     const isGhost = linePhase === 'ghost';
-    const delay = isHidden || isGhost ? 0 : i * staggerMs;
+    const isLeaving = linePhase === 'leaving';
+    const delay = isHidden || isGhost || isLeaving ? 0 : i * staggerMs;
 
     return (
       <span
         key={`${word}-${i}`}
         className={`inline-block ${className || ''}`}
         style={{
-          opacity: isGhost ? 0.2 : isHidden ? 0 : 1,
-          transform: `translate3d(0, ${isGhost ? -3 : isHidden ? enterY : 0}px, 0)`,
-          filter: `blur(${isGhost ? 1 : 0}px)`,
+          opacity: isLeaving ? 0 : isGhost ? 0.2 : isHidden ? 0 : 1,
+          transform: `translate3d(0, ${isLeaving ? -6 : isGhost ? -3 : isHidden ? enterY : 0}px, 0)`,
+          filter: `blur(${isLeaving ? 2 : isGhost ? 1 : 0}px)`,
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
           transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          transitionProperty: isGhost ? 'opacity, transform, filter' : 'transform',
+          transitionProperty: isGhost || isLeaving ? 'opacity, transform, filter' : 'transform',
           marginRight: '0.28em',
         }}
       >
@@ -492,9 +493,12 @@ export function StateText({ state }: { state: TextSceneState }) {
     const nextConfig = STATE_TEXT_CONFIG[state];
     const outgoing = activeRef.current;
 
+    const isTransitionable = (phase: string) =>
+      phase !== 'exit' && phase !== 'leaving';
+
     if (
       outgoing &&
-      outgoing.phase !== 'exit' &&
+      isTransitionable(outgoing.phase) &&
       hasText(outgoing.config, outgoing.state) &&
       nextConfig.lingerPrevious > 0
     ) {
@@ -512,9 +516,14 @@ export function StateText({ state }: { state: TextSceneState }) {
       }, 20);
       queueTimer(() => {
         setPrevious((prev) =>
+          prev?.id === previousInstance.id ? { ...prev, phase: 'leaving' } : prev
+        );
+      }, nextConfig.lingerPrevious);
+      queueTimer(() => {
+        setPrevious((prev) =>
           prev?.id === previousInstance.id ? null : prev
         );
-      }, nextConfig.transitionDuration + nextConfig.lingerPrevious);
+      }, nextConfig.lingerPrevious + nextConfig.transitionDuration);
     } else {
       setPrevious(null);
     }
@@ -563,6 +572,13 @@ export function StateText({ state }: { state: TextSceneState }) {
             : current
         );
       }, nextConfig.autoExitDelay);
+      queueTimer(() => {
+        setActive((current) =>
+          current?.id === nextInstance.id
+            ? { ...current, phase: 'leaving' }
+            : current
+        );
+      }, nextConfig.autoExitDelay + nextConfig.transitionDuration);
     }
 
     return clearTimers;
@@ -576,9 +592,10 @@ export function StateText({ state }: { state: TextSceneState }) {
 
     const { config, phase } = instance;
     const isGhost = phase === 'exit';
+    const isLeaving = phase === 'leaving';
     const duration = instance.exitDuration ?? config.transitionDuration;
     const motion = getRoleMotion(config.role);
-    const blockY = isGhost ? motion.exitY : motion.containerY;
+    const blockY = isLeaving ? motion.exitY - 2 : isGhost ? motion.exitY : motion.containerY;
 
     if (instance.state === '2') {
       return (
@@ -586,14 +603,14 @@ export function StateText({ state }: { state: TextSceneState }) {
           key={`${mode}-${instance.id}-${instance.state}`}
           className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
           style={{
-            opacity: 1,
+            opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
             transitionDuration: `${duration}ms`,
           }}
         >
           <State2CumulativeText
             isVisible={instance.lineVisibilities[0] ?? false}
-            isExiting={isGhost}
+            isExiting={isGhost || isLeaving}
           />
         </div>
       );
@@ -604,7 +621,7 @@ export function StateText({ state }: { state: TextSceneState }) {
         key={`${mode}-${instance.id}-${instance.state}`}
         className="absolute inset-0 flex flex-col items-center justify-center transition-all ease-out"
         style={{
-          opacity: 1,
+          opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
           transitionDuration: `${duration}ms`,
         }}
@@ -614,15 +631,19 @@ export function StateText({ state }: { state: TextSceneState }) {
             const lineWasVisible = instance.lineVisibilities[i];
             const linePhase: LinePhase = !lineWasVisible
               ? 'hidden'
-              : isGhost
-                ? 'ghost'
-                : 'active';
+              : isLeaving
+                ? 'leaving'
+                : isGhost
+                  ? 'ghost'
+                  : 'active';
             const typography = getRoleTypography(config.role, i);
             const lineEnterY = motion.enterY + i * 2;
             const textShadow =
               linePhase === 'ghost'
                 ? '0 0 1px rgba(255,255,255,0.04)'
-                : typography.textShadow;
+                : linePhase === 'leaving'
+                  ? '0 0 1px rgba(255,255,255,0.02)'
+                  : typography.textShadow;
 
             return (
               <div
