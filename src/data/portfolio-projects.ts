@@ -284,9 +284,9 @@ export const oxytapProject: PortfolioProject = {
   deliverables: 'Corporate site, support infrastructure, knowledge base, warranty flow, Botpress planning, affiliate system',
   philosophyLabel: 'Overview',
   philosophyHeading:
-    'This work extended beyond a single product or interface.',
+    'This project was not about building a single website or tool. It was about turning a growing set of business needs into a connected digital system that could operate across multiple touchpoints.',
   philosophyBody:
-    'Across OxyTap, the challenge was to translate a growing set of business needs into working digital systems — from the public-facing brand site, to the support and warranty infrastructure, to affiliate operations, and future conversational support planning.\n\nMy role was to turn these moving parts into something more coherent: shaping the user-facing experience, defining system logic, and building the structures needed for the brand to operate more clearly across multiple touchpoints.',
+    'Across OxyTap, the work centred on translating brand, support, warranty, affiliate, and future conversational support needs into clearer user experiences and system logic. The result was a more coherent digital structure for the brand — not a one-off interface, but an operating layer that could support the business as it grew.',
   accentColor: '#67e8f9',
   accentSecondaryColor: '#22d3ee',
   heroVideo: 'https://chnsb9h6s6psbc0a.public.blob.vercel-storage.com/oxytap/oxytap-hero.webm',
