@@ -16,7 +16,7 @@ import {
 } from '@/lib/particles/constants';
 
 const FINAL_VIDEO_DELAY_MS = 2200;
-const HOLD_COMMIT_THRESHOLD_MS = 400;
+const CORE_REVEAL_DURATION_MS = 2000;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -43,11 +43,12 @@ function App() {
 
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const holdCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coreRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   const planetEntryReadyRef = useRef(false);
   const sparkFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerDownRef = useRef(false);
 
   // Camera pan state
   const panStateRef = useRef({
@@ -69,9 +70,9 @@ function App() {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
-    if (holdCommitTimerRef.current) {
-      clearTimeout(holdCommitTimerRef.current);
-      holdCommitTimerRef.current = null;
+    if (coreRevealTimerRef.current) {
+      clearTimeout(coreRevealTimerRef.current);
+      coreRevealTimerRef.current = null;
     }
     substateTimersRef.current.forEach((timerId) => clearTimeout(timerId));
     substateTimersRef.current = [];
@@ -284,11 +285,13 @@ function App() {
       if (stateRef.current !== 1) return;
       if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
 
+      pointerDownRef.current = true;
+
       // Cancel any active pan drag
       panStateRef.current.isDragging = false;
       cameraPanRef.current.isDragging = false;
 
-      // Cancel lingering text sequence timers
+      // Cancel lingering timers
       if (textSequenceTimerRef.current) {
         clearTimeout(textSequenceTimerRef.current);
         textSequenceTimerRef.current = null;
@@ -297,27 +300,38 @@ function App() {
         clearTimeout(sparkFadeTimerRef.current);
         sparkFadeTimerRef.current = null;
       }
+      if (coreRevealTimerRef.current) {
+        clearTimeout(coreRevealTimerRef.current);
+        coreRevealTimerRef.current = null;
+      }
 
-      // Show spark beat text immediately
-      setTextState(8);
-
-      // Dispatch core activation pulse
+      // NO text during core reveal — only the particle core appears
+      // Dispatch core activation pulse (2000ms reveal)
       window.dispatchEvent(
         new CustomEvent('particle:core-activation-pulse', {
-          detail: { startedAtMs: performance.now(), durationMs: 2000 },
+          detail: { startedAtMs: performance.now(), durationMs: CORE_REVEAL_DURATION_MS },
         })
       );
 
-      // Start hold-commit timer: if released before threshold, it's just a click
-      holdCommitTimerRef.current = setTimeout(() => {
-        holdCommitTimerRef.current = null;
-        // User held past threshold — commit to State 2
-        commitToState2();
-      }, HOLD_COMMIT_THRESHOLD_MS);
+      // After 2000ms core reveal, determine if click-only or click-hold
+      coreRevealTimerRef.current = setTimeout(() => {
+        coreRevealTimerRef.current = null;
+        if (!pointerDownRef.current) {
+          // Pointer was released during reveal — click-only spark
+          setTextState(8);
+          sparkFadeTimerRef.current = setTimeout(() => {
+            sparkFadeTimerRef.current = null;
+            if (stateRef.current === 1) {
+              setTextState(1);
+            }
+          }, 1500);
+        }
+        // If pointer is still down, commitToState2 will be called by handlePointerUp
+      }, CORE_REVEAL_DURATION_MS);
     };
 
     const commitToState2 = () => {
-      if (inState2Ref.current) return; // already committed
+      if (inState2Ref.current) return;
 
       stateRef.current = 2;
       setState(2);
@@ -354,12 +368,16 @@ function App() {
     };
 
     const handlePointerUp = () => {
-      // If hold-commit timer is still pending, user clicked without holding
-      if (holdCommitTimerRef.current) {
-        clearTimeout(holdCommitTimerRef.current);
-        holdCommitTimerRef.current = null;
+      pointerDownRef.current = false;
 
-        // Spark beat: fade out after 1500ms and return to State 1
+      // If core reveal is still in progress
+      if (coreRevealTimerRef.current) {
+        // User released during the 2000ms core reveal
+        clearTimeout(coreRevealTimerRef.current);
+        coreRevealTimerRef.current = null;
+        // The core reveal timeout handler will show spark text after the remaining time
+        // But since pointer is up, we show spark text now
+        setTextState(8);
         sparkFadeTimerRef.current = setTimeout(() => {
           sparkFadeTimerRef.current = null;
           if (stateRef.current === 1) {
@@ -413,11 +431,13 @@ function App() {
     }
   }, [state]);
 
-  // Sequence through successful orbit text beats: 3 -> 7 -> 4
+  // Sequence through successful orbit text beats:
+  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution) -> [2500ms] -> State 4 (fadeout)
   useEffect(() => {
     if (textState !== 3 && textState !== 7) return;
     if (textSequenceTimerRef.current) return;
 
+    const delay = textState === 3 ? 2000 : 2500;
     const timerId = setTimeout(() => {
       textSequenceTimerRef.current = null;
       setTextState((prev) => {
@@ -425,7 +445,7 @@ function App() {
         if (prev === 7) return 4;
         return prev;
       });
-    }, 4000);
+    }, delay);
 
     textSequenceTimerRef.current = timerId;
     return () => {

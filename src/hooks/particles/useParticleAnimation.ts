@@ -520,14 +520,14 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           const pulseElapsed = now - corePulseStartRef.current;
           if (pulseElapsed < CORE_ACTIVATION_PULSE_DURATION) {
             const pulseT = pulseElapsed / CORE_ACTIVATION_PULSE_DURATION;
-            // Ramp up quickly, hold, then fade
-            const pulseEnvelope = pulseT < 0.3
-              ? pulseT / 0.3
-              : pulseT < 0.7
+            // Longer reveal: slow ramp up (0-50%), strong hold (50-80%), gentle fade (80-100%)
+            const pulseEnvelope = pulseT < 0.5
+              ? pulseT / 0.5
+              : pulseT < 0.8
                 ? 1
-                : 1 - (pulseT - 0.7) / 0.3;
+                : 1 - (pulseT - 0.8) / 0.2;
             showProceduralGlow = true;
-            pulseOpacity = Math.max(0, pulseEnvelope * GLOW_OPACITY);
+            pulseOpacity = Math.max(0, pulseEnvelope * GLOW_OPACITY * 1.2);
             cg.visible = true;
           } else {
             // Pulse expired

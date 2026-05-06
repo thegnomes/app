@@ -5,6 +5,17 @@ import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { resolveAssetUrl } from '@/lib/assets';
 import { nft11Project, oxytapProject, totoProject } from '@/data/portfolio-projects';
 
+const PORTFOLIO_VIDEO_SOURCES = [
+  '/webm/toto-ga2.webm',
+  '/webm/toto-ga2.mov',
+  '/webm/nft11-ga2.webm',
+  '/webm/nft11-ga2.mov',
+  '/webm/oxytap-ga2.webm',
+  '/webm/oxytap-ga2.mov',
+  '/webm/target-lock.webm',
+  '/webm/target-lock.mov',
+];
+
 interface Scene02Props {
   isActive: boolean;
   playAstro: boolean;
@@ -194,10 +205,53 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
   const [hoveredCompetency, setHoveredCompetency] = useState<CompetencyId | null>(null);
+  const [portfolioVideosReady, setPortfolioVideosReady] = useState(false);
   const astroVideoSources = getAlphaVideoSources(
     '/scene02/looking-astro-loop2.webm',
     '/scene02/looking-astro-loop2.mov'
   );
+
+  // Preload portfolio showcase videos when Scene02 becomes active
+  useEffect(() => {
+    if (!isActive) return;
+    let cancelled = false;
+    let loadedCount = 0;
+    const total = PORTFOLIO_VIDEO_SOURCES.length;
+
+    const checkAllLoaded = () => {
+      loadedCount++;
+      if (loadedCount >= total && !cancelled) {
+        setPortfolioVideosReady(true);
+      }
+    };
+
+    const preloaders: HTMLVideoElement[] = [];
+    for (const src of PORTFOLIO_VIDEO_SOURCES) {
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.crossOrigin = 'anonymous';
+      video.src = resolveAssetUrl(src);
+      video.oncanplaythrough = checkAllLoaded;
+      video.onerror = checkAllLoaded; // Don't block on individual failures
+      preloaders.push(video);
+    }
+
+    // Fallback: mark ready after 8s regardless
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled) setPortfolioVideosReady(true);
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(fallbackTimer);
+      for (const v of preloaders) {
+        v.src = '';
+        v.load();
+      }
+    };
+  }, [isActive]);
 
   useEffect(() => {
     const video = astroRef.current;

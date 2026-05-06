@@ -35,25 +35,21 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   1: {
     role: 'atmosphere',
     lines: [
-      'Across the endless void,',
-      'most thoughts do not matter —',
+      'Across the endless void, most thoughts do not matter —',
       'until inspiration clicks.',
     ],
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 500,
-    lineDelays: [0, 500, 1400],
+    lineDelays: [0, 2200],
     charStagger: 16,
   },
   8: {
     role: 'spark',
-    lines: [
-      'A spark appears.',
-      'Left alone, it fades back into the dark.',
-    ],
+    lines: ['A spark appears. Left alone, it fades back into the dark.'],
     transitionDuration: 450,
     lingerPrevious: 0,
-    lineDelay: 400,
+    lineDelay: 200,
     charStagger: 14,
     autoExitDelay: 2200,
   },
@@ -67,7 +63,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   3: {
     role: 'payoff',
-    lines: ['Orbit takes hold. What once drifted begins to gather around a centre.'],
+    lines: ['A vision begins when other ideas are drawn into orbit.'],
     transitionDuration: 650,
     lingerPrevious: 260,
     lineDelay: 200,
@@ -100,7 +96,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   7: {
     role: 'resolution',
-    lines: ['Its influence becomes order, setting its universe in motion.'],
+    lines: ['Its influence becomes order, setting an entire universe in motion.'],
     transitionDuration: 750,
     lingerPrevious: 260,
     lineDelay: 200,
@@ -309,9 +305,9 @@ function State2CumulativeText({
   }, [isVisible]);
 
   const beats = [
-    { line1: 'A thought given attention', line2: 'begins to take shape.' },
-    { line1: 'What takes shape', line2: 'becomes an idea when it survives the hold.' },
-    { line1: 'To grow beyond itself,', line2: 'an idea must be released.' },
+    'A thought given purpose becomes a notion.',
+    'A notion tested by time begins to take shape as an idea.',
+    'To become more than itself, an idea must be released.',
   ];
 
   const currentBeat = beatState.current;
@@ -329,7 +325,7 @@ function State2CumulativeText({
         return (
           <div
             key={i}
-            className="flex flex-col items-center justify-center gap-0.5 transition-all ease-out"
+            className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
             style={{
               opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
               transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
@@ -338,28 +334,12 @@ function State2CumulativeText({
               transitionProperty: transitionProps,
               pointerEvents: 'none',
               position: isCurrent || isGhost ? 'relative' : 'absolute',
+              textShadow: isGhost
+                ? '0 0 1px rgba(255,255,255,0.04)'
+                : '0 0 1px rgba(255,255,255,0.08)',
             }}
           >
-            <span
-              className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em]"
-              style={{
-                textShadow: isGhost
-                  ? '0 0 1px rgba(255,255,255,0.04)'
-                  : '0 0 1px rgba(255,255,255,0.08)',
-              }}
-            >
-              {beat.line1}
-            </span>
-            <span
-              className="font-orbitron text-[15px] sm:text-[17px] md:text-[19px] font-normal leading-relaxed text-white/80 tracking-[0.08em]"
-              style={{
-                textShadow: isGhost
-                  ? '0 0 1px rgba(255,255,255,0.03)'
-                  : '0 0 1px rgba(255,255,255,0.06)',
-              }}
-            >
-              {beat.line2}
-            </span>
+            {beat}
           </div>
         );
       })}
