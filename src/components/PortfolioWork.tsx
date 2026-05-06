@@ -55,10 +55,7 @@ function useInView(threshold = 0.15) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      className="text-[8.8px] uppercase tracking-[0.2em] text-neutral-500 mb-4"
-      style={{ fontFamily: "'Smooch Sans', sans-serif" }}
-    >
+    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );
@@ -207,19 +204,16 @@ function Hero() {
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
-          <span className="inline-block px-3 py-1 text-[8px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
+          <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             Case Study
           </span>
-          <span className="text-[8px] uppercase tracking-widest text-neutral-500">2026</span>
+          <span className="text-[10px] uppercase tracking-widest text-neutral-500">2026</span>
         </div>
 
-        <h1
-          className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8"
-          style={{ fontFamily: "'Smooch Sans', sans-serif" }}
-        >
+        <h1 className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8">
           Sonic
           <br />
-          <span style={{ fontFamily: "'Smooch Sans', sans-serif", fontStyle: 'italic' }}>Identity</span>
+          <span className="portfolio-template-serif italic">Identity</span>
         </h1>
 
         <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">
@@ -233,7 +227,7 @@ function Hero() {
             { label: 'Deliverables', value: 'Web, 3D, Motion' },
           ].map((meta) => (
             <div key={meta.label}>
-              <p className="text-[8px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
               <p className="text-sm font-medium text-neutral-100">{meta.value}</p>
             </div>
           ))}
@@ -282,7 +276,7 @@ function Stats() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
         {STATS.map((s, i) => (
           <FadeIn key={s.num} delay={i * 100}>
-            <p className="text-sm text-neutral-600 mb-6" style={{ fontFamily: "'Smooch Sans', sans-serif" }}>
+            <p className="portfolio-template-counter mb-6 text-sm text-neutral-600">
               {s.num}
             </p>
             <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-2">{s.title}</h3>
@@ -303,10 +297,7 @@ function Vision() {
           <Label>Vision</Label>
         </FadeIn>
         <FadeIn delay={150}>
-          <h2
-            className="text-3xl md:text-5xl lg:text-6xl font-normal leading-tight text-neutral-100"
-            style={{ fontFamily: "'Smooch Sans', sans-serif" }}
-          >
+          <h2 className="portfolio-template-serif text-3xl md:text-5xl lg:text-6xl font-normal leading-tight text-neutral-100">
             “In a world full of distraction, we design for those who notice. MORAE is about clarity, detail, and pure listening—tools for focus, not show.”
           </h2>
         </FadeIn>
@@ -402,7 +393,7 @@ function Footer() {
                 href="/portfolio.html"
                 className="text-3xl md:text-5xl font-medium text-neutral-100 hover:text-neutral-400 transition-colors"
               >
-                Stellar <span style={{ fontFamily: "'Smooch Sans', sans-serif", fontStyle: 'italic' }}>Motion</span>
+                Stellar <span className="portfolio-template-serif italic">Motion</span>
                 <span className="inline-block ml-3 align-middle">→</span>
               </a>
             </div>
@@ -446,7 +437,7 @@ export default function PortfolioWork() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="portfolio-template-shell min-h-screen bg-[#0a0a0a]">
       <Nav />
       <Hero />
       <Overview />

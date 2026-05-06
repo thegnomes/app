@@ -97,10 +97,7 @@ function AuroraTextReveal({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      className="text-[8.8px] uppercase tracking-[0.2em] text-neutral-500 mb-4"
-      style={{ fontFamily: "'Smooch Sans', sans-serif" }}
-    >
+    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );
@@ -324,10 +321,10 @@ function Hero({ project }: { project: PortfolioProject }) {
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
-          <span className="inline-block px-3 py-1 text-[8px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
+          <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             {project.tag}
           </span>
-          <span className="text-[8px] uppercase tracking-widest text-neutral-500">{project.year}</span>
+          <span className="text-[10px] uppercase tracking-widest text-neutral-500">{project.year}</span>
         </div>
 
         {project.scrollFlowTitle ? (
@@ -354,7 +351,7 @@ function Hero({ project }: { project: PortfolioProject }) {
             { label: 'Deliverables', value: project.deliverables },
           ].map((meta) => (
             <div key={meta.label}>
-              <p className="text-[8px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
               <p className="text-sm font-medium text-neutral-100">{meta.value}</p>
             </div>
           ))}
@@ -693,7 +690,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
-        <span className="text-[8px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
+        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
         <svg
           className="animate-bounce text-neutral-500"
           width="16"
@@ -840,7 +837,7 @@ export default function PortfolioTemplate({ project, children }: { project: Port
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a]">
+    <main className="portfolio-template-shell min-h-screen bg-[#0a0a0a]">
       <Nav />
       <Hero project={project} />
       <Overview project={project} />

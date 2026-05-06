@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Smooch+Sans:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bitcount+Prop+Single:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -119,6 +125,31 @@
 
 .disclaimer-caret {
   animation: disclaimer-caret-blink 0.85s steps(1, end) infinite;
+}
+
+.portfolio-template-shell,
+.portfolio-template-shell * {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.portfolio-template-shell .font-russo {
+  font-family: 'Russo One', sans-serif !important;
+}
+
+.portfolio-template-shell .font-orbitron {
+  font-family: 'Orbitron', sans-serif !important;
+}
+
+.portfolio-template-shell .portfolio-template-mono {
+  font-family: 'Fragment Mono', monospace !important;
+}
+
+.portfolio-template-shell .portfolio-template-serif {
+  font-family: 'Instrument Serif', serif !important;
+}
+
+.portfolio-template-shell .portfolio-template-counter {
+  font-family: 'Doto', sans-serif !important;
 }
 
 @keyframes crt-flicker {

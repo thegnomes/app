@@ -61,10 +61,7 @@ function FadeIn({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p
-      className="text-[8.8px] uppercase tracking-[0.2em] text-neutral-500 mb-4"
-      style={{ fontFamily: "'Smooch Sans', sans-serif" }}
-    >
+    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );

@@ -15,6 +15,21 @@ interface DisclaimerDialogProps {
   assetsLoaded: boolean;
 }
 
+const NEON = {
+  primary: '#00f0ff',
+  dim: 'rgba(0, 240, 255, 0.6)',
+  faint: 'rgba(0, 240, 255, 0.25)',
+  glow: 'rgba(0, 240, 255, 0.35)',
+  glowStrong: 'rgba(0, 240, 255, 0.55)',
+  title: '#a5f8ff',
+  text: '#00f0ff',
+  textBright: '#b0fcff',
+  textDim: 'rgba(0, 240, 255, 0.7)',
+  bg: '#020b12',
+  bezel: '#0a0f14',
+  border: '#001820',
+};
+
 const DISCLAIMER_COPY = `This portfolio is interactive by design.
 
 It begins with a short opening sequence that frames how I think, build, and navigate creative work.
@@ -118,42 +133,92 @@ function DisclaimerTerminal({
     <DialogContent
       showCloseButton={false}
       data-testid="disclaimer-terminal"
-      className="disclaimer-terminal max-w-none border-0 bg-transparent p-0 shadow-none"
+      className="disclaimer-terminal max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
     >
-      {/* Monitor frame */}
-      <div className="relative mx-auto w-[min(92vw,960px)] max-w-[92vw]" style={{ aspectRatio: '16/9' }}>
-        {/* Outer bezel glow */}
-        <div className="absolute -inset-3 rounded-[28px] bg-[#1a1a1a] shadow-[0_0_60px_rgba(255,176,0,0.15),inset_0_0_20px_rgba(0,0,0,0.8)]" />
-        
+      {/* Monitor frame — centered in viewport via parent flex + mx-auto */}
+      <div
+        className="relative mx-auto flex items-center justify-center"
+        style={{
+          width: 'min(92vw, 960px)',
+          maxWidth: '92vw',
+          aspectRatio: '16/9',
+        }}
+      >
+        {/* Outer neon glow */}
+        <div
+          className="absolute -inset-4 rounded-[32px]"
+          style={{
+            background: `radial-gradient(ellipse at center, ${NEON.glow} 0%, transparent 70%)`,
+            opacity: 0.25,
+          }}
+        />
+
+        {/* Neon border glow ring */}
+        <div
+          className="absolute -inset-3 rounded-[28px]"
+          style={{
+            boxShadow: `0 0 20px ${NEON.glow}, 0 0 60px ${NEON.faint}, inset 0 0 30px ${NEON.faint}`,
+            border: `1px solid ${NEON.faint}`,
+          }}
+        />
+
         {/* Monitor bezel */}
-        <div className="absolute -inset-1.5 rounded-[22px] bg-[#0d0d0d] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_32px_rgba(0,0,0,0.6)]" />
+        <div
+          className="absolute -inset-1.5 rounded-[22px]"
+          style={{
+            background: NEON.bezel,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.6)',
+          }}
+        />
 
         {/* Screen */}
-        <div className="relative flex h-full flex-col overflow-hidden rounded-[14px] border-[6px] border-[#111] bg-[#050704] p-5 text-[#ffb000] shadow-[inset_0_0_40px_rgba(255,176,0,0.08)] sm:p-7">
-          
+        <div
+          className="relative flex h-full w-full flex-col overflow-hidden rounded-[14px] p-5 sm:p-7"
+          style={{
+            background: NEON.bg,
+            border: `3px solid ${NEON.primary}`,
+            boxShadow: `0 0 16px ${NEON.glow}, inset 0 0 40px ${NEON.faint}`,
+            color: NEON.text,
+          }}
+        >
           {/* Scanlines */}
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,176,0,0.07)_50%,transparent_50%)] bg-[length:100%_3px] opacity-40" />
-          
-          {/* CRT vignette / curvature simulation */}
-          <div 
-            className="pointer-events-none absolute inset-0 rounded-[8px]"
+          <div
+            className="pointer-events-none absolute inset-0 opacity-30"
             style={{
-              boxShadow: 'inset 0 0 80px rgba(0,0,0,0.7), inset 0 0 20px rgba(255,176,0,0.03)',
+              background: `linear-gradient(${NEON.faint} 50%, transparent 50%)`,
+              backgroundSize: '100% 3px',
             }}
           />
 
-          {/* Subtle screen flicker */}
-          <div className="pointer-events-none absolute inset-0 animate-[crt-flicker_0.15s_infinite] opacity-[0.02] bg-[#ffb000]" />
+          {/* CRT vignette */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[8px]"
+            style={{
+              boxShadow: `inset 0 0 80px rgba(0,0,0,0.8), inset 0 0 20px ${NEON.faint}`,
+            }}
+          />
+
+          {/* Screen flicker */}
+          <div
+            className="pointer-events-none absolute inset-0 animate-[crt-flicker_0.15s_infinite] opacity-[0.02]"
+            style={{ background: NEON.primary }}
+          />
 
           <div className="relative z-10 flex h-full flex-col">
             {/* Title bar */}
-            <div className="mb-4 flex items-center justify-between border-b-2 border-[#ffb000]/40 pb-2 text-[13px] uppercase tracking-[0.2em] text-[#ffcf66] sm:text-[15px]">
+            <div
+              className="mb-4 flex items-center justify-between border-b-2 pb-2 text-[13px] uppercase tracking-[0.2em] sm:text-[15px]"
+              style={{ borderColor: NEON.faint, color: NEON.textBright }}
+            >
               <span>System Notice</span>
-              <span className="text-[#ffb000]/60">ENTRY.EXE</span>
+              <span style={{ color: NEON.dim }}>ENTRY.EXE</span>
             </div>
 
             <DialogHeader className="gap-2 text-left">
-              <DialogTitle className="text-[24px] font-semibold uppercase leading-none text-[#ffd36a] sm:text-[32px]">
+              <DialogTitle
+                className="text-[24px] font-semibold uppercase leading-none sm:text-[32px]"
+                style={{ color: NEON.title }}
+              >
                 Before you enter
               </DialogTitle>
               <DialogDescription className="sr-only">
@@ -162,10 +227,21 @@ function DisclaimerTerminal({
             </DialogHeader>
 
             {/* Main text area */}
-            <div className="mt-4 min-h-0 flex-1 overflow-hidden rounded border-2 border-[#ffb000]/30 bg-black/50 p-4 text-[16px] font-medium leading-[1.35] text-[#ffb000] sm:mt-5 sm:p-5 sm:text-[22px]">
+            <div
+              className="mt-4 min-h-0 flex-1 overflow-hidden rounded p-4 text-[16px] font-medium leading-[1.35] sm:mt-5 sm:p-5 sm:text-[22px]"
+              style={{
+                background: 'rgba(0, 0, 0, 0.45)',
+                border: `2px solid ${NEON.faint}`,
+                color: NEON.text,
+                textShadow: `0 0 6px ${NEON.glow}`,
+              }}
+            >
               <span className="whitespace-pre-line">{DISCLAIMER_COPY.slice(0, typedLength)}</span>
               {!typingComplete && (
-                <span className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.12em] translate-y-[0.15em] bg-[#ffb000]" />
+                <span
+                  className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.12em] translate-y-[0.15em]"
+                  style={{ background: NEON.primary }}
+                />
               )}
             </div>
 
@@ -173,31 +249,50 @@ function DisclaimerTerminal({
             <div className="mt-4 space-y-3 sm:mt-5">
               {/* Loading bar */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[12px] uppercase tracking-[0.14em] text-[#ffcf66] sm:text-[14px]">
+                <div
+                  className="flex items-center justify-between text-[12px] uppercase tracking-[0.14em] sm:text-[14px]"
+                  style={{ color: NEON.textBright }}
+                >
                   <span>Loading assets</span>
                   <span>{loadProgress}%</span>
                 </div>
-                <div className="h-3 w-full overflow-hidden rounded-none border-2 border-[#ffb000]/50 bg-black">
+                <div
+                  className="h-3 w-full overflow-hidden rounded-none bg-black"
+                  style={{ border: `2px solid ${NEON.faint}` }}
+                >
                   <div
-                    className="h-full bg-[#ffb000] transition-all duration-300 ease-out shadow-[0_0_8px_rgba(255,176,0,0.4)]"
-                    style={{ width: `${loadProgress}%` }}
+                    className="h-full transition-all duration-300 ease-out"
+                    style={{
+                      width: `${loadProgress}%`,
+                      background: NEON.primary,
+                      boxShadow: `0 0 10px ${NEON.glowStrong}`,
+                    }}
                   />
                 </div>
               </div>
 
               {/* Prompt line */}
               {showPrompt && (
-                <div className="flex items-center text-[15px] font-semibold uppercase tracking-[0.1em] text-[#ffe0a3] sm:text-[18px]">
+                <div
+                  className="flex items-center text-[15px] font-semibold uppercase tracking-[0.1em] sm:text-[18px]"
+                  style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}` }}
+                >
                   <span>{promptText}</span>
-                  <span className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.14em] translate-y-[0.15em] bg-[#ffb000]" />
+                  <span
+                    className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.14em] translate-y-[0.15em]"
+                    style={{ background: NEON.primary }}
+                  />
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Monitor brand / bottom bezel detail */}
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.3em] text-[#333]">
+        {/* Monitor brand */}
+        <div
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.3em]"
+          style={{ color: '#1a2a32' }}
+        >
           nebula-hero v1.0
         </div>
       </div>
