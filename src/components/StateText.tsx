@@ -90,12 +90,18 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     autoExitDelay: 3400,
   },
   6: {
-    role: 'marker',
-    lines: [],
+    role: 'reveal',
+    lines: [
+      'At the edge of fantasy and reality,',
+      'a traveller appears.',
+      'Plotting coordinates for ideas —',
+      'through narrative, platforms,',
+      'and the systems that bring them into form.',
+    ],
     transitionDuration: 800,
     lingerPrevious: 420,
-    lineDelay: 0,
-    charStagger: 0,
+    lineDelay: 400,
+    charStagger: 14,
   },
   7: {
     role: 'resolution',
@@ -188,6 +194,15 @@ function getRoleTypography(role: TextRole): TypographySpec {
         toneClass: 'text-white',
         textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
       };
+    case 'reveal':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
     default:
       return {
         fontClass: 'font-orbitron',
@@ -222,6 +237,8 @@ function getRoleMotion(role: TextRole): MotionSpec {
       return { enterY: 6, exitY: -8, containerY: 0 };
     case 'collapse':
       return { enterY: 3, exitY: -4, containerY: 0 };
+    case 'reveal':
+      return { enterY: 6, exitY: -8, containerY: 0 };
     default:
       return { enterY: 6, exitY: -4, containerY: 0 };
   }

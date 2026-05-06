@@ -26,7 +26,7 @@ function App() {
   const [autoZoom, setAutoZoom] = useState(false);
   const autoZoomTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
-  const [showAstronautText, setShowAstronautText] = useState(false);
+  const astronautTextTriggeredRef = useRef(false);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const showDisclaimerRef = useRef(true);
   useEffect(() => {
@@ -116,7 +116,9 @@ function App() {
   }, [redirectToScene02]);
 
   const handleAstronautPhase = useCallback(() => {
-    setShowAstronautText(true);
+    if (astronautTextTriggeredRef.current) return;
+    astronautTextTriggeredRef.current = true;
+    setTextState(6);
   }, []);
 
   // Preload main app videos + scene02 videos for continuity
@@ -496,11 +498,6 @@ function App() {
       setShowFinalVideo(true);
     }, FINAL_VIDEO_DELAY_MS);
 
-    if (textSequenceTimerRef.current) {
-      clearTimeout(textSequenceTimerRef.current);
-      textSequenceTimerRef.current = null;
-    }
-
     return () => {
       if (finalVideoTimerRef.current) {
         clearTimeout(finalVideoTimerRef.current);
@@ -527,7 +524,7 @@ function App() {
       </div>
       {assetsLoaded && !showDisclaimer && <StateText state={textState} />}
       <FinalVideoOverlay isActive={showFinalVideo} onEnded={handleFinalVideoEnded} onAstronautPhase={handleAstronautPhase} />
-      <AstronautTextOverlay isActive={showAstronautText} />
+      {/* Astronaut text is now rendered through StateText as textState 6 */}
       <DisclaimerDialog
         open={showDisclaimer}
         onClose={() => setShowDisclaimer(false)}
