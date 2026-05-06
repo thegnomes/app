@@ -97,7 +97,7 @@ function AuroraTextReveal({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p className="portfolio-template-mono mb-4 text-[22px] uppercase tracking-[0.2em] text-neutral-500">
+    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );
@@ -239,13 +239,13 @@ function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: s
 
   return (
     <div className="overflow-hidden select-none font-russo">
-      <div className="relative whitespace-nowrap text-[6rem] tracking-tight leading-[0.95] text-white md:text-[9rem] lg:text-[12rem]">
+      <div className="relative whitespace-nowrap text-[3rem] tracking-tight leading-[0.95] text-white md:text-[4.5rem] lg:text-[6rem]">
         <div ref={row1Ref} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
           <span className="inline-block whitespace-nowrap pr-8">{textTop}</span>
         </div>
       </div>
-      <div className="relative whitespace-nowrap text-[3rem] tracking-tight leading-none md:text-[4.5rem] lg:text-[6rem]" style={{ color: accentColor || 'rgba(255,255,255,0.9)' }}>
+      <div className="relative whitespace-nowrap text-[1.5rem] tracking-tight leading-none md:text-[2.25rem] lg:text-[3rem]" style={{ color: accentColor || 'rgba(255,255,255,0.9)' }}>
         <div ref={row2Ref} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
@@ -271,7 +271,7 @@ function Nav() {
         scrolled ? 'bg-[#0a0a0a]/80 backdrop-blur-md' : 'bg-transparent'
       }`}
     >
-      <a href="/" className="text-[1.125rem] font-medium tracking-tight text-neutral-100 transition-opacity uppercase hover:opacity-70 sm:text-[1.35rem] md:text-[1.75rem]">
+      <a href="/" className="text-[0.5625rem] font-medium tracking-tight text-neutral-100 transition-opacity uppercase hover:opacity-70 sm:text-[0.675rem] md:text-[0.875rem]">
         LEAVEEVERYTHINGTOCHANCE
       </a>
       <div className="flex items-center gap-6 md:gap-8">
@@ -283,14 +283,14 @@ function Nav() {
           <a
             key={item.label}
             href={item.href}
-            className="hidden text-[1.5rem] font-medium tracking-wide text-neutral-400 transition-colors hover:text-neutral-100 md:block"
+            className="hidden text-[0.75rem] font-medium tracking-wide text-neutral-400 transition-colors hover:text-neutral-100 md:block"
           >
             {item.label}
           </a>
         ))}
         <a
           href="/scene02"
-          className="rounded-full bg-neutral-100 px-4 py-2 text-[1rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[1.2rem] md:text-[1.5rem]"
+          className="rounded-full bg-neutral-100 px-4 py-2 text-[0.5rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[0.6rem] md:text-[0.75rem]"
         >
           Back to site
         </a>
@@ -321,10 +321,10 @@ function Hero({ project }: { project: PortfolioProject }) {
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
-          <span className="inline-block px-3 py-1 text-[20px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
+          <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             {project.tag}
           </span>
-          <span className="text-[20px] uppercase tracking-widest text-neutral-500">{project.year}</span>
+          <span className="text-[10px] uppercase tracking-widest text-neutral-500">{project.year}</span>
         </div>
 
         {project.scrollFlowTitle ? (
@@ -333,7 +333,7 @@ function Hero({ project }: { project: PortfolioProject }) {
           </div>
         ) : (
           <h1
-            className="mb-8 font-russo text-[6rem] font-medium tracking-tight leading-[0.95] text-white md:text-[9rem] lg:text-[12rem]"
+            className="mb-8 font-russo text-[3rem] font-medium tracking-tight leading-[0.95] text-white md:text-[4.5rem] lg:text-[6rem]"
           >
             {project.title}
             {project.titleAccent && (
@@ -351,8 +351,8 @@ function Hero({ project }: { project: PortfolioProject }) {
             { label: 'Deliverables', value: project.deliverables },
           ].map((meta) => (
             <div key={meta.label}>
-              <p className="mb-1 text-[20px] uppercase tracking-widest text-neutral-500">{meta.label}</p>
-              <p className="text-[1.75rem] font-medium text-neutral-100">{meta.value}</p>
+              <p className="mb-1 text-[10px] uppercase tracking-widest text-neutral-500">{meta.label}</p>
+              <p className="text-[0.875rem] font-medium text-neutral-100">{meta.value}</p>
             </div>
           ))}
         </div>
@@ -371,8 +371,8 @@ function Overview({ project }: { project: PortfolioProject }) {
           </FadeIn>
           <FadeIn delay={100}>
             <div className="mt-6 space-y-2">
-              <p className="font-russo text-[3.75rem] font-medium text-white md:text-[4.5rem]">{project.year}</p>
-              <p className="font-russo text-[2.5rem] font-medium text-white md:text-[3rem]">{project.coreCompetency}</p>
+              <p className="font-russo text-[1.875rem] font-medium text-white md:text-[2.25rem]">{project.year}</p>
+              <p className="font-russo text-[1.25rem] font-medium text-white md:text-[1.5rem]">{project.coreCompetency}</p>
             </div>
           </FadeIn>
         </div>
@@ -380,7 +380,7 @@ function Overview({ project }: { project: PortfolioProject }) {
           <FadeIn delay={100}>
             <AuroraTextReveal
               as="p"
-              className="mb-8 font-russo text-[3rem] font-medium leading-snug md:text-[3.75rem] lg:text-[4.5rem]"
+              className="mb-8 font-russo text-[1.5rem] font-medium leading-snug md:text-[1.875rem] lg:text-[2.25rem]"
               fromColor={project.accentColor || '#f59e0b'}
               toColor={project.accentSecondaryColor || '#ea580c'}
             >
@@ -388,7 +388,7 @@ function Overview({ project }: { project: PortfolioProject }) {
             </AuroraTextReveal>
           </FadeIn>
           <FadeIn delay={200}>
-            <p className="max-w-2xl text-[2rem] leading-relaxed text-neutral-400 md:text-[2.25rem]">{project.philosophyBody}</p>
+            <p className="max-w-2xl text-[1rem] leading-relaxed text-neutral-400 md:text-[1.125rem]">{project.philosophyBody}</p>
           </FadeIn>
         </div>
       </div>
@@ -544,7 +544,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       {/* Text */}
                       <div className="pb-2">
                         <h3
-                          className={`mb-1 font-russo text-[2.5rem] font-semibold transition-colors duration-500 md:text-[3rem] ${
+                          className={`mb-1 font-russo text-[1.25rem] font-semibold transition-colors duration-500 md:text-[1.5rem] ${
                             isActive ? 'text-neutral-100' : 'text-neutral-600 group-hover:text-neutral-500'
                           }`}
                           style={{ transitionDelay: `${iconDelay(index)}ms` }}
@@ -552,7 +552,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           {step.title}
                         </h3>
                         <p
-                          className={`mb-1.5 font-russo text-[1.75rem] font-medium transition-colors duration-500 md:text-[2rem] ${
+                          className={`mb-1.5 font-russo text-[0.875rem] font-medium transition-colors duration-500 md:text-[1rem] ${
                             isActive ? '' : 'text-neutral-600 group-hover:text-neutral-500'
                           }`}
                           style={{ color: isActive ? (project.accentColor || '#eab308') : undefined }}
@@ -560,7 +560,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                           {step.desc}
                         </p>
                         <p
-                          className={`text-[1.75rem] leading-relaxed transition-colors duration-500 ${
+                          className={`text-[0.875rem] leading-relaxed transition-colors duration-500 ${
                             isActive ? 'text-neutral-500' : 'text-neutral-700 group-hover:text-neutral-600'
                           }`}
                         >
@@ -571,7 +571,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             href={step.link.href}
                             target="_blank"
                             rel="noreferrer"
-                            className={`mt-2 inline-flex items-center gap-1.5 text-[1.75rem] transition-colors ${
+                            className={`mt-2 inline-flex items-center gap-1.5 text-[0.875rem] transition-colors ${
                               isActive ? '' : 'text-neutral-600 group-hover:text-neutral-500'
                             }`}
                             style={{ color: isActive ? (project.accentColor || '#eab308') : undefined }}
@@ -690,7 +690,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
-        <span className="text-[20px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
+        <span className="text-[10px] uppercase tracking-widest text-neutral-500">Scroll to explore</span>
         <svg
           className="animate-bounce text-neutral-500"
           width="16"
@@ -719,7 +719,7 @@ function Vision({ project }: { project: PortfolioProject }) {
         <FadeIn delay={150}>
           <AuroraTextReveal
             as="h2"
-            className="font-russo text-[3.75rem] font-normal leading-tight md:text-[6rem] lg:text-[7.5rem]"
+            className="font-russo text-[1.875rem] font-normal leading-tight md:text-[3rem] lg:text-[3.75rem]"
             fromColor={project.accentColor || '#f59e0b'}
             toColor={project.accentSecondaryColor || '#ea580c'}
           >
@@ -741,10 +741,10 @@ function Process({ project }: { project: PortfolioProject }) {
               <Label>{item.label}</Label>
             </FadeIn>
             <FadeIn delay={100}>
-              <h3 className="mb-6 font-russo text-[3rem] font-medium text-neutral-100 md:text-[3.75rem]">{item.heading}</h3>
+              <h3 className="mb-6 font-russo text-[1.5rem] font-medium text-neutral-100 md:text-[1.875rem]">{item.heading}</h3>
             </FadeIn>
             <FadeIn delay={200}>
-              <p className="text-[2rem] leading-relaxed text-neutral-400 md:text-[2.25rem]">{item.body}</p>
+              <p className="text-[1rem] leading-relaxed text-neutral-400 md:text-[1.125rem]">{item.body}</p>
             </FadeIn>
           </div>
         ))}
@@ -763,7 +763,7 @@ function Footer({ project }: { project: PortfolioProject }) {
               <Label>Next Project</Label>
               <a
                 href={project.nextProject.href}
-                className="font-russo text-[3.75rem] font-medium text-neutral-100 transition-colors hover:text-neutral-400 md:text-[6rem]"
+                className="font-russo text-[1.875rem] font-medium text-neutral-100 transition-colors hover:text-neutral-400 md:text-[3rem]"
               >
                 {project.nextProject.name}{' '}
                 <span className="font-russo">
@@ -779,7 +779,7 @@ function Footer({ project }: { project: PortfolioProject }) {
                   href={social.href}
                   target={social.external ? '_blank' : undefined}
                   rel={social.external ? 'noreferrer' : undefined}
-                  className="text-[1.5rem] font-medium text-neutral-400 transition-colors hover:text-neutral-100"
+                  className="text-[0.75rem] font-medium text-neutral-400 transition-colors hover:text-neutral-100"
                 >
                   {social.label}
                 </a>
@@ -789,7 +789,7 @@ function Footer({ project }: { project: PortfolioProject }) {
         </FadeIn>
 
         <FadeIn delay={100}>
-          <div className="flex flex-col gap-4 text-[1.5rem] text-neutral-600 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 text-[0.75rem] text-neutral-600 md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} LEAVEEVERYTHINGTOCHANCE. All rights reserved.</p>
             <p>Template replicated for portfolio showcase.</p>
           </div>
