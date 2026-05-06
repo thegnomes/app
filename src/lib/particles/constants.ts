@@ -111,6 +111,22 @@ export const CAMERA_FAR = 1000;
 export const MAX_PIXEL_RATIO = 2;
 
 // ============================================
+// Camera Framing Constants
+// ============================================
+
+/** Default camera Z for State 1 and reset */
+export const CAMERA_Z_DEFAULT = CAMERA_Z;
+
+/** Close camera Z for State 2.1 (Time / absorption) — immersive, fills screen */
+export const CAMERA_Z_STATE2_CLOSE = CAMERA_Z - 45;
+
+/** Camera Z at end of State 2.3 (Intent / stabilized) — back to readable */
+export const CAMERA_Z_STATE2_END = CAMERA_Z;
+
+/** Camera Z for State 3 orbit reveal — slightly wider than default */
+export const CAMERA_Z_STATE3_ORBIT = CAMERA_Z + 25;
+
+// ============================================
 // Color Constants
 // ============================================
 
@@ -256,6 +272,9 @@ export const CORE_COLOR_LERP = 0.04;
 
 /** Ambient/secondary color lerp factor */
 export const AMBIENT_COLOR_LERP = 0.04;
+
+/** Duration of the click activation pulse (ms) */
+export const CORE_ACTIVATION_PULSE_DURATION = 2000;
 
 // ============================================
 // State Timing Offsets

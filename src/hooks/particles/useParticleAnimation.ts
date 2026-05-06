@@ -15,7 +15,10 @@ import {
   AMBIENT_COLOR_LERP,
   CAMERA_MOVE_AMPLITUDE,
   CAMERA_MOVE_FREQUENCY,
-  CAMERA_Z,
+  CAMERA_Z_DEFAULT,
+  CAMERA_Z_STATE2_CLOSE,
+  CAMERA_Z_STATE2_END,
+  CAMERA_Z_STATE3_ORBIT,
   STATE_PRIMARY_COLORS,
   STATE_SECONDARY_COLORS,
   PLANETS,
@@ -27,6 +30,7 @@ import {
   SOLAR_VIDEO_CORE_PROCEDURAL_FADE,
   SOLAR_VIDEO_CORE_ENTRY_SCALE,
   SOLAR_VIDEO_CORE_REVEAL_DELAY,
+  CORE_ACTIVATION_PULSE_DURATION,
 } from '@/lib/particles/constants';
 import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
 import {
@@ -68,6 +72,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
   const speedRef = useRef(config.speed);
   const lastFrameTimeRef = useRef<number | null>(null);
 
+  // Core activation pulse refs
+  const corePulseStartRef = useRef<number | null>(null);
+  const corePulseActiveRef = useRef(false);
+
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
@@ -86,6 +94,14 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       data.mousePosition.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
     };
     window.addEventListener('mousemove', handleMouseMove);
+
+    // Core activation pulse listener
+    const handleCoreActivation = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { startedAtMs: number; durationMs: number };
+      corePulseStartRef.current = detail.startedAtMs;
+      corePulseActiveRef.current = true;
+    };
+    window.addEventListener('particle:core-activation-pulse', handleCoreActivation);
 
     // State change handler (defined inside effect to avoid linter immutability warnings)
     const handleStateChange = (transitionTime: number) => {
@@ -338,11 +354,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             data.currentPrimaryColor.current,
             data.currentSecondaryColor.current
           );
-          // Show core group in State 1 for the central particle glow
+          // Core group hidden by default in State 1 — only activation pulse shows it
           if (refs.coreGroup.current) {
-            refs.coreGroup.current.visible = true;
-            refs.coreGroup.current.scale.set(1, 1, 1);
-            refs.coreGroup.current.children[1]?.scale.set(1, 1, 1);
+            refs.coreGroup.current.visible = false;
           }
           if (refs.orbitGroup.current) refs.orbitGroup.current.visible = false;
           refs.planets.current?.forEach((p) => (p.group.visible = false));
@@ -483,7 +497,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       data.currentPrimaryColor.current.lerp(targetPrimaryColor, ambientColorLerp);
       data.currentSecondaryColor.current.lerp(targetSecondaryColor, ambientColorLerp);
 
-      // Update core group colors
+      // Update core group colors and visibility
       if (refs.coreGroup.current) {
         const cg = refs.coreGroup.current;
         const mesh = cg.children[0] as THREE.Mesh;
@@ -496,9 +510,42 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             1 - data.solarVideoCoreMix.current * SOLAR_VIDEO_CORE_PROCEDURAL_FADE;
         }
         glowUniforms.uColor.value.copy(data.currentCoreColor.current);
-        const showProceduralGlow = currentState === 1;
+
+        // Activation pulse: visible during State 1 when pulse is active
+        // During State 2/3, normal formation logic controls visibility
+        let showProceduralGlow = false;
+        let pulseOpacity = 0;
+
+        if (currentState === 1 && corePulseActiveRef.current && corePulseStartRef.current !== null) {
+          const pulseElapsed = now - corePulseStartRef.current;
+          if (pulseElapsed < CORE_ACTIVATION_PULSE_DURATION) {
+            const pulseT = pulseElapsed / CORE_ACTIVATION_PULSE_DURATION;
+            // Ramp up quickly, hold, then fade
+            const pulseEnvelope = pulseT < 0.3
+              ? pulseT / 0.3
+              : pulseT < 0.7
+                ? 1
+                : 1 - (pulseT - 0.7) / 0.3;
+            showProceduralGlow = true;
+            pulseOpacity = Math.max(0, pulseEnvelope * GLOW_OPACITY);
+            cg.visible = true;
+          } else {
+            // Pulse expired
+            corePulseActiveRef.current = false;
+            corePulseStartRef.current = null;
+            cg.visible = false;
+          }
+        } else if (currentState === 2 || currentState === 3) {
+          // Normal State 2/3 formation visibility
+          showProceduralGlow = true;
+          pulseOpacity = GLOW_OPACITY;
+          cg.visible = true;
+        } else {
+          cg.visible = false;
+        }
+
         glow.visible = showProceduralGlow;
-        glowUniforms.uOpacity.value = showProceduralGlow ? GLOW_OPACITY : 0;
+        glowUniforms.uOpacity.value = pulseOpacity;
         if (glowUniforms.uGlowBoost) {
           glowUniforms.uGlowBoost.value = 1;
         }
@@ -603,11 +650,33 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         refs.camera.current.userData.panX = smoothPanX;
         refs.camera.current.userData.panY = smoothPanY;
 
-        // Camera Z position - continuous zoom out during solar system
-        const targetZ = currentState === 3 ? CAMERA_Z + stateElapsed * 0.08 : CAMERA_Z;
+        // Staged camera Z positioning
+        let targetZ = CAMERA_Z_DEFAULT;
+
+        if (currentState === 2) {
+          const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+          if (stateElapsed < STATE2_ABSORPTION_DURATION) {
+            // State 2.1 (Time): close and immersive
+            targetZ = CAMERA_Z_STATE2_CLOSE;
+          } else if (stateElapsed < substate3Start) {
+            // State 2.2 (Pressure): pulling back from close to default
+            const pullBackT = (stateElapsed - STATE2_ABSORPTION_DURATION) / STATE2_STABILIZE_DURATION;
+            const easedPullBack = pullBackT * pullBackT * (3 - 2 * pullBackT);
+            targetZ = CAMERA_Z_STATE2_CLOSE + (CAMERA_Z_STATE2_END - CAMERA_Z_STATE2_CLOSE) * easedPullBack;
+          } else {
+            // State 2.3 (Intent): at default scale
+            targetZ = CAMERA_Z_STATE2_END;
+          }
+        } else if (currentState === 3) {
+          // State 3: slightly wider to reveal orbit
+          targetZ = CAMERA_Z_STATE3_ORBIT;
+        } else if (currentState === 4) {
+          // Collapse: back to default, no aggressive movement
+          targetZ = CAMERA_Z_DEFAULT;
+        }
 
         // Smooth camera Z transition
-        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * scaleFrameLerp(0.03, frameScale);
+        refs.camera.current.position.z += (targetZ - refs.camera.current.position.z) * scaleFrameLerp(0.04, frameScale);
 
         refs.camera.current.position.x =
           Math.sin(data.time.current * CAMERA_MOVE_FREQUENCY) * CAMERA_MOVE_AMPLITUDE +
@@ -631,6 +700,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
     return () => {
       cancelAnimationFrame(data.animationId.current);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('particle:core-activation-pulse', handleCoreActivation);
     };
   }, [refs, data, cameraPanRef]);
 }

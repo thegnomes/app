@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7;
 
 type TextRole =
   | 'thesis'
   | 'atmosphere'
-  | 'spark'
   | 'marker'
   | 'payoff'
   | 'resolution'
@@ -33,20 +32,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   1: {
     role: 'atmosphere',
-    lines: ['Drifting across endless darkness, every thought moves without direction.'],
+    lines: [
+      'Across the endless void,',
+      'most thoughts drift without weight —',
+      'until inspiration clicks.',
+    ],
     transitionDuration: 800,
     lingerPrevious: 420,
-    lineDelay: 200,
+    lineDelay: 500,
     charStagger: 16,
-  },
-  8: {
-    role: 'spark',
-    lines: ['Inspiration clicks. Something begins to gather.'],
-    transitionDuration: 450,
-    lingerPrevious: 0,
-    lineDelay: 200,
-    charStagger: 12,
-    autoExitDelay: 1800,
   },
   '2': {
     role: 'marker',
@@ -128,7 +122,6 @@ function getRoleTypography(role: TextRole): TypographySpec {
   switch (role) {
     case 'thesis':
     case 'atmosphere':
-    case 'spark':
     case 'payoff':
     case 'resolution':
     case 'collapse':
@@ -155,28 +148,25 @@ function getRoleTypography(role: TextRole): TypographySpec {
 interface MotionSpec {
   enterY: number;
   exitY: number;
-  blurEnter: number;
   containerY: number;
 }
 
 function getRoleMotion(role: TextRole): MotionSpec {
   switch (role) {
     case 'thesis':
-      return { enterY: 6, exitY: -4, blurEnter: 2, containerY: 0 };
+      return { enterY: 6, exitY: -4, containerY: 0 };
     case 'atmosphere':
-      return { enterY: 8, exitY: -8, blurEnter: 2, containerY: 0 };
-    case 'spark':
-      return { enterY: 4, exitY: -6, blurEnter: 1, containerY: 0 };
+      return { enterY: 8, exitY: -8, containerY: 0 };
     case 'marker':
-      return { enterY: 3, exitY: -6, blurEnter: 1, containerY: 60 };
+      return { enterY: 3, exitY: -6, containerY: 60 };
     case 'payoff':
-      return { enterY: 4, exitY: -6, blurEnter: 1, containerY: 0 };
+      return { enterY: 4, exitY: -6, containerY: 0 };
     case 'resolution':
-      return { enterY: 6, exitY: -8, blurEnter: 2, containerY: 0 };
+      return { enterY: 6, exitY: -8, containerY: 0 };
     case 'collapse':
-      return { enterY: 3, exitY: -4, blurEnter: 1, containerY: 0 };
+      return { enterY: 3, exitY: -4, containerY: 0 };
     default:
-      return { enterY: 6, exitY: -4, blurEnter: 2, containerY: 0 };
+      return { enterY: 6, exitY: -4, containerY: 0 };
   }
 }
 
@@ -211,7 +201,7 @@ function renderCharReveal(
         key={`${char}-${i}`}
         className={`inline-block ${className || ''}`}
         style={{
-          opacity: isLeaving ? 0 : isGhost ? 0.2 : isHidden ? 0 : 1,
+          opacity: isLeaving ? 0 : isGhost ? 0.18 : isHidden ? 0 : 1,
           transform: `translate3d(${tx}px, ${ty}px, 0)`,
           filter: `blur(${isLeaving ? 2 : isGhost ? 1 : 0}px)`,
           transitionDuration: `${transitionDuration}ms`,
@@ -542,7 +532,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               <div
                 key={i}
                 className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
-                style={{ textShadow }}
+                style={{ textShadow, marginTop: i > 0 ? '0.35em' : 0 }}
               >
                 {renderCharReveal(
                   line,

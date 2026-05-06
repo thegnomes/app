@@ -15,7 +15,7 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 7600;
+const FINAL_VIDEO_DELAY_MS = 2200;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -33,6 +33,7 @@ function App() {
   }, [showDisclaimer]);
   const redirectedRef = useRef(false);
   const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finalVideoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
   useEffect(() => {
@@ -309,17 +310,15 @@ function App() {
       // Start charging (hold to charge shell) - 7000ms for 3 substages
       stateRef.current = 2;
       setState(2);
-      setTextState(8); // spark beat
+      setTextState('2');
       setShowFinalVideo(false);
       inState2Ref.current = true;
 
-      // Transition from spark to State 2 marker text after brief beat
-      substateTimersRef.current.push(
-        setTimeout(() => {
-          if (stateRef.current === 2 && inState2Ref.current) {
-            setTextState('2');
-          }
-        }, 1200)
+      // Dispatch core activation pulse for the particle system
+      window.dispatchEvent(
+        new CustomEvent('particle:core-activation-pulse', {
+          detail: { startedAtMs: performance.now(), durationMs: 2000 },
+        })
       );
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
@@ -421,14 +420,29 @@ function App() {
   useEffect(() => {
     if (textState !== 7) return;
 
-    // Start final video immediately when ignition text (state 7) appears
-    setShowFinalVideo(true);
+    // Wait for State 7 text to be readable before starting final video
+    if (finalVideoTimerRef.current) {
+      clearTimeout(finalVideoTimerRef.current);
+      finalVideoTimerRef.current = null;
+    }
+
+    finalVideoTimerRef.current = setTimeout(() => {
+      finalVideoTimerRef.current = null;
+      setShowFinalVideo(true);
+    }, FINAL_VIDEO_DELAY_MS);
 
     // Cancel the auto text-sequence timer so state 7 text stays visible during the video
     if (textSequenceTimerRef.current) {
       clearTimeout(textSequenceTimerRef.current);
       textSequenceTimerRef.current = null;
     }
+
+    return () => {
+      if (finalVideoTimerRef.current) {
+        clearTimeout(finalVideoTimerRef.current);
+        finalVideoTimerRef.current = null;
+      }
+    };
   }, [textState]);
 
   return (
