@@ -45,8 +45,8 @@ export function GalaxyColumn({
     }
   }, [isHovered]);
 
-  const titleRingItems = Array(12).fill(label);
-  const yearRingItems = Array(14).fill(year);
+  const titleRingItems = [label];
+  const yearRingItems = [year];
 
   return (
     <a
@@ -74,8 +74,9 @@ export function GalaxyColumn({
         className="relative z-10 flex aspect-[554/430] items-center justify-center overflow-visible transition-all duration-700 ease-out"
         style={{
           width: 'clamp(13rem, 105%, 38rem)',
-          transform: `scale(${isHovered ? 1.08 : 0.72})`,
-          filter: isHovered ? 'saturate(1)' : 'saturate(0)',
+          transform: `scale(${isHovered ? 1.02 : 0.58})`,
+          filter: isHovered ? 'saturate(1)' : 'saturate(0) brightness(0.9)',
+          opacity: isHovered ? 1 : 0.84,
         }}
       >
         <div className="relative z-10 h-full w-full">
@@ -114,6 +115,7 @@ export function GalaxyColumn({
           radiusX={176}
           radiusY={68}
           arc="top"
+          className={`transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
           duration={14}
           verticalOffset={4}
           itemClassName="font-russo text-[14px] font-bold tracking-[0.28em] text-white sm:text-[16px] md:text-[18px] lg:text-[20px]"
@@ -129,6 +131,8 @@ export function GalaxyColumn({
           arc="bottom"
           duration={12}
           verticalOffset={18}
+          className={`transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+          direction="reverse"
           itemClassName="font-orbitron text-[10px] font-medium tracking-[0.38em] text-white/85 sm:text-[11px] md:text-[12px] lg:text-[14px]"
           itemStyle={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.85))' }}
         />

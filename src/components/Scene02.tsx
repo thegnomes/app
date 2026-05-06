@@ -20,7 +20,7 @@ const ASTRO_DESKTOP_DRIFT_PCT = { x: 0.15, y: 0.15 };
 const ASTRO_MOBILE_DRIFT_PCT = { x: 0.1, y: 0.1 };
 const NEBULA_PARALLAX_RATIO = 0.12;
 const MARQUEE_SPEED = 0.42;
-const MARQUEE_LINE_ONE = 'CHANCE WOON';
+const MARQUEE_LINE_ONE = 'CHANCE WOON - CREATIVE STRATEGIST';
 
 type CompetencyId = 'creative-direction' | 'universe-building' | 'prototype-to-ship';
 
@@ -87,10 +87,6 @@ function Scene02MarqueeLine({
 
   return (
     <span className="inline-flex items-center whitespace-nowrap pr-10">
-      <span style={getWordStyle()}>Creative Strategist</span>
-      <span className="px-3" style={getWordStyle()}>
-        -
-      </span>
       {MARQUEE_COMPETENCIES.map((item, index) => (
         <span key={`${copyIndex}-${item.id}`} className="inline-flex items-center">
           <span style={getWordStyle(item)}>{item.label}</span>
@@ -162,7 +158,7 @@ function Scene02BottomMarquee({
 
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 bottom-[100px] z-30 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out ${
+      className={`pointer-events-none absolute inset-x-0 bottom-[100px] z-20 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       aria-hidden="true"
@@ -361,7 +357,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         />
       </div>
       {/* Astronaut video - centered in viewport, drifts down on entrance, follows mouse */}
-      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-20 h-full w-full -translate-x-1/2 -translate-y-1/2">
+      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-40 h-full w-full -translate-x-1/2 -translate-y-1/2">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
             drifted ? 'translate-y-10 opacity-100' : 'translate-y-0 opacity-0'
