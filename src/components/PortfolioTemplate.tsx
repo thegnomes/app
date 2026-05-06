@@ -271,7 +271,7 @@ function Nav() {
         scrolled ? 'bg-[#0a0a0a]/80 backdrop-blur-md' : 'bg-transparent'
       }`}
     >
-      <a href="/" className="text-[1.75rem] font-medium tracking-tight text-neutral-100 transition-opacity uppercase hover:opacity-70">
+      <a href="/" className="text-[1.125rem] font-medium tracking-tight text-neutral-100 transition-opacity uppercase hover:opacity-70 sm:text-[1.35rem] md:text-[1.75rem]">
         LEAVEEVERYTHINGTOCHANCE
       </a>
       <div className="flex items-center gap-6 md:gap-8">
@@ -290,7 +290,7 @@ function Nav() {
         ))}
         <a
           href="/scene02"
-          className="bg-neutral-100 px-4 py-2 text-[1.5rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 rounded-full"
+          className="rounded-full bg-neutral-100 px-4 py-2 text-[1rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[1.2rem] md:text-[1.5rem]"
         >
           Back to site
         </a>

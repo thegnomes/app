@@ -61,7 +61,7 @@ function FadeIn({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+    <p className="portfolio-template-mono mb-4 text-[22px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );
@@ -145,13 +145,13 @@ export default function YouTubePlaylist({
             <Label>Media</Label>
           </FadeIn>
           <FadeIn delay={100}>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-medium text-neutral-100">
+            <h2 className="text-[3rem] font-medium text-neutral-100 md:text-[3.75rem] lg:text-[4.5rem]">
               {title}
             </h2>
           </FadeIn>
           {subtitle && (
             <FadeIn delay={150}>
-              <p className="text-base md:text-lg text-neutral-400 mt-3 max-w-xl">
+              <p className="mt-3 max-w-xl text-[2rem] text-neutral-400 md:text-[2.25rem]">
                 {subtitle}
               </p>
             </FadeIn>
@@ -213,7 +213,7 @@ export default function YouTubePlaylist({
                 />
               </div>
 
-              <span className="text-xs text-neutral-400 font-mono tabular-nums">
+              <span className="font-mono text-[1.5rem] text-neutral-400 tabular-nums">
                 {activeVideo.duration}
               </span>
 
@@ -243,7 +243,7 @@ export default function YouTubePlaylist({
         {/* Playlist List */}
         <FadeIn delay={250}>
           <div className="mt-6">
-            <h3 className="text-sm font-semibold text-neutral-200 mb-4 px-1">
+            <h3 className="mb-4 px-1 text-[1.75rem] font-semibold text-neutral-200">
               {title}
             </h3>
             <div className="space-y-1">
@@ -261,7 +261,7 @@ export default function YouTubePlaylist({
                     }`}
                   >
                     <span
-                      className={`text-sm font-mono tabular-nums w-6 text-center ${
+                      className={`w-6 text-center font-mono text-[1.75rem] tabular-nums ${
                         isActive ? 'text-neutral-100' : 'text-neutral-600'
                       }`}
                     >
@@ -270,7 +270,7 @@ export default function YouTubePlaylist({
 
                     <div className="flex-1 min-w-0">
                       <p
-                        className={`text-sm truncate ${
+                        className={`truncate text-[1.75rem] ${
                           isActive
                             ? 'text-neutral-100 font-medium'
                             : 'text-neutral-400'
@@ -281,7 +281,7 @@ export default function YouTubePlaylist({
                     </div>
 
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-xs text-neutral-500 font-mono tabular-nums">
+                      <span className="font-mono text-[1.5rem] text-neutral-500 tabular-nums">
                         {video.duration}
                       </span>
                       <div

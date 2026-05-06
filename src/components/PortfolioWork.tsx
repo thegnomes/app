@@ -55,7 +55,7 @@ function useInView(threshold = 0.15) {
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <p className="portfolio-template-mono mb-4 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+    <p className="portfolio-template-mono mb-4 text-[22px] uppercase tracking-[0.2em] text-neutral-500">
       {children}
     </p>
   );
@@ -160,7 +160,7 @@ function Nav() {
         scrolled ? 'bg-[#0a0a0a]/80 backdrop-blur-md' : 'bg-transparent'
       }`}
     >
-      <a href="/" className="text-sm font-medium tracking-tight text-neutral-100 hover:opacity-70 transition-opacity uppercase">
+      <a href="/" className="text-[1.125rem] font-medium tracking-tight text-neutral-100 transition-opacity uppercase hover:opacity-70 sm:text-[1.35rem] md:text-[1.75rem]">
         LEAVEEVERYTHINGTOCHANCE
       </a>
       <div className="flex items-center gap-6 md:gap-8">
@@ -172,14 +172,14 @@ function Nav() {
           <a
             key={item.label}
             href={item.href}
-            className="hidden md:block text-xs font-medium tracking-wide text-neutral-400 hover:text-neutral-100 transition-colors"
+            className="hidden text-[1.5rem] font-medium tracking-wide text-neutral-400 transition-colors hover:text-neutral-100 md:block"
           >
             {item.label}
           </a>
         ))}
         <a
           href="/scene02"
-          className="text-xs font-medium tracking-wide text-neutral-900 bg-neutral-100 px-4 py-2 rounded-full hover:bg-neutral-300 transition-colors"
+          className="rounded-full bg-neutral-100 px-4 py-2 text-[1rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[1.2rem] md:text-[1.5rem]"
         >
           Back to site
         </a>
@@ -204,19 +204,19 @@ function Hero() {
 
       <div className="relative z-10 max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
-          <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
+          <span className="inline-block px-3 py-1 text-[20px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             Case Study
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-neutral-500">2026</span>
+          <span className="text-[20px] uppercase tracking-widest text-neutral-500">2026</span>
         </div>
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[0.95] text-white mb-8">
+        <h1 className="mb-8 text-[6rem] font-medium tracking-tight leading-[0.95] text-white md:text-[9rem] lg:text-[12rem]">
           Sonic
           <br />
           <span className="portfolio-template-serif italic">Identity</span>
         </h1>
 
-        <p className="max-w-xl text-base md:text-lg text-neutral-300 leading-relaxed mb-10">
+        <p className="mb-10 max-w-xl text-[2rem] leading-relaxed text-neutral-300 md:text-[2.25rem]">
           A complete brand and digital experience for a single-product audio company. Designed to eliminate distraction and center the listener.
         </p>
 
@@ -227,8 +227,8 @@ function Hero() {
             { label: 'Deliverables', value: 'Web, 3D, Motion' },
           ].map((meta) => (
             <div key={meta.label}>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1">{meta.label}</p>
-              <p className="text-sm font-medium text-neutral-100">{meta.value}</p>
+              <p className="mb-1 text-[20px] uppercase tracking-widest text-neutral-500">{meta.label}</p>
+              <p className="text-[1.75rem] font-medium text-neutral-100">{meta.value}</p>
             </div>
           ))}
         </div>
@@ -248,12 +248,12 @@ function Overview() {
         </div>
         <div className="md:col-span-8">
           <FadeIn delay={100}>
-            <p className="text-2xl md:text-3xl lg:text-4xl font-medium leading-snug text-neutral-100 mb-8">
+            <p className="mb-8 text-[3rem] font-medium leading-snug text-neutral-100 md:text-[3.75rem] lg:text-[4.5rem]">
               At MORAE, we don’t follow trends. We study the subtle patterns of sound and the ways people interact with it.
             </p>
           </FadeIn>
           <FadeIn delay={200}>
-            <p className="text-base md:text-lg text-neutral-400 leading-relaxed max-w-2xl">
+            <p className="max-w-2xl text-[2rem] leading-relaxed text-neutral-400 md:text-[2.25rem]">
               Our philosophy is simple: eliminate distractions, highlight essence. Every design decision is deliberate—nothing is accidental. The goal isn’t to impress, but to allow clarity, focus, and awareness to emerge naturally.
             </p>
           </FadeIn>
@@ -276,12 +276,12 @@ function Stats() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
         {STATS.map((s, i) => (
           <FadeIn key={s.num} delay={i * 100}>
-            <p className="portfolio-template-counter mb-6 text-sm text-neutral-600">
+            <p className="portfolio-template-counter mb-6 text-[1.75rem] text-neutral-600">
               {s.num}
             </p>
-            <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-2">{s.title}</h3>
-            <p className="text-sm font-medium text-neutral-300 mb-3">{s.desc}</p>
-            <p className="text-sm text-neutral-500 leading-relaxed">{s.detail}</p>
+            <h3 className="mb-2 text-[3rem] font-medium text-neutral-100 md:text-[3.75rem]">{s.title}</h3>
+            <p className="mb-3 text-[1.75rem] font-medium text-neutral-300">{s.desc}</p>
+            <p className="text-[1.75rem] leading-relaxed text-neutral-500">{s.detail}</p>
           </FadeIn>
         ))}
       </div>
@@ -297,7 +297,7 @@ function Vision() {
           <Label>Vision</Label>
         </FadeIn>
         <FadeIn delay={150}>
-          <h2 className="portfolio-template-serif text-3xl md:text-5xl lg:text-6xl font-normal leading-tight text-neutral-100">
+          <h2 className="portfolio-template-serif text-[3.75rem] font-normal leading-tight text-neutral-100 md:text-[6rem] lg:text-[7.5rem]">
             “In a world full of distraction, we design for those who notice. MORAE is about clarity, detail, and pure listening—tools for focus, not show.”
           </h2>
         </FadeIn>
@@ -369,10 +369,10 @@ function Approach() {
               <Label>{item.label}</Label>
             </FadeIn>
             <FadeIn delay={100}>
-              <h3 className="text-2xl md:text-3xl font-medium text-neutral-100 mb-6">{item.heading}</h3>
+              <h3 className="mb-6 text-[3rem] font-medium text-neutral-100 md:text-[3.75rem]">{item.heading}</h3>
             </FadeIn>
             <FadeIn delay={200}>
-              <p className="text-base md:text-lg text-neutral-400 leading-relaxed">{item.body}</p>
+              <p className="text-[2rem] leading-relaxed text-neutral-400 md:text-[2.25rem]">{item.body}</p>
             </FadeIn>
           </div>
         ))}
@@ -391,7 +391,7 @@ function Footer() {
               <Label>Next Project</Label>
               <a
                 href="/portfolio.html"
-                className="text-3xl md:text-5xl font-medium text-neutral-100 hover:text-neutral-400 transition-colors"
+                className="text-[3.75rem] font-medium text-neutral-100 transition-colors hover:text-neutral-400 md:text-[6rem]"
               >
                 Stellar <span className="portfolio-template-serif italic">Motion</span>
                 <span className="inline-block ml-3 align-middle">→</span>
@@ -404,7 +404,7 @@ function Footer() {
                   href={social === 'Email' ? 'mailto:hello@morae.audio' : `https://${social.toLowerCase()}.com`}
                   target={social !== 'Email' ? '_blank' : undefined}
                   rel={social !== 'Email' ? 'noreferrer' : undefined}
-                  className="text-xs font-medium text-neutral-400 hover:text-neutral-100 transition-colors"
+                  className="text-[1.5rem] font-medium text-neutral-400 transition-colors hover:text-neutral-100"
                 >
                   {social}
                 </a>
@@ -414,7 +414,7 @@ function Footer() {
         </FadeIn>
 
         <FadeIn delay={100}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-xs text-neutral-600">
+          <div className="flex flex-col gap-4 text-[1.5rem] text-neutral-600 md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} LEAVEEVERYTHINGTOCHANCE. All rights reserved.</p>
             <p>Template replicated for portfolio showcase.</p>
           </div>
