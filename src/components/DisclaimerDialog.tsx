@@ -128,6 +128,7 @@ function DisclaimerTerminal({
   const promptText = !assetsLoaded
     ? `> Loading assets... ${loadProgress}%`
     : `> Proceed? [Y/N]: ${inputChar}`;
+  const showMobileActions = typingComplete && assetsLoaded;
 
   return (
     <DialogContent
@@ -273,16 +274,60 @@ function DisclaimerTerminal({
 
               {/* Prompt line */}
               {showPrompt && (
-                <div
-                  className="flex items-center text-[13px] font-semibold uppercase tracking-[0.1em] sm:text-[15px]"
-                  style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
-                >
-                  <span>{promptText}</span>
-                  <span
-                    className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.14em] translate-y-[0.15em]"
-                    style={{ background: NEON.primary }}
-                  />
-                </div>
+                <>
+                  <div
+                    className="hidden items-center text-[13px] font-semibold uppercase tracking-[0.1em] sm:text-[15px] lg:flex"
+                    style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <span>{promptText}</span>
+                    <span
+                      className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.14em] translate-y-[0.15em]"
+                      style={{ background: NEON.primary }}
+                    />
+                  </div>
+
+                  {!assetsLoaded && (
+                    <div
+                      className="text-[12px] font-semibold uppercase tracking-[0.1em] sm:text-[14px] lg:hidden"
+                      style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
+                    >
+                      {promptText}
+                    </div>
+                  )}
+
+                  {showMobileActions && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
+                        style={{
+                          borderColor: NEON.primary,
+                          background: 'rgba(0, 240, 255, 0.08)',
+                          color: NEON.textBright,
+                          boxShadow: `0 0 14px ${NEON.faint}`,
+                          fontFamily: "'Orbitron', sans-serif",
+                        }}
+                      >
+                        Full Experience
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onSkip}
+                        className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
+                        style={{
+                          borderColor: NEON.faint,
+                          background: 'rgba(0, 0, 0, 0.45)',
+                          color: NEON.text,
+                          boxShadow: `0 0 10px rgba(0, 240, 255, 0.12)`,
+                          fontFamily: "'Orbitron', sans-serif",
+                        }}
+                      >
+                        Skip to Work
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
