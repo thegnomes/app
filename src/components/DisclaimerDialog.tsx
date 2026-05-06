@@ -79,7 +79,7 @@ function DisclaimerTerminal({
         }
         return prev + 1;
       });
-    }, 16);
+    }, 14);
     return () => clearInterval(typingTimer);
   }, []);
 
@@ -133,15 +133,14 @@ function DisclaimerTerminal({
     <DialogContent
       showCloseButton={false}
       data-testid="disclaimer-terminal"
-      className="disclaimer-terminal max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
+      className="max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
     >
-      {/* Monitor frame — centered in viewport via parent flex + mx-auto */}
+      {/* Monitor frame — auto height so all text is visible */}
       <div
         className="relative mx-auto flex items-center justify-center"
         style={{
-          width: 'min(92vw, 960px)',
+          width: 'min(92vw, 840px)',
           maxWidth: '92vw',
-          aspectRatio: '16/9',
         }}
       >
         {/* Outer neon glow */}
@@ -173,7 +172,7 @@ function DisclaimerTerminal({
 
         {/* Screen */}
         <div
-          className="relative flex h-full w-full flex-col overflow-hidden rounded-[14px] p-5 sm:p-7"
+          className="relative flex w-full flex-col overflow-hidden rounded-[14px] p-5 sm:p-7"
           style={{
             background: NEON.bg,
             border: `3px solid ${NEON.primary}`,
@@ -204,11 +203,11 @@ function DisclaimerTerminal({
             style={{ background: NEON.primary }}
           />
 
-          <div className="relative z-10 flex h-full flex-col">
+          <div className="relative z-10 flex flex-col">
             {/* Title bar */}
             <div
-              className="mb-4 flex items-center justify-between border-b-2 pb-2 text-[13px] uppercase tracking-[0.2em] sm:text-[15px]"
-              style={{ borderColor: NEON.faint, color: NEON.textBright }}
+              className="mb-3 flex items-center justify-between border-b-2 pb-2 text-[11px] uppercase tracking-[0.2em] sm:text-[13px]"
+              style={{ borderColor: NEON.faint, color: NEON.textBright, fontFamily: "'Orbitron', sans-serif" }}
             >
               <span>System Notice</span>
               <span style={{ color: NEON.dim }}>ENTRY.EXE</span>
@@ -216,8 +215,8 @@ function DisclaimerTerminal({
 
             <DialogHeader className="gap-2 text-left">
               <DialogTitle
-                className="text-[24px] font-semibold uppercase leading-none sm:text-[32px]"
-                style={{ color: NEON.title }}
+                className="text-[20px] font-semibold uppercase leading-none sm:text-[26px]"
+                style={{ color: NEON.title, fontFamily: "'Russo One', sans-serif" }}
               >
                 Before you enter
               </DialogTitle>
@@ -226,14 +225,15 @@ function DisclaimerTerminal({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Main text area */}
+            {/* Main text area — no overflow hidden, auto height */}
             <div
-              className="mt-4 min-h-0 flex-1 overflow-hidden rounded p-4 text-[16px] font-medium leading-[1.35] sm:mt-5 sm:p-5 sm:text-[22px]"
+              className="mt-3 rounded p-4 text-[13px] font-medium leading-[1.5] sm:mt-4 sm:p-5 sm:text-[15px]"
               style={{
                 background: 'rgba(0, 0, 0, 0.45)',
                 border: `2px solid ${NEON.faint}`,
                 color: NEON.text,
                 textShadow: `0 0 6px ${NEON.glow}`,
+                fontFamily: "'Orbitron', sans-serif",
               }}
             >
               <span className="whitespace-pre-line">{DISCLAIMER_COPY.slice(0, typedLength)}</span>
@@ -250,14 +250,14 @@ function DisclaimerTerminal({
               {/* Loading bar */}
               <div className="space-y-1.5">
                 <div
-                  className="flex items-center justify-between text-[12px] uppercase tracking-[0.14em] sm:text-[14px]"
-                  style={{ color: NEON.textBright }}
+                  className="flex items-center justify-between text-[11px] uppercase tracking-[0.14em] sm:text-[13px]"
+                  style={{ color: NEON.textBright, fontFamily: "'Orbitron', sans-serif" }}
                 >
                   <span>Loading assets</span>
                   <span>{loadProgress}%</span>
                 </div>
                 <div
-                  className="h-3 w-full overflow-hidden rounded-none bg-black"
+                  className="h-2.5 w-full overflow-hidden rounded-none bg-black"
                   style={{ border: `2px solid ${NEON.faint}` }}
                 >
                   <div
@@ -274,8 +274,8 @@ function DisclaimerTerminal({
               {/* Prompt line */}
               {showPrompt && (
                 <div
-                  className="flex items-center text-[15px] font-semibold uppercase tracking-[0.1em] sm:text-[18px]"
-                  style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}` }}
+                  className="flex items-center text-[13px] font-semibold uppercase tracking-[0.1em] sm:text-[15px]"
+                  style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
                 >
                   <span>{promptText}</span>
                   <span
@@ -291,7 +291,7 @@ function DisclaimerTerminal({
         {/* Monitor brand */}
         <div
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.3em]"
-          style={{ color: '#1a2a32' }}
+          style={{ color: '#1a2a32', fontFamily: "'Orbitron', sans-serif" }}
         >
           nebula-hero v1.0
         </div>

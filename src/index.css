@@ -127,28 +127,41 @@
   animation: disclaimer-caret-blink 0.85s steps(1, end) infinite;
 }
 
-.portfolio-template-shell,
-.portfolio-template-shell * {
+.portfolio-template-shell {
   font-family: 'Inter', system-ui, sans-serif !important;
 }
 
-.portfolio-template-shell .font-russo {
+.portfolio-template-shell * {
+  font-family: inherit !important;
+}
+
+.portfolio-template-shell .font-russo,
+.portfolio-template-shell .font-russo * {
   font-family: 'Russo One', sans-serif !important;
 }
 
-.portfolio-template-shell .font-orbitron {
+.portfolio-template-shell .font-orbitron,
+.portfolio-template-shell .font-orbitron * {
   font-family: 'Orbitron', sans-serif !important;
 }
 
-.portfolio-template-shell .portfolio-template-mono {
+.portfolio-template-shell .portfolio-template-mono,
+.portfolio-template-shell .portfolio-template-mono * {
   font-family: 'Fragment Mono', monospace !important;
 }
 
-.portfolio-template-shell .portfolio-template-serif {
+.portfolio-template-shell .font-mono,
+.portfolio-template-shell .font-mono * {
+  font-family: 'Fragment Mono', ui-monospace, monospace !important;
+}
+
+.portfolio-template-shell .portfolio-template-serif,
+.portfolio-template-shell .portfolio-template-serif * {
   font-family: 'Instrument Serif', serif !important;
 }
 
-.portfolio-template-shell .portfolio-template-counter {
+.portfolio-template-shell .portfolio-template-counter,
+.portfolio-template-shell .portfolio-template-counter * {
   font-family: 'Doto', sans-serif !important;
 }
 

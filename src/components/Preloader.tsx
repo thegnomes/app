@@ -73,7 +73,7 @@ export function Preloader({ assets, onComplete }: PreloaderProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black">
-      <div className="font-russo text-white/70 text-sm tracking-[0.2em]">
+      <div className="font-russo text-[1.75rem] text-white/70 tracking-[0.2em] md:text-[2.25rem]">
         {progress}%
       </div>
     </div>
