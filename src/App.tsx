@@ -118,10 +118,15 @@ function App() {
     setShowAstronautText(true);
   }, []);
 
-  // Preload only main app videos — scene02 videos load on demand
+  // Preload main app videos + scene02 videos for continuity
   useEffect(() => {
     const mainSources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
-    const allSources = mainSources;
+    const scene02Sources = [
+      '/scene02/nebula_space_only2x.png',
+      '/scene02/looking-astro-loop2.webm',
+      '/scene02/looking-astro-loop2.mov',
+    ];
+    const allSources = [...mainSources, ...scene02Sources];
     const videos: HTMLVideoElement[] = [];
     let fontsReady = false;
 
