@@ -59,7 +59,7 @@ export const MIGRATOR_RATIO = 0.25;
 export const SHELL_PARTICLE_RATIO = 0.5;
 
 /** Global multiplier for particle point sizes */
-export const PARTICLE_SIZE_MULTIPLIER = 1.5;
+export const PARTICLE_SIZE_MULTIPLIER = 2.5;
 
 /** Share of shell particles that lead State 2 spike clusters */
 export const STATE2_SPIKE_CLUSTER_LEADER_RATIO = 0.1;

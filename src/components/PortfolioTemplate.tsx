@@ -329,7 +329,11 @@ function Hero({ project }: { project: PortfolioProject }) {
 
         {project.scrollFlowTitle ? (
           <div className="mb-8">
-            <ScrollFlowTextFX top={project.scrollFlowTitle.top} bottom={project.role} accentColor={project.accentColor} />
+            <ScrollFlowTextFX
+              top={project.scrollFlowTitle.top}
+              bottom={project.scrollFlowTitle.bottom}
+              accentColor={project.accentColor}
+            />
           </div>
         ) : (
           <h1

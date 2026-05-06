@@ -19,42 +19,33 @@ interface StateTextConfig {
   lingerPrevious: number;
   autoExitDelay?: number;
   lineDelay: number;
-  wordStagger: number;
+  charStagger: number;
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
     role: 'thesis',
-    lines: [
-      'I have a theory.',
-      'Our shared universe is our collective mind made visible.',
-    ],
+    lines: ['I have a theory. Our shared universe is our collective mind made visible.'],
     transitionDuration: 800,
     lingerPrevious: 0,
-    lineDelay: 900,
-    wordStagger: 70,
+    lineDelay: 200,
+    charStagger: 18,
   },
   1: {
     role: 'atmosphere',
-    lines: [
-      'Drifting across endless darkness,',
-      'every thought moves without direction.',
-    ],
+    lines: ['Drifting across endless darkness, every thought moves without direction.'],
     transitionDuration: 800,
     lingerPrevious: 420,
-    lineDelay: 720,
-    wordStagger: 65,
+    lineDelay: 200,
+    charStagger: 16,
   },
   8: {
     role: 'spark',
-    lines: [
-      'Inspiration clicks.',
-      'Something begins to gather.',
-    ],
+    lines: ['Inspiration clicks. Something begins to gather.'],
     transitionDuration: 450,
     lingerPrevious: 0,
-    lineDelay: 280,
-    wordStagger: 40,
+    lineDelay: 200,
+    charStagger: 12,
     autoExitDelay: 1800,
   },
   '2': {
@@ -63,18 +54,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 600,
     lingerPrevious: 0,
     lineDelay: 0,
-    wordStagger: 0,
+    charStagger: 0,
   },
   3: {
     role: 'payoff',
-    lines: [
-      'Orbit takes hold.',
-      'What once drifted begins to gather around a centre.',
-    ],
+    lines: ['Orbit takes hold. What once drifted begins to gather around a centre.'],
     transitionDuration: 650,
     lingerPrevious: 260,
-    lineDelay: 600,
-    wordStagger: 40,
+    lineDelay: 200,
+    charStagger: 12,
   },
   4: {
     role: 'marker',
@@ -82,19 +70,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 800,
     lingerPrevious: 260,
     lineDelay: 0,
-    wordStagger: 0,
+    charStagger: 0,
   },
   5: {
     role: 'collapse',
-    lines: [
-      'Formation collapses.',
-      'Some things burn brightly,',
-      'then fade back into the dark.',
-    ],
+    lines: ['Formation collapses. Some things burn brightly, then fade back into the dark.'],
     transitionDuration: 650,
     lingerPrevious: 320,
-    lineDelay: 480,
-    wordStagger: 25,
+    lineDelay: 200,
+    charStagger: 10,
     autoExitDelay: 3400,
   },
   6: {
@@ -103,18 +87,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 0,
-    wordStagger: 0,
+    charStagger: 0,
   },
   7: {
     role: 'resolution',
-    lines: [
-      'Its influence becomes order,',
-      'setting its universe in motion.',
-    ],
+    lines: ['Its influence becomes order, setting its universe in motion.'],
     transitionDuration: 750,
     lingerPrevious: 260,
-    lineDelay: 650,
-    wordStagger: 55,
+    lineDelay: 200,
+    charStagger: 14,
   },
 };
 
@@ -143,98 +124,22 @@ interface TypographySpec {
   textShadow: string;
 }
 
-function getRoleTypography(role: TextRole, lineIndex: number): TypographySpec {
+function getRoleTypography(role: TextRole): TypographySpec {
   switch (role) {
     case 'thesis':
-      return lineIndex === 0
-        ? {
-            fontClass: 'font-russo',
-            sizeClass: 'text-[48px] sm:text-[63px] md:text-[78px]',
-            trackingClass: 'tracking-[0.15em]',
-            uppercase: true,
-            toneClass: 'gradient-text',
-            textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
-          }
-        : {
-            fontClass: 'font-orbitron',
-            sizeClass: 'text-[21px] sm:text-[23px]',
-            trackingClass: 'tracking-[0.12em]',
-            uppercase: false,
-            toneClass: 'text-white',
-            textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
-          };
     case 'atmosphere':
-      return {
-        fontClass: 'font-russo',
-        sizeClass: 'text-[36px] sm:text-[48px] md:text-[60px]',
-        trackingClass: 'tracking-[0.1em]',
-        uppercase: true,
-        toneClass: 'gradient-text',
-        textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
-      };
     case 'spark':
-      return lineIndex === 0
-        ? {
-            fontClass: 'font-russo',
-            sizeClass: 'text-[42px] sm:text-[54px] md:text-[66px]',
-            trackingClass: 'tracking-[0.12em]',
-            uppercase: true,
-            toneClass: 'gradient-text',
-            textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
-          }
-        : {
-            fontClass: 'font-orbitron',
-            sizeClass: 'text-[20px] sm:text-[21px]',
-            trackingClass: 'tracking-[0.12em]',
-            uppercase: false,
-            toneClass: 'text-white',
-            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
-          };
     case 'payoff':
-      return lineIndex === 0
-        ? {
-            fontClass: 'font-russo',
-            sizeClass: 'text-[42px] sm:text-[54px] md:text-[66px]',
-            trackingClass: 'tracking-[0.12em]',
-            uppercase: true,
-            toneClass: 'text-[#ffd4a3]',
-            textShadow: '0 0 1px rgba(249, 115, 22, 0.35)',
-          }
-        : {
-            fontClass: 'font-orbitron',
-            sizeClass: 'text-[20px] sm:text-[21px]',
-            trackingClass: 'tracking-[0.15em]',
-            uppercase: false,
-            toneClass: 'text-white',
-            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
-          };
     case 'resolution':
-      return {
-        fontClass: 'font-russo',
-        sizeClass: 'text-[36px] sm:text-[48px] md:text-[60px]',
-        trackingClass: 'tracking-[0.1em]',
-        uppercase: true,
-        toneClass: 'gradient-text',
-        textShadow: '0 0 1px rgba(168, 85, 247, 0.35)',
-      };
     case 'collapse':
-      return lineIndex === 0
-        ? {
-            fontClass: 'font-russo',
-            sizeClass: 'text-[36px] sm:text-[45px] md:text-[54px]',
-            trackingClass: 'tracking-[0.1em]',
-            uppercase: true,
-            toneClass: 'text-white',
-            textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
-          }
-        : {
-            fontClass: 'font-orbitron',
-            sizeClass: 'text-[20px] sm:text-[21px]',
-            trackingClass: 'tracking-[0.12em]',
-            uppercase: false,
-            toneClass: 'text-white',
-            textShadow: '0 0 1px rgba(255, 255, 255, 0.06)',
-          };
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[22px] sm:text-[26px] md:text-[30px]',
+        trackingClass: 'tracking-[0.12em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
     default:
       return {
         fontClass: 'font-orbitron',
@@ -275,25 +180,6 @@ function getRoleMotion(role: TextRole): MotionSpec {
   }
 }
 
-function getLineGap(role: TextRole): string {
-  switch (role) {
-    case 'thesis':
-      return '0.6em';
-    case 'atmosphere':
-      return '0.25em';
-    case 'spark':
-      return '0.5em';
-    case 'payoff':
-      return '0.6em';
-    case 'resolution':
-      return '0.25em';
-    case 'collapse':
-      return '0.5em';
-    default:
-      return '0.5em';
-  }
-}
-
 type LinePhase = 'hidden' | 'active' | 'ghost' | 'leaving';
 
 interface EnterOffset {
@@ -301,28 +187,28 @@ interface EnterOffset {
   y: number;
 }
 
-function renderWordReveal(
+function renderCharReveal(
   text: string,
   linePhase: LinePhase,
   transitionDuration: number,
-  staggerMs: number,
+  charStaggerMs: number,
   enterOffset: EnterOffset,
   className?: string
 ): ReactNode {
   if (!text) return null;
-  const words = text.trim().split(/\s+/);
-  return words.map((word, i) => {
+  const chars = text.split('');
+  return chars.map((char, i) => {
     const isHidden = linePhase === 'hidden';
     const isGhost = linePhase === 'ghost';
     const isLeaving = linePhase === 'leaving';
-    const delay = isHidden || isGhost || isLeaving ? 0 : i * staggerMs;
+    const delay = isHidden || isGhost || isLeaving ? 0 : i * charStaggerMs;
 
     const tx = isHidden ? enterOffset.x : isGhost ? 0 : isLeaving ? 0 : 0;
     const ty = isHidden ? enterOffset.y : isGhost ? -3 : isLeaving ? -6 : 0;
 
     return (
       <span
-        key={`${word}-${i}`}
+        key={`${char}-${i}`}
         className={`inline-block ${className || ''}`}
         style={{
           opacity: isLeaving ? 0 : isGhost ? 0.2 : isHidden ? 0 : 1,
@@ -331,11 +217,11 @@ function renderWordReveal(
           transitionDuration: `${transitionDuration}ms`,
           transitionDelay: `${delay}ms`,
           transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          transitionProperty: isGhost || isLeaving ? 'opacity, transform, filter' : 'transform',
-          marginRight: '0.28em',
+          transitionProperty: isGhost || isLeaving ? 'opacity, transform, filter' : 'transform, opacity',
+          whiteSpace: 'pre',
         }}
       >
-        {word}
+        {char}
       </span>
     );
   });
@@ -634,54 +520,41 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionDuration: `${duration}ms`,
         }}
       >
-        {/* Desktop: 2-column layout */}
-        <div className="hidden md:flex w-full max-w-[min(90vw,1200px)] items-start justify-center gap-6 lg:gap-12 px-5">
-          {/* Left column: line 0 (header) */}
-          {config.lines.length > 0 && (
-            <div className="flex-1 text-left">
-              <LineBlock
-                line={config.lines[0]}
-                lineIndex={0}
-                instance={instance}
-                motion={motion}
-                config={config}
-                enterOffset={{ x: -28, y: 0 }}
-              />
-            </div>
-          )}
-          {/* Right column: lines 1+ (subtext) */}
-          {config.lines.length > 1 && (
-            <div className="flex-1 text-right">
-              {config.lines.slice(1).map((line, i) => (
-                <div key={i + 1} style={{ marginTop: i > 0 ? getLineGap(config.role) : 0 }}>
-                  <LineBlock
-                    line={line}
-                    lineIndex={i + 1}
-                    instance={instance}
-                    motion={motion}
-                    config={config}
-                    enterOffset={{ x: 28, y: 0 }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <div className="flex flex-col items-center justify-center text-center px-5">
+          {config.lines.map((line, i) => {
+            const lineWasVisible = instance.lineVisibilities[i];
+            const linePhase: LinePhase = !lineWasVisible
+              ? 'hidden'
+              : isLeaving
+                ? 'leaving'
+                : isGhost
+                  ? 'ghost'
+                  : 'active';
+            const typography = getRoleTypography(config.role);
+            const textShadow =
+              linePhase === 'ghost'
+                ? '0 0 1px rgba(255,255,255,0.04)'
+                : linePhase === 'leaving'
+                  ? '0 0 1px rgba(255,255,255,0.02)'
+                  : typography.textShadow;
 
-        {/* Mobile: stacked rows */}
-        <div className="flex md:hidden flex-col items-center text-center px-5">
-          {config.lines.map((line, i) => (
-            <div key={i} style={{ marginTop: i > 0 ? getLineGap(config.role) : 0 }}>
-              <LineBlock
-                line={line}
-                lineIndex={i}
-                instance={instance}
-                motion={motion}
-                config={config}
-                enterOffset={{ x: 0, y: motion.enterY + i * 2 }}
-              />
-            </div>
-          ))}
+            return (
+              <div
+                key={i}
+                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
+                style={{ textShadow }}
+              >
+                {renderCharReveal(
+                  line,
+                  linePhase,
+                  config.transitionDuration,
+                  config.charStagger,
+                  { x: 12, y: 0 },
+                  'transition-all ease-out'
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -693,57 +566,6 @@ export function StateText({ state }: { state: TextSceneState }) {
         {previous && renderTextBlock(previous, 'previous')}
         {active && renderTextBlock(active, 'active')}
       </div>
-    </div>
-  );
-}
-
-/* Extracted line rendering to keep the main component readable */
-function LineBlock({
-  line,
-  lineIndex,
-  instance,
-  motion,
-  config,
-  enterOffset,
-}: {
-  line: string;
-  lineIndex: number;
-  instance: TextBlockInstance;
-  motion: MotionSpec;
-  config: StateTextConfig;
-  enterOffset: EnterOffset;
-}) {
-  const lineWasVisible = instance.lineVisibilities[lineIndex];
-  const isGhost = instance.phase === 'exit';
-  const isLeaving = instance.phase === 'leaving';
-  const linePhase: LinePhase = !lineWasVisible
-    ? 'hidden'
-    : isLeaving
-      ? 'leaving'
-      : isGhost
-        ? 'ghost'
-        : 'active';
-  const typography = getRoleTypography(config.role, lineIndex);
-  const textShadow =
-    linePhase === 'ghost'
-      ? '0 0 1px rgba(255,255,255,0.04)'
-      : linePhase === 'leaving'
-        ? '0 0 1px rgba(255,255,255,0.02)'
-        : typography.textShadow;
-
-  return (
-    <div
-      className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
-      style={{ textShadow }}
-    >
-      {renderWordReveal(
-        line,
-        linePhase,
-        config.transitionDuration,
-        config.wordStagger,
-        enterOffset,
-        'transition-all ease-out'
-      )}
     </div>
   );
 }

@@ -195,6 +195,8 @@ export const nft11Project: PortfolioProject = {
     'At NFT11, the work was less about posting content and more about building a world people wanted to keep returning to.',
   philosophyBody:
     'That meant shaping the rhythm of participation through recurring formats, community programming, and narrative continuity. The goal was not to fill channels, but to create enough structure and momentum for people to feel involved in something active and unfolding.',
+  accentColor: '#f59e0b',
+  accentSecondaryColor: '#fb923c',
   heroVideo: '/portfolio/NFT11/final/nft11-trailer.mp4',
   scrollFlowTitle: { top: 'NFT11', bottom: 'Universe Building' },
   proof: [
