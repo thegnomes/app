@@ -16,6 +16,7 @@ import {
 } from '@/lib/particles/constants';
 
 const FINAL_VIDEO_DELAY_MS = 2200;
+const HOLD_COMMIT_THRESHOLD_MS = 400;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -42,9 +43,11 @@ function App() {
 
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
-  const planetEntryReadyRef = useRef(false); // Set when State 2 completes, triggers planets on mouse up
+  const planetEntryReadyRef = useRef(false);
+  const sparkFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Camera pan state
   const panStateRef = useRef({
@@ -66,6 +69,10 @@ function App() {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
+    if (holdCommitTimerRef.current) {
+      clearTimeout(holdCommitTimerRef.current);
+      holdCommitTimerRef.current = null;
+    }
     substateTimersRef.current.forEach((timerId) => clearTimeout(timerId));
     substateTimersRef.current = [];
   }, []);
@@ -80,7 +87,7 @@ function App() {
 
   // Handle transition from State 0 (video brain) to State 1 (starfield)
   const handleVideoTransition = useCallback(() => {
-    if (showDisclaimerRef.current) return; // block until disclaimer is dismissed
+    if (showDisclaimerRef.current) return;
     if (autoZoomTimerRef.current) {
       clearTimeout(autoZoomTimerRef.current);
       autoZoomTimerRef.current = null;
@@ -89,7 +96,6 @@ function App() {
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
-
   }, []);
 
   const redirectToScene02 = useCallback(() => {
@@ -112,24 +118,10 @@ function App() {
     setShowAstronautText(true);
   }, []);
 
-  // Explicitly preload all critical assets before starting the experience
-  // (main app videos + scene02 videos/images so transition is instant)
+  // Preload only main app videos — scene02 videos load on demand
   useEffect(() => {
     const mainSources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
-    const scene02Sources = [
-      '/scene02/nebula_space_only2x.png',
-      '/scene02/looking-astro-loop2.webm',
-      '/scene02/looking-astro-loop2.mov',
-      '/webm/toto-ga2.webm',
-      '/webm/toto-ga2.mov',
-      '/webm/nft11-ga2.webm',
-      '/webm/nft11-ga2.mov',
-      '/webm/oxytap-ga2.webm',
-      '/webm/oxytap-ga2.mov',
-      '/webm/target-lock.webm',
-      '/webm/target-lock.mov',
-    ];
-    const allSources = [...mainSources, ...scene02Sources];
+    const allSources = mainSources;
     const videos: HTMLVideoElement[] = [];
     let fontsReady = false;
 
@@ -152,36 +144,27 @@ function App() {
 
     const promises = allSources.map((src) => {
       const url = resolveAssetUrl(src);
-      const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url);
-      if (isVideo) {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.playsInline = true;
-        video.src = url;
-        video.load();
-        videos.push(video);
-        return new Promise<void>((resolve) => {
-          const cleanup = () => {
-            video.removeEventListener('canplaythrough', onReady);
-            video.removeEventListener('error', onReady);
-          };
-          const onReady = () => {
-            cleanup();
-            resolve();
-          };
-          video.addEventListener('canplaythrough', onReady);
-          video.addEventListener('error', onReady);
-          if (video.readyState >= 4) {
-            onReady();
-          }
-        });
-      }
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.src = url;
+      video.load();
+      videos.push(video);
       return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.src = url;
+        const cleanup = () => {
+          video.removeEventListener('canplaythrough', onReady);
+          video.removeEventListener('error', onReady);
+        };
+        const onReady = () => {
+          cleanup();
+          resolve();
+        };
+        video.addEventListener('canplaythrough', onReady);
+        video.addEventListener('error', onReady);
+        if (video.readyState >= 4) {
+          onReady();
+        }
       });
     });
 
@@ -200,13 +183,13 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-play text after assets load and disclaimer is dismissed, then auto-transition to starfield
+  // Auto-play text after assets load and disclaimer is dismissed
   useEffect(() => {
     if (!assetsLoaded) return;
     if (showDisclaimer) return;
     autoZoomTimerRef.current = setTimeout(() => {
       autoZoomTimerRef.current = null;
-      if (stateRef.current !== 0) return; // user already transitioned manually
+      if (stateRef.current !== 0) return;
       setAutoZoom(true);
       setState(1);
       setTextState(1);
@@ -227,7 +210,7 @@ function App() {
 
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
-      if (stateRef.current !== 1) return; // Only pan in State 1
+      if (stateRef.current !== 1) return;
 
       (canvas as HTMLElement).setPointerCapture?.(e.pointerId);
       panStateRef.current.isDragging = true;
@@ -259,7 +242,7 @@ function App() {
         try {
           (canvas as HTMLElement).releasePointerCapture?.(e.pointerId);
         } catch {
-          // ignore if capture was not set
+          // ignore
         }
       }
       panStateRef.current.isDragging = false;
@@ -283,12 +266,11 @@ function App() {
     };
   }, []);
 
-  // Global pointer handler for state transitions (works with mouse + touch)
+  // Global pointer handler for state transitions
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
 
-      // Only handle clicks on the particle canvas, not on UI
       const target = e.target as HTMLElement;
       if (target.closest('.control-panel')) return;
       if (target.closest('.video-background')) return;
@@ -297,29 +279,46 @@ function App() {
       if (stateRef.current !== 1) return;
       if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
 
-      // Cancel any active pan drag before transitioning to State 2
+      // Cancel any active pan drag
       panStateRef.current.isDragging = false;
       cameraPanRef.current.isDragging = false;
 
-      // Cancel any lingering text sequence timers
+      // Cancel lingering text sequence timers
       if (textSequenceTimerRef.current) {
         clearTimeout(textSequenceTimerRef.current);
         textSequenceTimerRef.current = null;
       }
+      if (sparkFadeTimerRef.current) {
+        clearTimeout(sparkFadeTimerRef.current);
+        sparkFadeTimerRef.current = null;
+      }
 
-      // Start charging (hold to charge shell) - 7000ms for 3 substages
-      stateRef.current = 2;
-      setState(2);
-      setTextState('2');
-      setShowFinalVideo(false);
-      inState2Ref.current = true;
+      // Show spark beat text immediately
+      setTextState(8);
 
-      // Dispatch core activation pulse for the particle system
+      // Dispatch core activation pulse
       window.dispatchEvent(
         new CustomEvent('particle:core-activation-pulse', {
           detail: { startedAtMs: performance.now(), durationMs: 2000 },
         })
       );
+
+      // Start hold-commit timer: if released before threshold, it's just a click
+      holdCommitTimerRef.current = setTimeout(() => {
+        holdCommitTimerRef.current = null;
+        // User held past threshold — commit to State 2
+        commitToState2();
+      }, HOLD_COMMIT_THRESHOLD_MS);
+    };
+
+    const commitToState2 = () => {
+      if (inState2Ref.current) return; // already committed
+
+      stateRef.current = 2;
+      setState(2);
+      setTextState('2');
+      setShowFinalVideo(false);
+      inState2Ref.current = true;
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
       const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
@@ -343,7 +342,6 @@ function App() {
       );
 
       holdTimerRef.current = setTimeout(() => {
-        // State 2 complete - ready for planet entry on mouse release
         inState2Ref.current = false;
         planetEntryReadyRef.current = true;
         holdTimerRef.current = null;
@@ -351,6 +349,21 @@ function App() {
     };
 
     const handlePointerUp = () => {
+      // If hold-commit timer is still pending, user clicked without holding
+      if (holdCommitTimerRef.current) {
+        clearTimeout(holdCommitTimerRef.current);
+        holdCommitTimerRef.current = null;
+
+        // Spark beat: fade out after 1500ms and return to State 1
+        sparkFadeTimerRef.current = setTimeout(() => {
+          sparkFadeTimerRef.current = null;
+          if (stateRef.current === 1) {
+            setTextState(1);
+          }
+        }, 1500);
+        return;
+      }
+
       if (inState2Ref.current) {
         // Released early during State 2 - go to collapse
         clearState2Timers();
@@ -359,7 +372,7 @@ function App() {
         setTextState(5);
         setShowFinalVideo(false);
       } else if (planetEntryReadyRef.current) {
-        // Released after State 2 completed - planets start entering orbit
+        // Released after State 2 completed
         planetEntryReadyRef.current = false;
         window.dispatchEvent(
           new CustomEvent('particle:state3-release-trigger', {
@@ -390,13 +403,12 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
-
       }, 2500);
       return () => clearTimeout(t);
     }
   }, [state]);
 
-  // Sequence through successful orbit text beats: 3.1 -> 3.2 -> ignition
+  // Sequence through successful orbit text beats: 3 -> 7 -> 4
   useEffect(() => {
     if (textState !== 3 && textState !== 7) return;
     if (textSequenceTimerRef.current) return;
@@ -420,7 +432,6 @@ function App() {
   useEffect(() => {
     if (textState !== 7) return;
 
-    // Wait for State 7 text to be readable before starting final video
     if (finalVideoTimerRef.current) {
       clearTimeout(finalVideoTimerRef.current);
       finalVideoTimerRef.current = null;
@@ -431,7 +442,6 @@ function App() {
       setShowFinalVideo(true);
     }, FINAL_VIDEO_DELAY_MS);
 
-    // Cancel the auto text-sequence timer so state 7 text stays visible during the video
     if (textSequenceTimerRef.current) {
       clearTimeout(textSequenceTimerRef.current);
       textSequenceTimerRef.current = null;

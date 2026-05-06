@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8;
 
 type TextRole =
   | 'thesis'
   | 'atmosphere'
+  | 'spark'
   | 'marker'
   | 'payoff'
   | 'resolution'
@@ -18,6 +19,7 @@ interface StateTextConfig {
   lingerPrevious: number;
   autoExitDelay?: number;
   lineDelay: number;
+  lineDelays?: number[];
   charStagger: number;
 }
 
@@ -34,13 +36,26 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     role: 'atmosphere',
     lines: [
       'Across the endless void,',
-      'most thoughts drift without weight —',
+      'most thoughts do not matter —',
       'until inspiration clicks.',
     ],
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 500,
+    lineDelays: [0, 500, 1400],
     charStagger: 16,
+  },
+  8: {
+    role: 'spark',
+    lines: [
+      'A spark appears.',
+      'Left alone, it fades back into the dark.',
+    ],
+    transitionDuration: 450,
+    lingerPrevious: 0,
+    lineDelay: 400,
+    charStagger: 14,
+    autoExitDelay: 2200,
   },
   '2': {
     role: 'marker',
@@ -121,23 +136,64 @@ interface TypographySpec {
 function getRoleTypography(role: TextRole): TypographySpec {
   switch (role) {
     case 'thesis':
-    case 'atmosphere':
-    case 'payoff':
-    case 'resolution':
-    case 'collapse':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[22px] sm:text-[26px] md:text-[30px]',
+        sizeClass: 'text-[18px] sm:text-[21px] md:text-[24px]',
         trackingClass: 'tracking-[0.12em]',
         uppercase: false,
         toneClass: 'text-white',
         textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
       };
+    case 'atmosphere':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
+    case 'spark':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
+    case 'payoff':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
+    case 'resolution':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.12)',
+      };
+    case 'collapse':
+      return {
+        fontClass: 'font-orbitron',
+        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        trackingClass: 'tracking-[0.1em]',
+        uppercase: false,
+        toneClass: 'text-white',
+        textShadow: '0 0 1px rgba(255, 255, 255, 0.1)',
+      };
     default:
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[16px]',
-        trackingClass: 'tracking-[0.15em]',
+        sizeClass: 'text-[14px]',
+        trackingClass: 'tracking-[0.12em]',
         uppercase: false,
         toneClass: 'text-white',
         textShadow: 'none',
@@ -157,6 +213,8 @@ function getRoleMotion(role: TextRole): MotionSpec {
       return { enterY: 6, exitY: -4, containerY: 0 };
     case 'atmosphere':
       return { enterY: 8, exitY: -8, containerY: 0 };
+    case 'spark':
+      return { enterY: 4, exitY: -6, containerY: 0 };
     case 'marker':
       return { enterY: 3, exitY: -6, containerY: 60 };
     case 'payoff':
@@ -224,117 +282,87 @@ function State2CumulativeText({
   isVisible: boolean;
   isExiting?: boolean;
 }) {
-  const [wordState, setWordState] = useState({ current: -1, previous: -1 });
-  const [lineState, setLineState] = useState({ current: -1, previous: -1 });
+  const [beatState, setBeatState] = useState({ current: -1, previous: -1 });
 
   useEffect(() => {
     if (!isVisible) {
-      setWordState({ current: -1, previous: -1 });
-      setLineState({ current: -1, previous: -1 });
+      setBeatState({ current: -1, previous: -1 });
       return;
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(
       setTimeout(() => {
-        setWordState({ current: 0, previous: -1 });
-        setLineState({ current: 0, previous: -1 });
+        setBeatState({ current: 0, previous: -1 });
       }, 0 * STATE2_TEXT_STEP_MS)
     );
     timers.push(
       setTimeout(() => {
-        setWordState({ current: 1, previous: 0 });
-        setLineState({ current: 1, previous: 0 });
+        setBeatState({ current: 1, previous: 0 });
       }, 1 * STATE2_TEXT_STEP_MS)
     );
     timers.push(
       setTimeout(() => {
-        setWordState({ current: 2, previous: 1 });
-        setLineState({ current: 2, previous: 1 });
+        setBeatState({ current: 2, previous: 1 });
       }, 2 * STATE2_TEXT_STEP_MS)
     );
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
-  const words = ['Time.', 'Pressure.', 'Intent.'];
-  const lines = [
-    'A spark disappears unless it is returned to.',
-    'What survives the hold begins to take shape.',
-    'To grow beyond its first form, it must be released.',
+  const beats = [
+    { line1: 'A thought given attention', line2: 'begins to take shape.' },
+    { line1: 'What takes shape', line2: 'becomes an idea when it survives the hold.' },
+    { line1: 'To grow beyond itself,', line2: 'an idea must be released.' },
   ];
 
-  const currentWord = wordState.current;
-  const currentLine = lineState.current;
+  const currentBeat = beatState.current;
 
   return (
     <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
-      <h1
-        className="font-russo flex w-full flex-col items-center justify-center gap-1 text-center text-[36px] sm:text-[48px] md:text-[60px] font-normal leading-none uppercase"
-        style={{ zIndex: 10 }}
-      >
-        {words.map((word, i) => {
-          const isCurrent = i === currentWord;
-          const isGhost = !isExiting && i < currentWord && currentWord >= 0;
-          const isFuture = i > currentWord || currentWord < 0;
-          const transitionProps = isExiting || isGhost
-            ? 'opacity, transform, filter'
-            : 'transform';
+      {beats.map((beat, i) => {
+        const isCurrent = i === currentBeat;
+        const isGhost = !isExiting && i < currentBeat && currentBeat >= 0;
+        const isFuture = i > currentBeat || currentBeat < 0;
+        const transitionProps = isExiting || isGhost
+          ? 'opacity, transform, filter'
+          : 'transform';
 
-          return (
+        return (
+          <div
+            key={i}
+            className="flex flex-col items-center justify-center gap-0.5 transition-all ease-out"
+            style={{
+              opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
+              transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
+              filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
+              transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
+              transitionProperty: transitionProps,
+              pointerEvents: 'none',
+              position: isCurrent || isGhost ? 'relative' : 'absolute',
+            }}
+          >
             <span
-              key={word}
-              className="block transition-all ease-out"
+              className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em]"
               style={{
-                color: '#22d3ee',
-                opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
-                transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
-                filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
-                textShadow: isGhost
-                  ? '0 0 1px #22d3ee22'
-                  : '0 0 1px #22d3ee55',
-                transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
-                transitionProperty: transitionProps,
-                pointerEvents: 'none',
-              }}
-            >
-              {word}
-            </span>
-          );
-        })}
-      </h1>
-
-      <div
-        className="relative mt-3 min-h-[2em] w-full flex items-center justify-center"
-        style={{ zIndex: 30 }}
-      >
-        {lines.map((line, i) => {
-          const isCurrent = i === currentLine;
-          const isGhost = !isExiting && i < currentLine && currentLine >= 0;
-          const isFuture = i > currentLine || currentLine < 0;
-          const transitionProps = isExiting || isGhost
-            ? 'opacity, transform, filter'
-            : 'transform';
-
-          return (
-            <p
-              key={i}
-              className="absolute font-orbitron flex w-full items-center justify-center text-center text-[18px] sm:text-[20px] font-normal leading-relaxed text-white tracking-[0.15em]"
-              style={{
-                opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
-                transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
-                filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
-                transitionDuration: `${isExiting || isGhost ? HEADER_FADE_DURATION_MS : 600}ms`,
-                transitionProperty: transitionProps,
                 textShadow: isGhost
                   ? '0 0 1px rgba(255,255,255,0.04)'
-                  : '0 0 1px rgba(255, 255, 255, 0.08)',
-                pointerEvents: 'none',
+                  : '0 0 1px rgba(255,255,255,0.08)',
               }}
             >
-              {line}
-            </p>
-          );
-        })}
-      </div>
+              {beat.line1}
+            </span>
+            <span
+              className="font-orbitron text-[15px] sm:text-[17px] md:text-[19px] font-normal leading-relaxed text-white/80 tracking-[0.08em]"
+              style={{
+                textShadow: isGhost
+                  ? '0 0 1px rgba(255,255,255,0.03)'
+                  : '0 0 1px rgba(255,255,255,0.06)',
+              }}
+            >
+              {beat.line2}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -426,8 +454,8 @@ export function StateText({ state }: { state: TextSceneState }) {
       }, 0);
     } else {
       nextConfig.lines.forEach((_, i) => {
-        const delay =
-          i === 0 ? Math.min(nextConfig.lineDelay, 200) : nextConfig.lineDelay * i;
+        const delay = nextConfig.lineDelays?.[i] ??
+          (i === 0 ? Math.min(nextConfig.lineDelay, 200) : nextConfig.lineDelay * i);
         queueTimer(() => {
           setActive((current) =>
             current?.id === nextInstance.id

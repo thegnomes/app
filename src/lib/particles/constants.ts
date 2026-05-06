@@ -274,7 +274,7 @@ export const CORE_COLOR_LERP = 0.04;
 export const AMBIENT_COLOR_LERP = 0.04;
 
 /** Duration of the click activation pulse (ms) */
-export const CORE_ACTIVATION_PULSE_DURATION = 2000;
+export const CORE_ACTIVATION_PULSE_DURATION = 1500;
 
 // ============================================
 // State Timing Offsets
