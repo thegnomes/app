@@ -3,6 +3,7 @@ import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { resolveAssetUrl } from '@/lib/assets';
+import { nft11Project, oxytapProject, totoProject } from '@/data/portfolio-projects';
 
 interface Scene02Props {
   isActive: boolean;
@@ -299,7 +300,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   if (!isActive) return null;
 
   return (
-    <div className="absolute inset-0 z-30 overflow-hidden bg-black">
+    <div className="scene02-shell absolute inset-0 z-30 overflow-hidden bg-black">
       {/* Nebula background - starts at 200%, zooms out to 100% */}
       <div
         ref={nebulaParallaxRef}
@@ -333,7 +334,8 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <GalaxyColumn
           srcWebm="/webm/toto-ga2.webm"
           srcMov="/webm/toto-ga2.mov"
-          label="TOTO"
+          label={totoProject.title}
+          year={totoProject.year}
           href="/toto-portfolio.html"
           hoverId="creative-direction"
           onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
@@ -341,7 +343,8 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <GalaxyColumn
           srcWebm="/webm/nft11-ga2.webm"
           srcMov="/webm/nft11-ga2.mov"
-          label="NFT11"
+          label={nft11Project.title}
+          year={nft11Project.year}
           href="/nft11-portfolio.html"
           alignTop
           hoverId="universe-building"
@@ -350,7 +353,8 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
         <GalaxyColumn
           srcWebm="/webm/oxytap-ga2.webm"
           srcMov="/webm/oxytap-ga2.mov"
-          label="OXYTAP"
+          label={oxytapProject.title.toUpperCase()}
+          year={oxytapProject.year}
           href="/oxytap-portfolio.html"
           hoverId="prototype-to-ship"
           onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}

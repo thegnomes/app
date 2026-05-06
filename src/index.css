@@ -165,6 +165,29 @@
   font-family: 'Doto', sans-serif !important;
 }
 
+.scene02-shell {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.scene02-shell * {
+  font-family: inherit !important;
+}
+
+.scene02-shell .font-russo,
+.scene02-shell .font-russo * {
+  font-family: 'Russo One', sans-serif !important;
+}
+
+.scene02-shell .font-orbitron,
+.scene02-shell .font-orbitron * {
+  font-family: 'Orbitron', sans-serif !important;
+}
+
+.scene02-shell .scene02-mono,
+.scene02-shell .scene02-mono * {
+  font-family: 'Fragment Mono', monospace !important;
+}
+
 @keyframes crt-flicker {
   0% { opacity: 0.015; }
   50% { opacity: 0.025; }

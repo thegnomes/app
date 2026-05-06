@@ -6,6 +6,7 @@ interface GalaxyColumnProps {
   srcWebm: string;
   srcMov: string;
   label: string;
+  year: string;
   href: string;
   alignTop?: boolean;
   hoverId?: string;
@@ -16,6 +17,7 @@ export function GalaxyColumn({
   srcWebm,
   srcMov,
   label,
+  year,
   href,
   alignTop = false,
   hoverId,
@@ -43,7 +45,8 @@ export function GalaxyColumn({
     }
   }, [isHovered]);
 
-  const ringItems = Array(12).fill(label);
+  const titleRingItems = Array(12).fill(label);
+  const yearRingItems = Array(14).fill(year);
 
   return (
     <a
@@ -105,7 +108,30 @@ export function GalaxyColumn({
           ))}
         </video>
 
-        <RingText items={ringItems} radius={150} duration={12} />
+        <RingText
+          items={titleRingItems}
+          radius={166}
+          radiusX={176}
+          radiusY={68}
+          arc="top"
+          duration={14}
+          verticalOffset={4}
+          itemClassName="font-russo text-[14px] font-bold tracking-[0.28em] text-white sm:text-[16px] md:text-[18px] lg:text-[20px]"
+          itemStyle={{
+            filter: 'drop-shadow(0 0 12px rgba(0,0,0,0.9)) drop-shadow(0 0 18px rgba(255,255,255,0.35))',
+          }}
+        />
+        <RingText
+          items={yearRingItems}
+          radius={152}
+          radiusX={176}
+          radiusY={86}
+          arc="bottom"
+          duration={12}
+          verticalOffset={18}
+          itemClassName="font-orbitron text-[10px] font-medium tracking-[0.38em] text-white/85 sm:text-[11px] md:text-[12px] lg:text-[14px]"
+          itemStyle={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.85))' }}
+        />
       </div>
     </a>
   );
