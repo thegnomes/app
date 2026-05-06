@@ -316,22 +316,33 @@ function App() {
       // After 2000ms core reveal, determine if click-only or click-hold
       coreRevealTimerRef.current = setTimeout(() => {
         coreRevealTimerRef.current = null;
-        if (!pointerDownRef.current) {
-          // Pointer was released during reveal — click-only spark
-          setTextState(8);
-          sparkFadeTimerRef.current = setTimeout(() => {
-            sparkFadeTimerRef.current = null;
-            if (stateRef.current === 1) {
-              setTextState(1);
-            }
-          }, 1500);
+
+        if (pointerDownRef.current) {
+          // Pointer is still held after the core reveal.
+          // Commit into the actual State 2 formation sequence.
+          commitToState2();
+          return;
         }
-        // If pointer is still down, commitToState2 will be called by handlePointerUp
+
+        // Pointer was released during reveal — click-only spark.
+        setTextState(8);
+        sparkFadeTimerRef.current = setTimeout(() => {
+          sparkFadeTimerRef.current = null;
+          if (stateRef.current === 1) {
+            setTextState(1);
+          }
+        }, 1500);
       }, CORE_REVEAL_DURATION_MS);
     };
 
     const commitToState2 = () => {
       if (inState2Ref.current) return;
+      if (stateRef.current !== 1) return;
+
+      if (sparkFadeTimerRef.current) {
+        clearTimeout(sparkFadeTimerRef.current);
+        sparkFadeTimerRef.current = null;
+      }
 
       stateRef.current = 2;
       setState(2);
@@ -413,6 +424,24 @@ function App() {
 
     return () => {
       clearState2Timers();
+
+      if (sparkFadeTimerRef.current) {
+        clearTimeout(sparkFadeTimerRef.current);
+        sparkFadeTimerRef.current = null;
+      }
+
+      if (textSequenceTimerRef.current) {
+        clearTimeout(textSequenceTimerRef.current);
+        textSequenceTimerRef.current = null;
+      }
+
+      if (finalVideoTimerRef.current) {
+        clearTimeout(finalVideoTimerRef.current);
+        finalVideoTimerRef.current = null;
+      }
+
+      pointerDownRef.current = false;
+
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointercancel', handlePointerUp);

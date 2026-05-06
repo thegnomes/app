@@ -46,10 +46,13 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   8: {
     role: 'spark',
-    lines: ['A spark appears. Left alone, it fades back into the dark.'],
+    lines: [
+      'A spark appears.',
+      'Left alone, it fades back into the dark.',
+    ],
     transitionDuration: 450,
     lingerPrevious: 0,
-    lineDelay: 200,
+    lineDelay: 350,
     charStagger: 14,
     autoExitDelay: 2200,
   },
