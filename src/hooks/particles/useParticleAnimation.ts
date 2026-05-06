@@ -529,6 +529,8 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             showProceduralGlow = true;
             pulseOpacity = Math.max(0, pulseEnvelope * GLOW_OPACITY * 1.2);
             cg.visible = true;
+            // In State 1, only the glow shows during pulse — the solid mesh stays hidden
+            mesh.visible = false;
           } else {
             // Pulse expired
             corePulseActiveRef.current = false;
@@ -540,6 +542,7 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
           showProceduralGlow = true;
           pulseOpacity = GLOW_OPACITY;
           cg.visible = true;
+          mesh.visible = true;
         } else {
           cg.visible = false;
         }
