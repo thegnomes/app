@@ -84,7 +84,7 @@ export const totoProject: PortfolioProject = {
   title: 'TOTO',
   titleAccent: '#washnotwipe',
   tag: 'Creative Direction',
-  year: '2024',
+  year: '2018 - 2021',
   coreCompetency: 'Creative Direction',
   description:
     'Developed a platform idea that could travel across channels while keeping the message, visual identity, and campaign logic coherent.',
@@ -136,9 +136,9 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '04',
-      title: '~S$250k',
-      desc: 'Marketing arm in year one',
-      detail: "Helped build Onezine's marketing arm around the account to roughly S$250k in the first year.",
+      title: 'TOTO Agency of Choice for 4 Years',
+      desc: '~S$200k account growth in year one',
+      detail: "Helped establish Onezine as TOTO's agency of choice across a four-year run, while growing the account to roughly S$200k in the first year.",
       images: [],
     },
   ],
@@ -183,7 +183,7 @@ export const nft11Project: PortfolioProject = {
   title: 'NFT11',
   titleAccent: 'Universe Building',
   tag: 'Universe Building',
-  year: '2023',
+  year: '2021 - 2023',
   coreCompetency: 'Community Strategy',
   description:
     'Built the rituals, programming, and community cadence that gave the project momentum and made participation feel continuous rather than episodic.',
@@ -277,7 +277,7 @@ export const oxytapProject: PortfolioProject = {
   title: 'OxyTap',
   titleAccent: 'Ecosystem',
   tag: 'Prototype-to-Ship',
-  year: '2024',
+  year: '2023 - 2025',
   coreCompetency: 'Systems Design',
   description:
     'Turned fragmented business needs into connected digital systems across brand, support, affiliate operations, and future automation planning.',
