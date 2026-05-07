@@ -310,8 +310,10 @@ function State2CumulativeText({
 
   useEffect(() => {
     if (!isVisible) {
-      setBeatState({ current: -1, previous: -1 });
-      return;
+      const resetTimer = setTimeout(() => {
+        setBeatState({ current: -1, previous: -1 });
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
     timers.push(
@@ -396,6 +398,7 @@ export function StateText({ state }: { state: TextSceneState }) {
   const activeRef = useRef<TextBlockInstance | null>(null);
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   const nextIdRef = useRef(0);
+  const shouldRenderAboveVideo = state === 6 || state === 7;
 
   useEffect(() => {
     activeRef.current = active;
@@ -591,7 +594,7 @@ export function StateText({ state }: { state: TextSceneState }) {
   };
 
   return (
-    <div className={`fixed inset-0 pointer-events-none ${state === 7 ? 'z-50' : 'z-20'}`}>
+    <div className={`fixed inset-0 pointer-events-none ${shouldRenderAboveVideo ? 'z-50' : 'z-20'}`}>
       <div className="relative w-full h-full">
         {previous && renderTextBlock(previous, 'previous')}
         {active && renderTextBlock(active, 'active')}
