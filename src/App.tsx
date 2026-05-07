@@ -47,7 +47,6 @@ function App() {
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   const planetEntryReadyRef = useRef(false);
-  const sparkFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointerDownRef = useRef(false);
 
   // Camera pan state
@@ -366,16 +365,14 @@ function App() {
         clearTimeout(textSequenceTimerRef.current);
         textSequenceTimerRef.current = null;
       }
-      if (sparkFadeTimerRef.current) {
-        clearTimeout(sparkFadeTimerRef.current);
-        sparkFadeTimerRef.current = null;
-      }
       if (coreRevealTimerRef.current) {
         clearTimeout(coreRevealTimerRef.current);
         coreRevealTimerRef.current = null;
       }
 
-      // NO text during core reveal — only the particle core appears
+      // Show spark text immediately on every click
+      setTextState(8);
+
       // Dispatch core activation pulse (2000ms reveal)
       window.dispatchEvent(
         new CustomEvent('particle:core-activation-pulse', {
@@ -395,24 +392,14 @@ function App() {
         }
 
         // Pointer was released during reveal — click-only spark.
-        setTextState(8);
-        sparkFadeTimerRef.current = setTimeout(() => {
-          sparkFadeTimerRef.current = null;
-          if (stateRef.current === 1) {
-            setTextState(1);
-          }
-        }, 1500);
+        // Show the second line of the spark narrative.
+        setTextState(9);
       }, CORE_REVEAL_DURATION_MS);
     };
 
     const commitToState2 = () => {
       if (inState2Ref.current) return;
       if (stateRef.current !== 1) return;
-
-      if (sparkFadeTimerRef.current) {
-        clearTimeout(sparkFadeTimerRef.current);
-        sparkFadeTimerRef.current = null;
-      }
 
       stateRef.current = 2;
       setState(2);
@@ -453,18 +440,10 @@ function App() {
 
       // If core reveal is still in progress
       if (coreRevealTimerRef.current) {
-        // User released during the 2000ms core reveal
-        clearTimeout(coreRevealTimerRef.current);
-        coreRevealTimerRef.current = null;
-        // The core reveal timeout handler will show spark text after the remaining time
-        // But since pointer is up, we show spark text now
-        setTextState(8);
-        sparkFadeTimerRef.current = setTimeout(() => {
-          sparkFadeTimerRef.current = null;
-          if (stateRef.current === 1) {
-            setTextState(1);
-          }
-        }, 1500);
+        // User released during the 2000ms core reveal.
+        // Let the core reveal timer finish — it will show the second line at 2000ms.
+        // If the user wants immediate feedback, we could show textState 9 now,
+        // but keeping the 2000ms rhythm makes the spark feel consistent.
         return;
       }
 
@@ -494,11 +473,6 @@ function App() {
 
     return () => {
       clearState2Timers();
-
-      if (sparkFadeTimerRef.current) {
-        clearTimeout(sparkFadeTimerRef.current);
-        sparkFadeTimerRef.current = null;
-      }
 
       if (textSequenceTimerRef.current) {
         clearTimeout(textSequenceTimerRef.current);

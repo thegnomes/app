@@ -100,6 +100,30 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       const detail = (e as CustomEvent).detail as { startedAtMs: number; durationMs: number };
       corePulseStartRef.current = detail.startedAtMs;
       corePulseActiveRef.current = true;
+
+      // Trigger nova expansion on core activation (spark emphasis)
+      if (refs.systemGroup.current) {
+        // Clean up any existing novas first
+        refs.novaMeshes.current.forEach((nova) => {
+          const container = (nova as THREE.Mesh & { container?: THREE.Group }).container;
+          nova.geometry.dispose();
+          (nova.material as THREE.Material).dispose();
+          if (container) {
+            refs.systemGroup.current?.remove(container);
+          } else {
+            refs.systemGroup.current?.remove(nova);
+          }
+        });
+        refs.novaMeshes.current = [];
+
+        const novaColor = new THREE.Color('#ffffff');
+        for (let i = 0; i < 4; i++) {
+          const rotationZ = (i * Math.PI) / 4;
+          const nova = createNovaMesh(refs.systemGroup.current, novaColor, 0.5, rotationZ);
+          refs.novaMeshes.current.push(nova);
+        }
+        refs.novaState.current = { active: true, startTime: detail.startedAtMs };
+      }
     };
     window.addEventListener('particle:core-activation-pulse', handleCoreActivation);
 
@@ -490,7 +514,10 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         currentState === 2 &&
         stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       if (!state2CoreGlowActive) {
-        data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
+        // Slow down white→blue transition during State 2.1 so it completes by absorption end
+        const isState2Early = currentState === 2 && stateElapsed < STATE2_ABSORPTION_DURATION;
+        const adjustedCoreColorLerp = isState2Early ? coreColorLerp * 0.35 : coreColorLerp;
+        data.currentCoreColor.current.lerp(targetPrimaryColor, adjustedCoreColorLerp);
       }
 
       // Lerp primary and secondary ambient colors
@@ -600,16 +627,18 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
       if (refs.novaMeshes.current.length > 0 && refs.novaState.current.active) {
         const novaElapsed = now - refs.novaState.current.startTime;
         const isState3Flare = currentState === 3;
-        const novaDuration = isState3Flare ? 500 : 1800;
+        // Core activation nova: shorter, more emphatic burst during State 1 pulse
+        const isCoreActivationNova = currentState === 1 && corePulseActiveRef.current;
+        const novaDuration = isState3Flare ? 500 : isCoreActivationNova ? 1200 : 1800;
         const progress = Math.min(novaElapsed / novaDuration, 1);
 
         const startScale = isState3Flare ? 0.2 : 0.5;
-        const maxScale = isState3Flare ? 70 : 120;
+        const maxScale = isState3Flare ? 70 : isCoreActivationNova ? 80 : 120;
         const scale = startScale + progress * maxScale;
 
-        const fadeStart = isState3Flare ? 0.04 : 0.15;
+        const fadeStart = isState3Flare ? 0.04 : isCoreActivationNova ? 0.25 : 0.15;
         const fadeProgress = Math.max(0, (progress - fadeStart) / (1 - fadeStart));
-        const baseOpacity = isState3Flare ? 0.82 : 0.35;
+        const baseOpacity = isState3Flare ? 0.82 : isCoreActivationNova ? 0.55 : 0.35;
         const opacity = baseOpacity * (1 - fadeProgress * fadeProgress);
 
         for (let ni = 0; ni < refs.novaMeshes.current.length; ni++) {

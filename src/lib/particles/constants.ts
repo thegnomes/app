@@ -185,10 +185,10 @@ export const PLANETS: PlanetConfig[] = [
 export const CORE_GEOMETRY_DETAIL = 32;
 
 /** Core sphere radius */
-export const CORE_RADIUS = 1.5;
+export const CORE_RADIUS = 2.5;
 
 /** Glow sphere radius */
-export const GLOW_RADIUS = 6;
+export const GLOW_RADIUS = 10;
 
 /** Glow opacity */
 export const GLOW_OPACITY = 0.55;

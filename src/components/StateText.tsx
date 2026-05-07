@@ -4,7 +4,7 @@ import {
   STATE2_STABILIZE_DURATION,
 } from '@/lib/particles/constants';
 
-export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8;
+export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 type TextRole =
   | 'thesis'
@@ -45,19 +45,24 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 500,
-    lineDelays: [0, 2200],
+    lineDelays: [1500, 3700],
     charStagger: 16,
   },
   8: {
     role: 'spark',
-    lines: [
-      'A spark appears.',
-      'Left alone, it fades back into the dark.',
-    ],
+    lines: ['A spark appears.'],
     transitionDuration: 450,
     lingerPrevious: 0,
-    lineDelay: 350,
+    lineDelay: 0,
     charStagger: 14,
+  },
+  9: {
+    role: 'spark',
+    lines: ['Left alone, it fades back into the dark.'],
+    transitionDuration: 450,
+    lingerPrevious: 320,
+    lineDelay: 0,
+    charStagger: 12,
     autoExitDelay: 2200,
   },
   '2': {
