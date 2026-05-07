@@ -313,7 +313,8 @@ export function animateState2And3(
 
   // Precompute state-2 time constants outside the per-particle loop
   const isState2 = state === 2;
-  const s2_drawInDuration = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+  // Draw-in completes during State 2.1 (absorption) so particles reach shell by ~3500ms
+  const s2_drawInDuration = STATE2_ABSORPTION_DURATION;
   const s2_transitionStart = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION * 0.35;
   const s2_transitionDuration = STATE2_DURATION - s2_transitionStart;
   const s2_substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
@@ -383,18 +384,20 @@ export function animateState2And3(
       const fibY = fibTargetY;
       const fibZ = fibTargetZ;
 
-      const indexDelay = (i / TOTAL_MAIN) * 420;
-      const randomDelay = rnd * 280;
-      const phaseOffset = Math.sin((i % 23) * 0.27) * 120;
+      // Staggered particle start times — compressed so all arrive by ~2800ms
+      const indexDelay = (i / TOTAL_MAIN) * 180;
+      const randomDelay = rnd * 120;
+      const phaseOffset = Math.sin((i % 23) * 0.27) * 60;
       const particleDelay = indexDelay + randomDelay + phaseOffset;
 
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / s2_drawInDuration);
-      // Gravitational acceleration: slow start, fast approach to core
-      const drawInEased = easeInCubic(drawInProgress);
+      // Gravitational acceleration: gentle slow start, building to fast approach
+      // easeInQuad gives more visible early motion than easeInCubic
+      const drawInEased = easeInQuad(drawInProgress);
 
       const volatilityEnvelope =
-        easeInCubic(drawInProgress) *
+        easeInQuad(drawInProgress) *
         Math.pow(Math.max(0, 1 - s2_bounceDecayProgress), 0.9);
 
       const clusterWeight = state2ClusterWeight[i];
