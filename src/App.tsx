@@ -4,11 +4,11 @@ import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
 import { FinalVideoOverlay } from './components/FinalVideoOverlay';
-import { AstronautTextOverlay } from './components/AstronautTextOverlay';
 import { DisclaimerDialog } from './components/DisclaimerDialog';
 import './App.css';
 import { DEFAULT_CONFIG, type AppState } from '@/types';
 import { resolveAssetUrl } from '@/lib/assets';
+import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import {
   STATE2_ABSORPTION_DURATION,
   STATE2_STABILIZE_DURATION,
@@ -121,17 +121,42 @@ function App() {
     setTextState(6);
   }, []);
 
+  useEffect(() => {
+    const existing = document.head.querySelector('link[data-scene02-prefetch="true"]');
+    if (existing) return;
+
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.as = 'document';
+    link.href = '/scene02.html';
+    link.dataset.scene02Prefetch = 'true';
+    document.head.appendChild(link);
+
+    return () => {
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    };
+  }, []);
+
   // Preload main app videos + scene02 videos for continuity
   useEffect(() => {
-    const mainSources = ['/idle_brain.webm', '/brain_zoom.webm', '/zoom-compiled-edit-latest-web.webm'];
-    const scene02Sources = [
-      '/scene02/nebula_space_only2x.png',
-      '/scene02/looking-astro-loop2.webm',
-      '/scene02/looking-astro-loop2.mov',
+    const mainVideoSources = [
+      resolveAssetUrl('/idle_brain.webm'),
+      resolveAssetUrl('/brain_zoom.webm'),
+      resolveAssetUrl('/zoom-compiled-edit-latest-web.webm'),
     ];
-    const allSources = [...mainSources, ...scene02Sources];
+    const scene02ImageSources = [resolveAssetUrl('/scene02/nebula_space_only2x.png')];
+    const scene02VideoSources = getAlphaVideoSources(
+      '/scene02/looking-astro-loop2.webm',
+      '/scene02/looking-astro-loop2.mov'
+    ).map((source) => source.src);
+    const allVideoSources = [...mainVideoSources, ...scene02VideoSources];
     const videos: HTMLVideoElement[] = [];
+    const images: HTMLImageElement[] = [];
+    let loadedImages = 0;
     let fontsReady = false;
+    const totalAssets = allVideoSources.length + scene02ImageSources.length + 1;
 
     const updateProgress = () => {
       let total = 0;
@@ -143,20 +168,20 @@ function App() {
           total += Math.min(1, buffered / v.duration);
         }
       });
+      total += loadedImages;
       total += fontsReady ? 1 : 0;
-      const pct = Math.min(100, Math.round((total / (allSources.length + 1)) * 100));
+      const pct = Math.min(100, Math.round((total / totalAssets) * 100));
       setLoadProgress(pct);
     };
 
     const interval = setInterval(updateProgress, 100);
 
-    const promises = allSources.map((src) => {
-      const url = resolveAssetUrl(src);
+    const videoPromises = allVideoSources.map((src) => {
       const video = document.createElement('video');
       video.preload = 'auto';
       video.muted = true;
       video.playsInline = true;
-      video.src = url;
+      video.src = src;
       video.load();
       videos.push(video);
       return new Promise<void>((resolve) => {
@@ -176,6 +201,38 @@ function App() {
       });
     });
 
+    const imagePromises = scene02ImageSources.map((src) => {
+      const image = new Image();
+      image.decoding = 'async';
+      images.push(image);
+      return new Promise<void>((resolve) => {
+        const onReady = async () => {
+          image.onload = null;
+          image.onerror = null;
+          try {
+            if ('decode' in image) {
+              await image.decode();
+            }
+          } catch {
+            // Ignore decode failures and continue.
+          }
+          loadedImages += 1;
+          resolve();
+        };
+
+        image.onload = () => {
+          void onReady();
+        };
+        image.onerror = () => {
+          loadedImages += 1;
+          resolve();
+        };
+        image.src = src;
+      });
+    });
+
+    const promises = [...videoPromises, ...imagePromises];
+
     promises.push(
       document.fonts.ready.then(() => {
         fontsReady = true;
@@ -188,7 +245,18 @@ function App() {
       setAssetsLoaded(true);
     });
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      videos.forEach((video) => {
+        video.src = '';
+        video.load();
+      });
+      images.forEach((image) => {
+        image.onload = null;
+        image.onerror = null;
+        image.src = '';
+      });
+    };
   }, []);
 
   // Auto-play text after assets load and disclaimer is dismissed

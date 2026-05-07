@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  STATE2_ABSORPTION_DURATION,
+  STATE2_STABILIZE_DURATION,
+} from '@/lib/particles/constants';
 
 export type TextSceneState = 0 | 1 | '2' | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -123,7 +127,6 @@ interface TextBlockInstance {
 }
 
 const HEADER_FADE_DURATION_MS = 1400;
-const STATE2_TEXT_STEP_MS = 3000;
 
 function hasText(config: StateTextConfig, state: TextSceneState): boolean {
   return config.lines.length > 0 || state === '2';
@@ -309,25 +312,25 @@ function State2CumulativeText({
     timers.push(
       setTimeout(() => {
         setBeatState({ current: 0, previous: -1 });
-      }, 0 * STATE2_TEXT_STEP_MS)
+      }, 0)
     );
     timers.push(
       setTimeout(() => {
         setBeatState({ current: 1, previous: 0 });
-      }, 1 * STATE2_TEXT_STEP_MS)
+      }, STATE2_ABSORPTION_DURATION)
     );
     timers.push(
       setTimeout(() => {
         setBeatState({ current: 2, previous: 1 });
-      }, 2 * STATE2_TEXT_STEP_MS)
+      }, STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION)
     );
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
   const beats = [
-    'A thought given purpose becomes a notion.',
-    'A notion tested by time begins to take shape as an idea.',
-    'To become more than itself, an idea must be released.',
+    ['A thought given purpose', 'becomes a notion.'],
+    ['A notion tested by time', 'begins to take shape as an idea.'],
+    ['To become more than itself,', 'an idea must be released.'],
   ];
 
   const currentBeat = beatState.current;
@@ -359,7 +362,11 @@ function State2CumulativeText({
                 : '0 0 1px rgba(255,255,255,0.08)',
             }}
           >
-            {beat}
+            {(beat as string[]).map((line, li) => (
+              <div key={li} style={{ marginTop: li > 0 ? '0.35em' : 0 }}>
+                {line}
+              </div>
+            ))}
           </div>
         );
       })}
