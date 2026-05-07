@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -43,92 +42,7 @@ function DisclaimerTerminal({
   loadProgress,
   assetsLoaded,
 }: Omit<DisclaimerDialogProps, 'open'>) {
-  const [typedLength, setTypedLength] = useState(0);
-  const [inputChar, setInputChar] = useState('');
-  const [inputConfirmed, setInputConfirmed] = useState(false);
-  const typingDoneRef = useRef(false);
-  const typedLengthRef = useRef(0);
-  const inputCharRef = useRef('');
-  const inputConfirmedRef = useRef(false);
-  const assetsLoadedRef = useRef(assetsLoaded);
-
-  useEffect(() => {
-    assetsLoadedRef.current = assetsLoaded;
-  }, [assetsLoaded]);
-
-  useEffect(() => {
-    typedLengthRef.current = typedLength;
-  }, [typedLength]);
-
-  useEffect(() => {
-    inputCharRef.current = inputChar;
-  }, [inputChar]);
-
-  useEffect(() => {
-    inputConfirmedRef.current = inputConfirmed;
-  }, [inputConfirmed]);
-
-  // Typing effect
-  useEffect(() => {
-    const typingTimer = setInterval(() => {
-      setTypedLength((prev) => {
-        if (prev >= DISCLAIMER_COPY.length) {
-          clearInterval(typingTimer);
-          typingDoneRef.current = true;
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 14);
-    return () => clearInterval(typingTimer);
-  }, []);
-
-  const handleConfirm = useCallback((char: string) => {
-    if (char === 'Y' || char === 'y') {
-      onClose();
-    } else if (char === 'N' || char === 'n') {
-      onSkip();
-    }
-  }, [onClose, onSkip]);
-
-  // Keyboard listener for Y/N + Enter
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (inputConfirmedRef.current) return;
-      if (!assetsLoadedRef.current) return;
-      if (!typingDoneRef.current && typedLengthRef.current < DISCLAIMER_COPY.length) return;
-
-      const key = e.key;
-
-      if (key === 'Enter') {
-        const char = inputCharRef.current;
-        if (char) {
-          setInputConfirmed(true);
-          handleConfirm(char);
-        }
-        return;
-      }
-
-      if (key === 'Backspace') {
-        setInputChar('');
-        return;
-      }
-
-      if (key.length === 1 && /[yYnN]/.test(key)) {
-        setInputChar(key.toUpperCase());
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleConfirm]);
-
-  const typingComplete = typedLength >= DISCLAIMER_COPY.length;
-  const showPrompt = typingComplete;
-  const promptText = !assetsLoaded
-    ? `> Loading assets... ${loadProgress}%`
-    : `> Proceed? [Y/N]: ${inputChar}`;
-  const showMobileActions = typingComplete && assetsLoaded;
+  const canProceed = assetsLoaded;
 
   return (
     <DialogContent
@@ -136,7 +50,7 @@ function DisclaimerTerminal({
       data-testid="disclaimer-terminal"
       className="max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
     >
-      {/* Monitor frame — auto height so all text is visible */}
+      {/* Monitor frame */}
       <div
         className="relative mx-auto flex items-center justify-center"
         style={{
@@ -226,7 +140,7 @@ function DisclaimerTerminal({
               </DialogDescription>
             </DialogHeader>
 
-            {/* Main text area — no overflow hidden, auto height */}
+            {/* Main text area */}
             <div
               className="mt-3 rounded p-4 text-[13px] font-medium leading-[1.5] sm:mt-4 sm:p-5 sm:text-[15px]"
               style={{
@@ -237,16 +151,10 @@ function DisclaimerTerminal({
                 fontFamily: "'Orbitron', sans-serif",
               }}
             >
-              <span className="whitespace-pre-line">{DISCLAIMER_COPY.slice(0, typedLength)}</span>
-              {!typingComplete && (
-                <span
-                  className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.12em] translate-y-[0.15em]"
-                  style={{ background: NEON.primary }}
-                />
-              )}
+              <span className="whitespace-pre-line">{DISCLAIMER_COPY}</span>
             </div>
 
-            {/* Bottom row: loading bar + prompt */}
+            {/* Bottom row: loading bar + CTAs */}
             <div className="mt-4 space-y-3 sm:mt-5">
               {/* Loading bar */}
               <div className="space-y-1.5">
@@ -272,62 +180,47 @@ function DisclaimerTerminal({
                 </div>
               </div>
 
-              {/* Prompt line */}
-              {showPrompt && (
-                <>
-                  <div
-                    className="hidden items-center text-[13px] font-semibold uppercase tracking-[0.1em] sm:text-[15px] lg:flex"
-                    style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
-                  >
-                    <span>{promptText}</span>
-                    <span
-                      className="disclaimer-caret ml-1 inline-block h-[1em] w-[0.14em] translate-y-[0.15em]"
-                      style={{ background: NEON.primary }}
-                    />
-                  </div>
+              {/* CTA Buttons — always visible, disabled until loaded */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={!canProceed}
+                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[13px]"
+                  style={{
+                    borderColor: NEON.primary,
+                    background: 'rgba(0, 240, 255, 0.08)',
+                    color: NEON.textBright,
+                    boxShadow: `0 0 14px ${NEON.faint}`,
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}
+                >
+                  Full Experience
+                </button>
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  disabled={!canProceed}
+                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[13px]"
+                  style={{
+                    borderColor: NEON.faint,
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    color: NEON.text,
+                    boxShadow: `0 0 10px rgba(0, 240, 255, 0.12)`,
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}
+                >
+                  Skip to Work
+                </button>
+              </div>
 
-                  {!assetsLoaded && (
-                    <div
-                      className="text-[12px] font-semibold uppercase tracking-[0.1em] sm:text-[14px] lg:hidden"
-                      style={{ color: NEON.textBright, textShadow: `0 0 8px ${NEON.glow}`, fontFamily: "'Orbitron', sans-serif" }}
-                    >
-                      {promptText}
-                    </div>
-                  )}
-
-                  {showMobileActions && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
-                      <button
-                        type="button"
-                        onClick={onClose}
-                        className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
-                        style={{
-                          borderColor: NEON.primary,
-                          background: 'rgba(0, 240, 255, 0.08)',
-                          color: NEON.textBright,
-                          boxShadow: `0 0 14px ${NEON.faint}`,
-                          fontFamily: "'Orbitron', sans-serif",
-                        }}
-                      >
-                        Full Experience
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onSkip}
-                        className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
-                        style={{
-                          borderColor: NEON.faint,
-                          background: 'rgba(0, 0, 0, 0.45)',
-                          color: NEON.text,
-                          boxShadow: `0 0 10px rgba(0, 240, 255, 0.12)`,
-                          fontFamily: "'Orbitron', sans-serif",
-                        }}
-                      >
-                        Skip to Work
-                      </button>
-                    </div>
-                  )}
-                </>
+              {!assetsLoaded && (
+                <div
+                  className="text-center text-[11px] uppercase tracking-[0.14em]"
+                  style={{ color: NEON.dim, fontFamily: "'Orbitron', sans-serif" }}
+                >
+                  Please wait while assets load…
+                </div>
               )}
             </div>
           </div>

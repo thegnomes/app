@@ -15,8 +15,9 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
+const STATE2_HOLD_DURATION = STATE2_DURATION;
+
 const FINAL_VIDEO_DELAY_MS = 2200;
-const CORE_REVEAL_DURATION_MS = 2000;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -43,10 +44,8 @@ function App() {
 
   // State transition refs
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const coreRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
-  const planetEntryReadyRef = useRef(false);
   const pointerDownRef = useRef(false);
 
   // Camera pan state
@@ -68,10 +67,6 @@ function App() {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
-    }
-    if (coreRevealTimerRef.current) {
-      clearTimeout(coreRevealTimerRef.current);
-      coreRevealTimerRef.current = null;
     }
     substateTimersRef.current.forEach((timerId) => clearTimeout(timerId));
     substateTimersRef.current = [];
@@ -352,7 +347,7 @@ function App() {
 
       // Only work in State 1
       if (stateRef.current !== 1) return;
-      if (inState2Ref.current || planetEntryReadyRef.current || holdTimerRef.current) return;
+      if (inState2Ref.current || holdTimerRef.current) return;
 
       pointerDownRef.current = true;
 
@@ -365,36 +360,12 @@ function App() {
         clearTimeout(textSequenceTimerRef.current);
         textSequenceTimerRef.current = null;
       }
-      if (coreRevealTimerRef.current) {
-        clearTimeout(coreRevealTimerRef.current);
-        coreRevealTimerRef.current = null;
-      }
 
       // Show spark text immediately on every click
       setTextState(8);
 
-      // Dispatch core activation pulse (2000ms reveal)
-      window.dispatchEvent(
-        new CustomEvent('particle:core-activation-pulse', {
-          detail: { startedAtMs: performance.now(), durationMs: CORE_REVEAL_DURATION_MS },
-        })
-      );
-
-      // After 2000ms core reveal, determine if click-only or click-hold
-      coreRevealTimerRef.current = setTimeout(() => {
-        coreRevealTimerRef.current = null;
-
-        if (pointerDownRef.current) {
-          // Pointer is still held after the core reveal.
-          // Commit into the actual State 2 formation sequence.
-          commitToState2();
-          return;
-        }
-
-        // Pointer was released during reveal — click-only spark.
-        // Show the second line of the spark narrative.
-        setTextState(9);
-      }, CORE_REVEAL_DURATION_MS);
+      // Start State 2 immediately on press-and-hold
+      commitToState2();
     };
 
     const commitToState2 = () => {
@@ -430,60 +401,38 @@ function App() {
 
       holdTimerRef.current = setTimeout(() => {
         inState2Ref.current = false;
-        planetEntryReadyRef.current = true;
         holdTimerRef.current = null;
 
-        // Give the user a short intentional release window.
-        // If they keep holding, prevent State 2 from hanging forever.
-        window.setTimeout(() => {
-          if (!planetEntryReadyRef.current) return;
-          if (stateRef.current !== 2) return;
-
-          planetEntryReadyRef.current = false;
-
+        // Auto-advance to State 3 if the user is still holding.
+        // This prevents the sequence from hanging if pointerup never comes.
+        if (pointerDownRef.current && stateRef.current === 2) {
           window.dispatchEvent(
             new CustomEvent('particle:state3-release-trigger', {
               detail: { releasedAtMs: performance.now() },
             })
           );
-
           stateRef.current = 3;
           setState(3);
           setTextState(3);
-        }, 1800);
-      }, STATE2_DURATION);
+        }
+      }, STATE2_HOLD_DURATION);
     };
 
     const handlePointerUp = () => {
       pointerDownRef.current = false;
 
-      // If core reveal is still in progress
-      if (coreRevealTimerRef.current) {
-        // User released during the 2000ms core reveal.
-        // Let the core reveal timer finish — it will show the second line at 2000ms.
-        // If the user wants immediate feedback, we could show textState 9 now,
-        // but keeping the 2000ms rhythm makes the spark feel consistent.
-        return;
-      }
-
       if (inState2Ref.current) {
-        // Released early during State 2 - go to collapse
+        // Released early during State 2 — fail / collapse
         clearState2Timers();
         inState2Ref.current = false;
         setState(4);
         setTextState(5);
         setShowFinalVideo(false);
-      } else if (planetEntryReadyRef.current) {
-        // Released after State 2 completed
-        planetEntryReadyRef.current = false;
-        window.dispatchEvent(
-          new CustomEvent('particle:state3-release-trigger', {
-            detail: { releasedAtMs: performance.now() },
-          })
-        );
-        setState(3);
-        setTextState(3);
+        return;
       }
+
+      // If State 2 already finished while holding, the hold timer already
+      // advanced us to State 3. Nothing more to do on release.
     };
 
     window.addEventListener('pointerdown', handlePointerDown);
