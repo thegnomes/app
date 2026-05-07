@@ -10,6 +10,15 @@ export function easeOutCubic(t: number): number {
 }
 
 /**
+ * Easing function: ease in cubic
+ * Slow start, fast end
+ * Good for gravitational acceleration feel
+ */
+export function easeInCubic(t: number): number {
+  return t * t * t;
+}
+
+/**
  * Easing function: ease in-out cubic
  * Slow start, fast middle, slow end
  */

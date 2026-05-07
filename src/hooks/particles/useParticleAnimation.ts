@@ -32,7 +32,7 @@ import {
   SOLAR_VIDEO_CORE_REVEAL_DELAY,
   CORE_ACTIVATION_PULSE_DURATION,
 } from '@/lib/particles/constants';
-import { createOrbitGeometryFromAngle } from '@/lib/particles/geometry';
+import { createOrbitGeometryFromAngle, easeInOutCubic } from '@/lib/particles/geometry';
 import {
   animateState0,
   animateState1,
@@ -75,6 +75,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
   // Core activation pulse refs
   const corePulseStartRef = useRef<number | null>(null);
   const corePulseActiveRef = useRef(false);
+
+  // State 2 entry color for time-based white→blue interpolation
+  const state2EntryColorRef = useRef<THREE.Color | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -138,6 +141,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
       lastState.current = nextState;
       stateStart.current = transitionTime;
+
+      // Capture State 2 entry color for time-based white→blue interpolation
+      if (nextState === 2) {
+        state2EntryColorRef.current = data.currentCoreColor.current.clone();
+      }
 
       // Capture position snapshot
       const pos = particles.current.geometry.attributes.position.array as Float32Array;
@@ -509,15 +517,24 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
         }
       }
 
-      // Lerp core color towards primary state color
+      // Core color interpolation
       const state2CoreGlowActive =
         currentState === 2 &&
         stateElapsed >= STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
       if (!state2CoreGlowActive) {
-        // Slow down white→blue transition during State 2.1 so it completes by absorption end
-        const isState2Early = currentState === 2 && stateElapsed < STATE2_ABSORPTION_DURATION;
-        const adjustedCoreColorLerp = isState2Early ? coreColorLerp * 0.35 : coreColorLerp;
-        data.currentCoreColor.current.lerp(targetPrimaryColor, adjustedCoreColorLerp);
+        if (currentState === 2 && state2EntryColorRef.current) {
+          // Time-based white→blue interpolation: completes at end of State 2.1 (absorption)
+          const colorT = Math.min(1, stateElapsed / STATE2_ABSORPTION_DURATION);
+          const easedColorT = easeInOutCubic(colorT);
+          data.currentCoreColor.current.lerpColors(
+            state2EntryColorRef.current,
+            targetPrimaryColor,
+            easedColorT
+          );
+        } else {
+          // Normal frame-based lerp for other states
+          data.currentCoreColor.current.lerp(targetPrimaryColor, coreColorLerp);
+        }
       }
 
       // Lerp primary and secondary ambient colors

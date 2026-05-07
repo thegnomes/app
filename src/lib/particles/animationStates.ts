@@ -19,7 +19,7 @@ import {
   STATE2_SPIKE_FREQUENCY,
   STATE2_SPIKE_FREQUENCY_JITTER,
 } from './constants';
-import { easeOutCubic, easeInOutCubic } from './geometry';
+import { easeOutCubic, easeInCubic, easeInOutCubic } from './geometry';
 import type { PlanetInstance } from './scene';
 
 // ============================================
@@ -390,10 +390,11 @@ export function animateState2And3(
 
       const drawInElapsed = Math.max(0, stateElapsed - particleDelay);
       const drawInProgress = Math.min(1, drawInElapsed / s2_drawInDuration);
-      const drawInEased = easeOutCubic(drawInProgress);
+      // Gravitational acceleration: slow start, fast approach to core
+      const drawInEased = easeInCubic(drawInProgress);
 
       const volatilityEnvelope =
-        easeOutCubic(drawInProgress) *
+        easeInCubic(drawInProgress) *
         Math.pow(Math.max(0, 1 - s2_bounceDecayProgress), 0.9);
 
       const clusterWeight = state2ClusterWeight[i];
