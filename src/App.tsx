@@ -348,7 +348,7 @@ function App() {
 
       const target = e.target as HTMLElement;
       if (target.closest('.control-panel')) return;
-      if (target.closest('.video-background')) return;
+      if (stateRef.current === 0 && target.closest('.video-background')) return;
 
       // Only work in State 1
       if (stateRef.current !== 1) return;
@@ -432,6 +432,25 @@ function App() {
         inState2Ref.current = false;
         planetEntryReadyRef.current = true;
         holdTimerRef.current = null;
+
+        // Give the user a short intentional release window.
+        // If they keep holding, prevent State 2 from hanging forever.
+        window.setTimeout(() => {
+          if (!planetEntryReadyRef.current) return;
+          if (stateRef.current !== 2) return;
+
+          planetEntryReadyRef.current = false;
+
+          window.dispatchEvent(
+            new CustomEvent('particle:state3-release-trigger', {
+              detail: { releasedAtMs: performance.now() },
+            })
+          );
+
+          stateRef.current = 3;
+          setState(3);
+          setTextState(3);
+        }, 1800);
       }, STATE2_DURATION);
     };
 
