@@ -1,9 +1,16 @@
 ﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { Preloader } from './Preloader';
 import { resolveAssetUrl } from '@/lib/assets';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 /* ─── Hooks ─── */
 
@@ -173,6 +180,50 @@ function VideoPlayer({
       <source src={`${base}.webm`} type="video/webm" />
       <source src={`${base}.mp4`} type="video/mp4" />
     </video>
+  );
+}
+
+type ProjectMediaItem = { src: string; alt: string };
+type ProjectLink = { href: string; label: string };
+
+function isVideoSrc(src: string): boolean {
+  return /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
+}
+
+function PortfolioMediaFrame({
+  item,
+  link,
+  className,
+}: {
+  item: ProjectMediaItem;
+  link?: ProjectLink;
+  className: string;
+}) {
+  const media = isVideoSrc(item.src) ? (
+    <VideoPlayer
+      src={item.src}
+      className={className}
+    />
+  ) : (
+    <img
+      src={resolveAssetUrl(item.src)}
+      alt={item.alt}
+      className={className}
+    />
+  );
+
+  if (!link) return media;
+
+  return (
+    <a
+      href={link.href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={link.label}
+      className="flex h-full max-h-full w-full items-center justify-center"
+    >
+      {media}
+    </a>
   );
 }
 
@@ -405,11 +456,13 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   const [prevStep, setPrevStep] = useState(0);
   // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [mobileOpenValue, setMobileOpenValue] = useState<string | undefined>(undefined);
+  const [mobileCarouselIndex, setMobileCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
   const sectionRef = useRef<HTMLElement>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
 
-  const getStepImages = (stepIndex: number) => {
+  const getStepImages = (stepIndex: number): ProjectMediaItem[] => {
     const step = project.proof[stepIndex];
     if (step?.images !== undefined) return step.images;
     const total = project.gallery.length;
@@ -422,6 +475,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   const handleNavigate = (dir: 'up' | 'down'): boolean => {
+    if (!window.matchMedia('(min-width: 1024px)').matches) return false;
     if (!hasScrolled) setHasScrolled(true);
 
     if (dir === 'down' && activeStep < project.proof.length - 1) {
@@ -445,8 +499,6 @@ function DualModeView({ project }: { project: PortfolioProject }) {
 
   useScrollLock(sectionRef, handleNavigate);
 
-  const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
-
   const stepImages = getStepImages(activeStep);
   const currentImage = stepImages[carouselIndex] ?? stepImages[0];
   const activeLink = project.proof[activeStep]?.link;
@@ -467,6 +519,30 @@ function DualModeView({ project }: { project: PortfolioProject }) {
     setCarouselIndex((i) => (i === stepImages.length - 1 ? 0 : i + 1));
   };
 
+  const handleMobileOpenChange = (value: string) => {
+    const nextValue = value || undefined;
+    setMobileOpenValue(nextValue);
+    setMobileCarouselIndex(0);
+
+    if (!nextValue) return;
+
+    const nextIndex = project.proof.findIndex((step) => step.num === nextValue);
+    if (nextIndex < 0 || nextIndex === activeStep) return;
+
+    setPrevStep(activeStep);
+    setSlideDir(nextIndex > activeStep ? 'right' : 'left');
+    setActiveStep(nextIndex);
+    setCarouselIndex(0);
+  };
+
+  const handleMobilePrev = (imageCount: number) => {
+    setMobileCarouselIndex((i) => (i === 0 ? imageCount - 1 : i - 1));
+  };
+
+  const handleMobileNext = (imageCount: number) => {
+    setMobileCarouselIndex((i) => (i === imageCount - 1 ? 0 : i + 1));
+  };
+
   const stepIcons = [
     <svg key="1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
     <svg key="2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>,
@@ -485,7 +561,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
+    <section ref={sectionRef} className="relative border-y border-neutral-900 bg-[#0a0a0a] px-6 py-14 md:px-10 md:py-16 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-[100dvh] lg:overflow-hidden lg:py-6">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -496,8 +572,147 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
-      <div className="max-w-7xl mx-auto h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 h-full">
+      <div className="mx-auto h-full max-w-7xl">
+        <div className="lg:hidden">
+          <Label>Proof of Work</Label>
+          <Accordion
+            type="single"
+            collapsible
+            value={mobileOpenValue}
+            onValueChange={handleMobileOpenChange}
+            className="border-t border-neutral-800/80"
+          >
+            {project.proof.map((step, index) => {
+              const isOpen = mobileOpenValue === step.num;
+              const mobileImages = isOpen ? getStepImages(index) : [];
+              const currentMobileIndex = mobileImages.length > 0
+                ? Math.min(mobileCarouselIndex, mobileImages.length - 1)
+                : 0;
+              const currentMobileImage = mobileImages[currentMobileIndex];
+
+              return (
+                <AccordionItem
+                  key={step.num}
+                  value={step.num}
+                  className="border-neutral-800/80"
+                >
+                  <AccordionTrigger className="group gap-4 rounded-none py-5 hover:no-underline">
+                    <span className="flex min-w-0 flex-1 items-start gap-3">
+                      <span
+                        className="mt-1 shrink-0 font-russo text-[0.7rem] tracking-[0.18em] text-neutral-500 transition-colors"
+                        style={{
+                          color: isOpen ? (project.accentColor || '#eab308') : undefined,
+                        }}
+                      >
+                        {step.num}
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className="block font-russo text-[1.05rem] font-medium leading-snug text-neutral-100"
+                          style={{ color: isOpen ? (project.accentColor || '#eab308') : undefined }}
+                        >
+                          {step.title}
+                        </span>
+                        <span className="mt-1 block text-[0.78rem] leading-relaxed text-neutral-500">
+                          {step.desc}
+                        </span>
+                      </span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-7">
+                    <div className="space-y-5">
+                      <p className="text-[0.9rem] leading-relaxed text-neutral-400">
+                        {step.detail}
+                      </p>
+                      {step.link && (
+                        <a
+                          href={step.link.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[0.84rem] font-medium transition-opacity hover:opacity-80"
+                          style={{ color: project.accentColor || '#eab308' }}
+                        >
+                          {step.link.label}
+                          <ArrowUpRight className="size-3.5" />
+                        </a>
+                      )}
+                      {currentMobileImage && (
+                        <div className="overflow-hidden rounded-md border border-neutral-800 bg-neutral-950">
+                          <div className="relative aspect-[16/10] max-h-[48dvh] w-full overflow-hidden bg-neutral-950">
+                            <div
+                              key={`${step.num}-${currentMobileIndex}`}
+                              className="flex h-full w-full items-center justify-center"
+                              style={{
+                                animation: slideDir === 'right'
+                                  ? 'gallerySlideInRight 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                                  : 'gallerySlideInLeft 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                              }}
+                            >
+                              <PortfolioMediaFrame
+                                item={currentMobileImage}
+                                link={step.link}
+                                className="h-full max-h-full w-full max-w-full object-contain"
+                              />
+                            </div>
+                          </div>
+
+                          {mobileImages.length > 1 && (
+                            <div className="flex items-center justify-between border-t border-neutral-800 px-3 py-3">
+                              <button
+                                type="button"
+                                aria-label="Previous media"
+                                onClick={() => {
+                                  setSlideDir('left');
+                                  handleMobilePrev(mobileImages.length);
+                                }}
+                                className="flex size-9 items-center justify-center rounded-full border border-neutral-700 text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+                              >
+                                <ChevronLeft className="size-4" />
+                              </button>
+
+                              <div className="flex items-center gap-2">
+                                {mobileImages.map((_, imageIndex) => (
+                                  <button
+                                    key={imageIndex}
+                                    type="button"
+                                    aria-label={`Show media ${imageIndex + 1}`}
+                                    onClick={() => {
+                                      setSlideDir(imageIndex > currentMobileIndex ? 'right' : 'left');
+                                      setMobileCarouselIndex(imageIndex);
+                                    }}
+                                    className={`size-2.5 rounded-full transition-all duration-300 ${
+                                      imageIndex === currentMobileIndex
+                                        ? 'scale-110 bg-neutral-300'
+                                        : 'bg-neutral-700 hover:bg-neutral-600'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+
+                              <button
+                                type="button"
+                                aria-label="Next media"
+                                onClick={() => {
+                                  setSlideDir('right');
+                                  handleMobileNext(mobileImages.length);
+                                }}
+                                className="flex size-9 items-center justify-center rounded-full border border-neutral-700 text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+                              >
+                                <ChevronRight className="size-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </div>
+
+        <div className="hidden h-full grid-cols-12 gap-16 lg:grid">
           {/* Left: Steps Timeline */}
           <div className="lg:col-span-5 h-full overflow-hidden">
             <FadeIn>
@@ -582,7 +797,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             onClick={(e) => e.stopPropagation()}
                           >
                             {step.link.label}
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                            <ArrowUpRight className="size-3.5" />
                           </a>
                         )}
                       </div>
@@ -609,40 +824,11 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                         }}
                       >
-                        {activeLink ? (
-                          <a
-                            href={activeLink.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex h-full max-h-full w-full items-center justify-center"
-                          >
-                            {isVideo(currentImage.src) ? (
-                              <VideoPlayer
-                                src={currentImage.src}
-                                className="h-full max-h-full w-full max-w-full object-contain"
-                              />
-                            ) : (
-                              <img
-                                src={resolveAssetUrl(currentImage.src)}
-                                alt={currentImage.alt}
-                                className="h-full max-h-full w-full max-w-full object-contain"
-                              />
-                            )}
-                          </a>
-                        ) : (
-                          isVideo(currentImage.src) ? (
-                            <VideoPlayer
-                              src={currentImage.src}
-                              className="h-full max-h-full w-full max-w-full object-contain"
-                            />
-                          ) : (
-                            <img
-                              src={resolveAssetUrl(currentImage.src)}
-                              alt={currentImage.alt}
-                              className="h-full max-h-full w-full max-w-full object-contain"
-                            />
-                          )
-                        )}
+                        <PortfolioMediaFrame
+                          item={currentImage}
+                          link={activeLink}
+                          className="h-full max-h-full w-full max-w-full object-contain"
+                        />
                       </div>
                     </div>
 
@@ -650,10 +836,11 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                       <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800 flex-shrink-0">
                         <button
                           type="button"
+                          aria-label="Previous media"
                           onClick={handlePrev}
                           className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                          <ChevronLeft className="size-4" />
                         </button>
 
                         <div className="flex items-center gap-2">
@@ -661,6 +848,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             <button
                               key={i}
                               type="button"
+                              aria-label={`Show media ${i + 1}`}
                               onClick={() => setCarouselIndex(i)}
                               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                                 i === carouselIndex
@@ -673,10 +861,11 @@ function DualModeView({ project }: { project: PortfolioProject }) {
 
                         <button
                           type="button"
+                          aria-label="Next media"
                           onClick={handleNext}
                           className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                          <ChevronRight className="size-4" />
                         </button>
                       </div>
                     )}
@@ -690,7 +879,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
 
       {/* Scroll hint */}
       <div
-        className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-500 ${
+        className={`absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 transition-opacity duration-500 lg:flex ${
           hasScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
