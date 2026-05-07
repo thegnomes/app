@@ -400,10 +400,198 @@ function Overview({ project }: { project: PortfolioProject }) {
   );
 }
 
-function DualModeView({ project }: { project: PortfolioProject }) {
+/* ─── Mobile Accordion PoW ─── */
+
+function MobilePoWAccordion({ project }: { project: PortfolioProject }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [carouselMap, setCarouselMap] = useState<Record<number, number>>({});
+
+  const getStepImages = (stepIndex: number) => {
+    const step = project.proof[stepIndex];
+    if (step?.images !== undefined) return step.images;
+    const total = project.gallery.length;
+    if (total === 0) return [];
+    const perStep = 2;
+    const start = (stepIndex * perStep) % total;
+    return Array.from({ length: perStep }, (_, i) =>
+      project.gallery[(start + i) % total]
+    ).filter(Boolean);
+  };
+
+  const isVideo = (src: string) => /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
+
+  const handleToggle = (index: number) => {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  };
+
+  const handleCarouselPrev = (stepIndex: number, imageCount: number) => {
+    setCarouselMap((prev) => ({
+      ...prev,
+      [stepIndex]: (prev[stepIndex] || 0) === 0 ? imageCount - 1 : (prev[stepIndex] || 0) - 1,
+    }));
+  };
+
+  const handleCarouselNext = (stepIndex: number, imageCount: number) => {
+    setCarouselMap((prev) => ({
+      ...prev,
+      [stepIndex]: (prev[stepIndex] || 0) === imageCount - 1 ? 0 : (prev[stepIndex] || 0) + 1,
+    }));
+  };
+
+  return (
+    <section className="lg:hidden px-6 py-4 border-y border-neutral-900 bg-[#0a0a0a]" style={{ height: '100dvh', maxHeight: '100dvh' }}>
+      <div className="h-full flex flex-col max-w-7xl mx-auto">
+        <FadeIn>
+          <Label>Proof of Work</Label>
+        </FadeIn>
+        <div className="flex-1 flex flex-col min-h-0 mt-3">
+          {project.proof.map((step, index) => {
+            const isOpen = openIndex === index;
+            const images = getStepImages(index);
+            const cIndex = carouselMap[index] || 0;
+            const currentImage = images[cIndex];
+
+            return (
+              <div
+                key={step.num}
+                className={`flex flex-col min-h-0 transition-all duration-300 ${
+                  index < project.proof.length - 1 ? 'border-b border-neutral-800/60' : ''
+                }`}
+                style={{
+                  flex: isOpen ? '1 1 0%' : '0 0 auto',
+                }}
+              >
+                {/* Accordion Header */}
+                <button
+                  type="button"
+                  onClick={() => handleToggle(index)}
+                  className="w-full text-left flex items-center gap-3 py-2.5 flex-shrink-0"
+                >
+                  <span
+                    className="font-russo text-[0.7rem] tracking-[0.18em] text-neutral-500 transition-colors"
+                    style={{ color: isOpen ? (project.accentColor || '#eab308') : undefined }}
+                  >
+                    {step.num}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className="block font-russo text-[1.05rem] font-medium leading-snug text-neutral-100"
+                      style={{ color: isOpen ? (project.accentColor || '#eab308') : undefined }}
+                    >
+                      {step.title}
+                    </span>
+                    <span className="block text-[0.78rem] leading-relaxed text-neutral-500 truncate">
+                      {step.desc}
+                    </span>
+                  </span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`text-neutral-500 transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+
+                {/* Accordion Content */}
+                <div
+                  className={`transition-all duration-300 ${isOpen ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                  style={{
+                    maxHeight: isOpen ? 'calc(100dvh - 180px)' : '0px',
+                    opacity: isOpen ? 1 : 0,
+                  }}
+                >
+                  <div className="pb-3 space-y-3">
+                    <p className="text-[0.875rem] leading-relaxed text-neutral-400">
+                      {step.detail}
+                    </p>
+                    {step.link && (
+                      <a
+                        href={step.link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[0.84rem] font-medium transition-opacity hover:opacity-80"
+                        style={{ color: project.accentColor || '#eab308' }}
+                      >
+                        {step.link.label}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                      </a>
+                    )}
+
+                    {/* Media Gallery */}
+                    {currentImage && (
+                      <div className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
+                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-950">
+                          {isVideo(currentImage.src) ? (
+                            <VideoPlayer
+                              src={currentImage.src}
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <img
+                              src={resolveAssetUrl(currentImage.src)}
+                              alt={currentImage.alt}
+                              className="h-full w-full object-contain"
+                            />
+                          )}
+                        </div>
+
+                        {images.length > 1 && (
+                          <div className="flex items-center justify-between px-3 py-2.5 border-t border-neutral-800">
+                            <button
+                              type="button"
+                              onClick={() => handleCarouselPrev(index, images.length)}
+                              className="flex size-8 items-center justify-center rounded-full border border-neutral-700 text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                            </button>
+
+                            <div className="flex items-center gap-1.5">
+                              {images.map((_, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setCarouselMap((prev) => ({ ...prev, [index]: i }))}
+                                  className={`size-2 rounded-full transition-all duration-300 ${
+                                    i === cIndex
+                                      ? 'scale-110 bg-neutral-300'
+                                      : 'bg-neutral-700 hover:bg-neutral-600'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCarouselNext(index, images.length)}
+                              className="flex size-8 items-center justify-center rounded-full border border-neutral-700 text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DesktopPoW({ project }: { project: PortfolioProject }) {
   const [activeStep, setActiveStep] = useState(0);
   const [prevStep, setPrevStep] = useState(0);
-  // viewMode removed — always Slider
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right');
   const sectionRef = useRef<HTMLElement>(null);
@@ -480,7 +668,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
   };
 
   return (
-    <section ref={sectionRef} className="relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] min-h-[100dvh] lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
+    <section ref={sectionRef} className="hidden lg:block relative px-6 md:px-10 py-4 md:py-6 border-y border-neutral-900 bg-[#0a0a0a] h-[100dvh] max-h-[100dvh] overflow-hidden">
       <style>{`
         @keyframes gallerySlideInRight {
           from { transform: translateX(60px); opacity: 0; }
@@ -492,9 +680,9 @@ function DualModeView({ project }: { project: PortfolioProject }) {
         }
       `}</style>
       <div className="max-w-7xl mx-auto h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 h-full">
+        <div className="grid grid-cols-12 gap-16 h-full">
           {/* Left: Steps Timeline */}
-          <div className="lg:col-span-5 h-full overflow-hidden">
+          <div className="col-span-5 h-full overflow-hidden">
             <FadeIn>
               <Label>Proof of Work</Label>
             </FadeIn>
@@ -589,43 +777,28 @@ function DualModeView({ project }: { project: PortfolioProject }) {
           </div>
 
           {/* Right: Media Viewer */}
-          <div className="lg:col-span-7 flex min-h-0 max-h-[calc(100dvh-2rem)] flex-col justify-center lg:h-full lg:max-h-[calc(100dvh-3rem)]">
-            <FadeIn delay={150} className="flex h-[70dvh] min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col justify-center lg:h-full lg:max-h-[calc(100dvh-3rem)]">
-              {/* Slider only */}
-                {stepImages.length > 0 && currentImage && (
-                  <div className="flex h-full min-h-0 w-full max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 lg:max-h-[calc(100dvh-3rem)]">
-                    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-neutral-950">
-                      <div
-                        key={`${activeStep}-${carouselIndex}`}
-                        className="flex h-full max-h-full w-full items-center justify-center"
-                        style={{
-                          animation: slideDir === 'right'
-                            ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
-                            : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                        }}
-                      >
-                        {activeLink ? (
-                          <a
-                            href={activeLink.href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex h-full max-h-full w-full items-center justify-center"
-                          >
-                            {isVideo(currentImage.src) ? (
-                              <VideoPlayer
-                                src={currentImage.src}
-                                className="h-full max-h-full w-full max-w-full object-contain"
-                              />
-                            ) : (
-                              <img
-                                src={resolveAssetUrl(currentImage.src)}
-                                alt={currentImage.alt}
-                                className="h-full max-h-full w-full max-w-full object-contain"
-                              />
-                            )}
-                          </a>
-                        ) : (
-                          isVideo(currentImage.src) ? (
+          <div className="col-span-7 flex min-h-0 max-h-[calc(100dvh-3rem)] flex-col justify-center h-full">
+            <FadeIn delay={150} className="flex h-full min-h-0 w-full max-h-[calc(100dvh-3rem)] flex-col justify-center">
+              {stepImages.length > 0 && currentImage && (
+                <div className="flex h-full min-h-0 w-full max-h-[calc(100dvh-3rem)] flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950">
+                  <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-neutral-950">
+                    <div
+                      key={`${activeStep}-${carouselIndex}`}
+                      className="flex h-full max-h-full w-full items-center justify-center"
+                      style={{
+                        animation: slideDir === 'right'
+                          ? 'gallerySlideInRight 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                          : 'gallerySlideInLeft 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                      }}
+                    >
+                      {activeLink ? (
+                        <a
+                          href={activeLink.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex h-full max-h-full w-full items-center justify-center"
+                        >
+                          {isVideo(currentImage.src) ? (
                             <VideoPlayer
                               src={currentImage.src}
                               className="h-full max-h-full w-full max-w-full object-contain"
@@ -636,48 +809,61 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                               alt={currentImage.alt}
                               className="h-full max-h-full w-full max-w-full object-contain"
                             />
-                          )
-                        )}
-                      </div>
+                          )}
+                        </a>
+                      ) : (
+                        isVideo(currentImage.src) ? (
+                          <VideoPlayer
+                            src={currentImage.src}
+                            className="h-full max-h-full w-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={resolveAssetUrl(currentImage.src)}
+                            alt={currentImage.alt}
+                            className="h-full max-h-full w-full max-w-full object-contain"
+                          />
+                        )
+                      )}
                     </div>
-
-                    {stepImages.length > 1 && (
-                      <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800 flex-shrink-0">
-                        <button
-                          type="button"
-                          onClick={handlePrev}
-                          className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                        </button>
-
-                        <div className="flex items-center gap-2">
-                          {stepImages.map((_, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => setCarouselIndex(i)}
-                              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                                i === carouselIndex
-                                  ? 'bg-neutral-300 scale-110'
-                                  : 'bg-neutral-700 hover:bg-neutral-600'
-                              }`}
-                            />
-                          ))}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={handleNext}
-                          className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                        </button>
-                      </div>
-                    )}
                   </div>
-                )}
-              {/* /Slider only */}
+
+                  {stepImages.length > 1 && (
+                    <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-800 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={handlePrev}
+                        className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        {stepImages.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setCarouselIndex(i)}
+                            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                              i === carouselIndex
+                                ? 'bg-neutral-300 scale-110'
+                                : 'bg-neutral-700 hover:bg-neutral-600'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        className="w-9 h-9 rounded-full border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:border-neutral-500 transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </FadeIn>
           </div>
         </div>
@@ -705,6 +891,15 @@ function DualModeView({ project }: { project: PortfolioProject }) {
         </svg>
       </div>
     </section>
+  );
+}
+
+function DualModeView({ project }: { project: PortfolioProject }) {
+  return (
+    <>
+      <MobilePoWAccordion project={project} />
+      <DesktopPoW project={project} />
+    </>
   );
 }
 
