@@ -342,41 +342,31 @@ function State2CumulativeText({
 
   const currentBeat = beatState.current;
 
+  // Only render the current beat — pure replacement, no stacking
+  if (currentBeat < 0 || currentBeat >= beats.length) return null;
+  const beat = beats[currentBeat];
+
   return (
     <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
-      {beats.map((beat, i) => {
-        const isCurrent = i === currentBeat;
-        const isGhost = !isExiting && i < currentBeat && currentBeat >= 0;
-        const isFuture = i > currentBeat || currentBeat < 0;
-        const transitionProps = isExiting || isGhost
-          ? 'opacity, transform, filter'
-          : 'transform';
-
-        return (
-          <div
-            key={i}
-            className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
-            style={{
-              opacity: isExiting ? 0 : isCurrent ? 1 : isGhost ? 0.2 : 0,
-              transform: `translate3d(0, ${isExiting ? -6 : isFuture ? 4 : isGhost ? -2 : 0}px, 0)`,
-              filter: `blur(${isExiting ? 2 : isGhost ? 1 : 0}px)`,
-              transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
-              transitionProperty: transitionProps,
-              pointerEvents: 'none',
-              position: isCurrent || isGhost ? 'relative' : 'absolute',
-              textShadow: isGhost
-                ? '0 0 1px rgba(255,255,255,0.04)'
-                : '0 0 1px rgba(255,255,255,0.08)',
-            }}
-          >
-            {(beat as string[]).map((line, li) => (
-              <div key={li} style={{ marginTop: li > 0 ? '0.35em' : 0 }}>
-                {line}
-              </div>
-            ))}
+      <div
+        key={currentBeat}
+        className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
+        style={{
+          opacity: isExiting ? 0 : 1,
+          transform: `translate3d(0, ${isExiting ? -6 : 0}px, 0)`,
+          filter: `blur(${isExiting ? 2 : 0}px)`,
+          transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
+          transitionProperty: isExiting ? 'opacity, transform, filter' : 'transform',
+          pointerEvents: 'none',
+          textShadow: '0 0 1px rgba(255,255,255,0.08)',
+        }}
+      >
+        {(beat as string[]).map((line, li) => (
+          <div key={li} style={{ marginTop: li > 0 ? '0.35em' : 0 }}>
+            {line}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
