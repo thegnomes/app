@@ -467,12 +467,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
     setCarouselIndex((i) => (i === stepImages.length - 1 ? 0 : i + 1));
   };
 
-  const stepIcons = [
-    <svg key="1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
-    <svg key="2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>,
-    <svg key="3" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
-    <svg key="4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
-  ];
+  const stepIcons: React.ReactNode[] = [];
 
   const lineDelay = (index: number) => {
     const dist = Math.abs(index - Math.min(prevStep, activeStep));
@@ -529,7 +524,7 @@ function DualModeView({ project }: { project: PortfolioProject }) {
                             boxShadow: isActive ? `0 0 20px ${project.accentColor || '#eab308'}59` : undefined,
                           }}
                         >
-                          {stepIcons[index] ?? stepIcons[0]}
+                          {stepIcons[index] ?? null}
                         </div>
                         {index < project.proof.length - 1 && (
                           <div className="relative w-px flex-1 min-h-[32px] bg-neutral-800 mt-2 overflow-hidden">
@@ -777,17 +772,19 @@ function Footer({ project }: { project: PortfolioProject }) {
               </a>
             </div>
             <div className="flex items-center gap-6">
-              {project.socials.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target={social.external ? '_blank' : undefined}
-                  rel={social.external ? 'noreferrer' : undefined}
-                  className="text-[0.75rem] font-medium text-neutral-400 transition-colors hover:text-neutral-100"
-                >
-                  {social.label}
-                </a>
-              ))}
+              {project.socials
+                .filter((s) => !s.href.includes('instagram.com') && !s.href.includes('twitter.com') && !s.href.includes('x.com'))
+                .map((social) => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target={social.external ? '_blank' : undefined}
+                    rel={social.external ? 'noreferrer' : undefined}
+                    className="text-[0.75rem] font-medium text-neutral-400 transition-colors hover:text-neutral-100"
+                  >
+                    {social.label}
+                  </a>
+                ))}
             </div>
           </div>
         </FadeIn>
@@ -795,7 +792,6 @@ function Footer({ project }: { project: PortfolioProject }) {
         <FadeIn delay={100}>
           <div className="flex flex-col gap-4 text-[0.75rem] text-neutral-600 md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} LEAVEEVERYTHINGTOCHANCE. All rights reserved.</p>
-            <p>Template replicated for portfolio showcase.</p>
           </div>
         </FadeIn>
       </div>

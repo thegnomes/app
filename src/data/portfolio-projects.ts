@@ -26,59 +26,6 @@ export interface PortfolioProject {
   scrollFlowTitle?: { top: string; bottom: string };
 }
 
-export const moraeProject: PortfolioProject = {
-  slug: 'morae',
-  title: 'Sonic',
-  titleAccent: 'Identity',
-  tag: 'Case Study',
-  year: '2026',
-  coreCompetency: 'Design & Development',
-  description:
-    'A complete brand and digital experience for a single-product audio company. Designed to eliminate distraction and center the listener.',
-  client: 'MORAE Audio',
-  role: 'Design & Development',
-  deliverables: 'Web, 3D, Motion',
-  philosophyLabel: 'Philosophy',
-  philosophyHeading:
-    "At MORAE, we don't follow trends. We study the subtle patterns of sound and the ways people interact with it.",
-  philosophyBody:
-    'Our philosophy is simple: eliminate distractions, highlight essence. Every design decision is deliberate—nothing is accidental. The goal isn’t to impress, but to allow clarity, focus, and awareness to emerge naturally.',
-  proof: [
-    { num: '01', title: '40 Hours', desc: 'Battery Endurance', detail: 'Engineered for long listening sessions without interruptions.' },
-    { num: '02', title: '32%', desc: 'Enhanced Noise Reduction', detail: 'Advanced ANC algorithms delivering noticeably deeper isolation.' },
-    { num: '03', title: '0.08s', desc: 'Instant Response Time', detail: 'Ultra-fast touch and sensor feedback for seamless control.' },
-    { num: '04', title: '+27%', desc: 'Improved Acoustic Clarity', detail: 'Refined drivers and adaptive tuning for a cleaner, more balanced sound.' },
-  ],
-  visionLabel: 'Vision',
-  visionQuote:
-    'In a world full of distraction, we design for those who notice. MORAE is about clarity, detail, and pure listening—tools for focus, not show.',
-  gallery: [
-    { src: '/portfolio/product1.png', alt: 'Product detail', layout: 'full', speed: 0.25 },
-    { src: '/portfolio/lifestyle.jpg', alt: 'Lifestyle', layout: 'half', speed: 0.2 },
-    { src: '/portfolio/product2.png', alt: 'Product angle', layout: 'half', speed: 0.35 },
-    { src: '/portfolio/detail.png', alt: 'Detail shot', layout: 'full' },
-  ],
-  approachLabel: 'Approach',
-  approachItems: [
-    {
-      label: 'Craft',
-      heading: 'Precision matters more than extravagance.',
-      body: 'Every material is chosen for function first, form second. Metals are cool to the touch, plastics durable yet unassuming. Even the smallest joint is considered for both performance and longevity. Craft is not about beauty for attention—it is honesty in construction, visible to those who look closely.',
-    },
-    {
-      label: 'Sound',
-      heading: 'Sound isn’t just heard; it is experienced.',
-      body: 'MORAE captures subtle layers and textures that often go unnoticed. We don’t aim for loudness or flashy bass; we seek authenticity. Every note, every frequency, every silence is intentional. Listening becomes a conscious act, a moment to focus on what really matters.',
-    },
-  ],
-  nextProject: { name: 'Stellar', accent: 'Motion', href: '/portfolio.html' },
-  socials: [
-    { label: 'Instagram', href: 'https://instagram.com', external: true },
-    { label: 'Twitter', href: 'https://twitter.com', external: true },
-    { label: 'Email', href: 'mailto:hello@morae.audio' },
-  ],
-};
-
 export const totoProject: PortfolioProject = {
   slug: 'toto',
   title: 'TOTO',
@@ -87,15 +34,15 @@ export const totoProject: PortfolioProject = {
   year: '2018 - 2021',
   coreCompetency: 'Creative Direction',
   description:
-    'Developed a platform idea that could travel across channels while keeping the message, visual identity, and campaign logic coherent.',
+    'Turned a sensitive hygiene category into a reusable, family-friendly campaign platform through tongue-in-cheek humour.',
   client: 'TOTO via Onezine',
   role: 'Creative Direction',
-  deliverables: 'Platform idea, KV, OOH, social, influencer, V2, Home Tour',
-  philosophyLabel: 'Overview',
+  deliverables: 'Campaign platform, KV, OOH, social, influencer, V2, Home Tour, creative kits',
+  philosophyLabel: 'Brief',
   philosophyHeading:
-    'This project was not about creating a single campaign asset. It was about building a central idea strong enough to hold across multiple touchpoints without losing clarity.',
+    'The challenge was to build top-of-mind awareness without making toilet hygiene feel awkward, crude, or overly functional.',
   philosophyBody:
-    'The work centred on developing a platform spine that could carry the message through key visuals, outdoor, social, influencer content, and later extensions. The result was a system that could scale, not just a one-off campaign expression.',
+    'TOTO needed an evergreen campaign platform that could be reused across multiple channels while staying family-friendly. Toilet hygiene is a sensitive subject, and the campaign needed to be memorable without becoming crude, overly clinical, or cheesy. Instead of avoiding that sensitivity, the strategic angle was to use it carefully — neutralising discomfort through tongue-in-cheek humour while keeping the message clean, direct, and easy to recognise.',
   accentColor: '#3b82f6',
   accentSecondaryColor: '#60a5fa',
   heroVideo: '/portfolio/TOTO/wnw-toilet.mp4',
@@ -104,8 +51,8 @@ export const totoProject: PortfolioProject = {
     {
       num: '01',
       title: '#washnotwipe',
-      desc: 'Platform originated',
-      detail: 'Developed the core idea and message spine that anchored the campaign across formats.',
+      desc: 'A direct behavioural proposition',
+      detail: 'I championed #washnotwipe as the campaign spine — simple enough to remember, clean enough to stay family-friendly, and flexible enough to translate across OOH, social, influencer content, and later campaign extensions.',
       images: [
         { src: '/portfolio/TOTO/wnwv1.png', alt: 'Wash Not Wipe hero' },
         { src: '/portfolio/TOTO/feature-01.jpg', alt: 'Feature 01' },
@@ -115,9 +62,9 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '02',
-      title: 'Multi-channel',
-      desc: 'Applied across major touchpoints',
-      detail: 'Rolled out across KV, OOH, social, and influencer while maintaining recognisability.',
+      title: 'Built to Travel',
+      desc: 'OOH, social, influencer, and campaign extensions',
+      detail: 'The platform was designed for reusability. It gave the campaign a repeatable verbal hook and visual logic that could hold across different formats without losing the central behaviour.',
       images: [
         { src: '/portfolio/TOTO/wnw-toilet.mp4', alt: 'Toilet spot' },
         { src: '/portfolio/TOTO/wnw-kitchen.mp4', alt: 'Kitchen spot' },
@@ -126,9 +73,9 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '03',
-      title: 'V2 + Home Tour',
-      desc: 'Extended beyond launch',
-      detail: 'Built a campaign structure that could evolve into later phases instead of peaking once.',
+      title: 'Beyond Launch',
+      desc: 'V2 and Home Tour adaptation',
+      detail: 'The idea extended beyond a single launch phase. Because the campaign was built around a behaviour rather than one execution, it had enough flexibility to support future campaign expressions.',
       images: [
         { src: '/portfolio/TOTO/wnw2.mp4', alt: 'V2 campaign' },
         { src: '/portfolio/TOTO/wnw2-home-tour.mp4', alt: 'Home Tour' },
@@ -136,44 +83,37 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '04',
-      title: 'TOTO Agency of Choice for 4 Years',
-      desc: '~S$200k account growth in year one',
-      detail: "Helped establish Onezine as TOTO's agency of choice across a four-year run, while growing the account to roughly S$200k in the first year.",
+      title: 'Agency-of-Choice Account',
+      desc: 'Four-year account relationship',
+      detail: 'The campaign platform contributed to TOTO becoming Onezine\u2019s agency-of-choice account for four years, with the account growing to roughly S$200k in the first year.',
       images: [],
     },
   ],
-  visionLabel: 'Vision',
+  visionLabel: 'Strategic Thesis',
   visionQuote:
-    'A good campaign can land once. A strong platform can keep extending without losing its centre.',
+    'A good campaign does not just land once. It gives the brand a line of behaviour people can remember, repeat, and recognise.',
   gallery: [
-    // TODO: Hero + first full gallery image. Replace with strongest flagship visual from campaign launch.
-    { src: '/portfolio/toto-hero-placeholder.svg', alt: '[Placeholder Image — TOTO master key visual for #washnotwipe]', layout: 'full', speed: 0.25 },
-    // TODO: Show how the central idea translated into large-format media.
-    { src: '/portfolio/toto-gallery-1.svg', alt: '[Placeholder Image — OOH execution]', layout: 'half', speed: 0.2 },
-    // TODO: Show adaptation without losing campaign identity.
-    { src: '/portfolio/toto-gallery-2.svg', alt: '[Placeholder Image — Social campaign rollout]', layout: 'half', speed: 0.35 },
-    // TODO: Demonstrate the platform travelling across channels.
-    { src: '/portfolio/toto-gallery-3.svg', alt: '[Placeholder Image — Influencer or digital extension]', layout: 'full' },
-    // TODO: Should show how the idea evolved after launch. Replace with video if available.
-    { src: '/portfolio/toto-gallery-4.svg', alt: '[Placeholder Video — V2 / Home Tour extension]', layout: 'full' },
+    { src: '/portfolio/TOTO/wnwv1.png', alt: '#washnotwipe master key visual', layout: 'full', speed: 0.25 },
+    { src: '/portfolio/TOTO/feature-01.jpg', alt: 'OOH / campaign visual', layout: 'half', speed: 0.2 },
+    { src: '/portfolio/TOTO/feature-02.jpg', alt: 'Social rollout visual', layout: 'half', speed: 0.35 },
+    { src: '/portfolio/TOTO/feature-03.jpg', alt: 'Influencer / digital extension', layout: 'full' },
+    { src: '/portfolio/TOTO/wnw2.mp4', alt: 'V2 / Home Tour extension', layout: 'full' },
   ],
   approachLabel: 'Process',
   approachItems: [
     {
-      label: 'Platform',
-      heading: 'The idea has to hold before the executions can travel.',
-      body: 'The first job was to find an idea clear enough to anchor message, tone, and visuals. It needed to be direct enough to work in public-facing channels, while giving the wider campaign enough structure to remain recognisable as it expanded.',
+      label: 'Thinking',
+      heading: 'The sensitivity of the category became the hook.',
+      body: 'Instead of hiding the awkwardness of toilet hygiene, the campaign used it carefully. Tongue-in-cheek humour allowed the message to stay direct and memorable without becoming crude.',
     },
     {
-      label: 'System',
-      heading: 'Consistency matters more when more hands are involved.',
-      body: 'A platform becomes more valuable when it can be reused without dilution. Part of the work was turning creative direction into reusable kits and templates so the campaign could scale while keeping its logic intact.',
+      label: 'Execution',
+      heading: 'The line had to work beyond one asset.',
+      body: '#washnotwipe was shaped as a campaign spine that could travel across key visuals, OOH, social, influencer content, and later extensions while keeping the central behaviour intact.',
     },
   ],
   nextProject: { name: 'OxyTap', accent: 'Ecosystem', href: '/oxytap-portfolio.html' },
   socials: [
-    { label: 'Instagram', href: 'https://instagram.com', external: true },
-    { label: 'Twitter', href: 'https://twitter.com', external: true },
     { label: 'Email', href: 'mailto:hello@onezine.co' },
   ],
 };
@@ -266,8 +206,6 @@ export const nft11Project: PortfolioProject = {
   ],
   nextProject: { name: 'TOTO', accent: '#washnotwipe', href: '/toto-portfolio.html' },
   socials: [
-    { label: 'Instagram', href: 'https://instagram.com', external: true },
-    { label: 'Twitter', href: 'https://twitter.com', external: true },
     { label: 'Email', href: 'mailto:hello@nft11.co' },
   ],
 };
@@ -351,8 +289,6 @@ export const oxytapProject: PortfolioProject = {
   ],
   nextProject: { name: 'NFT11', accent: 'Universe Building', href: '/nft11-portfolio.html' },
   socials: [
-    { label: 'Instagram', href: 'https://instagram.com', external: true },
-    { label: 'Twitter', href: 'https://twitter.com', external: true },
     { label: 'Email', href: 'mailto:hello@oxytap.co' },
   ],
 };

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { GalaxyColumn } from './GalaxyColumn';
 import { GravityParticles } from './GravityParticles';
+import { Scene02MobileCarousel, type Scene02GalaxyItem } from './Scene02MobileCarousel';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { resolveAssetUrl } from '@/lib/assets';
 import { nft11Project, oxytapProject, totoProject } from '@/data/portfolio-projects';
@@ -34,6 +35,32 @@ const MARQUEE_SPEED = 0.42;
 const MARQUEE_LINE_ONE = 'CHANCE WOON - CREATIVE STRATEGIST';
 
 type CompetencyId = 'creative-direction' | 'universe-building' | 'prototype-to-ship';
+
+const SCENE02_GALAXIES: Scene02GalaxyItem[] = [
+  {
+    srcWebm: '/webm/toto-ga2.webm',
+    srcMov: '/webm/toto-ga2.mov',
+    href: '/toto-portfolio.html',
+    hoverId: 'creative-direction',
+    project: totoProject,
+  },
+  {
+    srcWebm: '/webm/nft11-ga2.webm',
+    srcMov: '/webm/nft11-ga2.mov',
+    href: '/nft11-portfolio.html',
+    hoverId: 'universe-building',
+    project: nft11Project,
+    alignTop: true,
+  },
+  {
+    srcWebm: '/webm/oxytap-ga2.webm',
+    srcMov: '/webm/oxytap-ga2.mov',
+    href: '/oxytap-portfolio.html',
+    hoverId: 'prototype-to-ship',
+    project: oxytapProject,
+    displayTitle: oxytapProject.title.toUpperCase(),
+  },
+];
 
 interface CompetencyItem {
   id: CompetencyId;
@@ -169,7 +196,7 @@ function Scene02BottomMarquee({
 
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 bottom-[100px] z-20 select-none overflow-hidden transition-opacity duration-[1500ms] ease-out ${
+      className={`pointer-events-none absolute inset-x-0 bottom-[100px] z-20 hidden select-none overflow-hidden transition-opacity duration-[1500ms] ease-out md:block ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       aria-hidden="true"
@@ -205,7 +232,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   const [scaleAstro, setScaleAstro] = useState(1);
   const [drifted, setDrifted] = useState(false);
   const [hoveredCompetency, setHoveredCompetency] = useState<CompetencyId | null>(null);
-  const [portfolioVideosReady, setPortfolioVideosReady] = useState(false);
+  const [, setPortfolioVideosReady] = useState(false);
   const astroVideoSources = getAlphaVideoSources(
     '/scene02/looking-astro-loop2.webm',
     '/scene02/looking-astro-loop2.mov'
@@ -375,43 +402,29 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       </div>
       {/* Gravity particles layer - floating interactive particles above nebula */}
       <GravityParticles isActive={isActive} />
+      <Scene02MobileCarousel items={SCENE02_GALAXIES} isVisible={drifted} />
       {/* Galaxy columns - 3 columns spanning full viewport */}
       <div
-        className={`absolute inset-0 z-10 flex transition-opacity duration-[1500ms] ease-out ${
+        className={`absolute inset-0 z-10 hidden transition-opacity duration-[1500ms] ease-out md:flex ${
           drifted ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <GalaxyColumn
-          srcWebm="/webm/toto-ga2.webm"
-          srcMov="/webm/toto-ga2.mov"
-          label={totoProject.title}
-          year={totoProject.year}
-          href="/toto-portfolio.html"
-          hoverId="creative-direction"
-          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
-        />
-        <GalaxyColumn
-          srcWebm="/webm/nft11-ga2.webm"
-          srcMov="/webm/nft11-ga2.mov"
-          label={nft11Project.title}
-          year={nft11Project.year}
-          href="/nft11-portfolio.html"
-          alignTop
-          hoverId="universe-building"
-          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
-        />
-        <GalaxyColumn
-          srcWebm="/webm/oxytap-ga2.webm"
-          srcMov="/webm/oxytap-ga2.mov"
-          label={oxytapProject.title.toUpperCase()}
-          year={oxytapProject.year}
-          href="/oxytap-portfolio.html"
-          hoverId="prototype-to-ship"
-          onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
-        />
+        {SCENE02_GALAXIES.map((galaxy) => (
+          <GalaxyColumn
+            key={galaxy.hoverId}
+            srcWebm={galaxy.srcWebm}
+            srcMov={galaxy.srcMov}
+            label={galaxy.displayTitle ?? galaxy.project.title}
+            year={galaxy.project.year}
+            href={galaxy.href}
+            alignTop={galaxy.alignTop}
+            hoverId={galaxy.hoverId}
+            onHoverChange={(hoverId) => setHoveredCompetency(toCompetencyId(hoverId))}
+          />
+        ))}
       </div>
       {/* Astronaut video - centered in viewport, drifts down on entrance, follows mouse */}
-      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-40 h-full w-full -translate-x-1/2 -translate-y-1/2">
+      <div className="astro-float pointer-events-none absolute left-1/2 top-1/2 z-40 hidden h-full w-full -translate-x-1/2 -translate-y-1/2 md:block">
         <div
           className={`h-full w-full transition-all duration-[1500ms] ease-out ${
             drifted ? 'translate-y-10 opacity-100' : 'translate-y-0 opacity-0'
