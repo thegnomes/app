@@ -128,7 +128,7 @@ export const totoProject: PortfolioProject = {
 export const nft11Project: PortfolioProject = {
   slug: 'nft11',
   title: 'NFT11',
-  titleAccent: '0-to-1 Web3 Launch',
+  titleAccent: '',
   tag: 'Universe Building',
   year: '2021 - 2023',
   coreCompetency: 'Brand, Launch & Community Systems',
@@ -145,7 +145,7 @@ export const nft11Project: PortfolioProject = {
   accentColor: '#f59e0b',
   accentSecondaryColor: '#fb923c',
   heroVideo: '/portfolio/NFT11/final/nft11-trailer.mp4',
-  scrollFlowTitle: { top: 'NFT11', bottom: '0-to-1 Web3 Launch' },
+  scrollFlowTitle: undefined,
   proof: [
     {
       num: '01',

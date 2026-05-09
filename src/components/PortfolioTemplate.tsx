@@ -408,7 +408,7 @@ function Hero({ project }: { project: PortfolioProject }) {
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             {project.tag}
           </span>
-          <span className="text-[11px] md:text-xs uppercase tracking-widest text-neutral-300 font-medium bg-neutral-800/60 px-3 py-1 rounded-full">
+          <span className="font-orbitron text-[13px] md:text-sm lg:text-base uppercase tracking-[0.15em] text-neutral-200 font-medium bg-neutral-800/60 px-3 py-1 rounded-full">
             {project.year}
           </span>
         </div>
@@ -1090,7 +1090,125 @@ function AnimatedStat({
   );
 }
 
+const OXYTAP_CHECKLIST = [
+  'Brand, voice and website established',
+  'Event and campaign assets shipped',
+  'Product education layer created',
+  'Support portal, warranty and servicing flows structured',
+  'International customer support pathway built',
+  'Affiliate programme designed from comp plan to dashboard logic',
+];
+
+function useChecklistInView(threshold = 0.2) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { threshold, rootMargin: '0px 0px -40px 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+
+  return { ref, inView };
+}
+
+function CheckIcon({ visible }: { visible: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center flex-shrink-0 w-5 h-5 rounded-full border transition-all duration-500 ease-out"
+      style={{
+        borderColor: visible ? '#67e8f9' : 'rgba(82,82,82,0.5)',
+        backgroundColor: visible ? 'rgba(103,232,249,0.12)' : 'transparent',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'scale(1)' : 'scale(0.6)',
+      }}
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="transition-all duration-500 ease-out"
+        style={{
+          color: '#67e8f9',
+          opacity: visible ? 1 : 0,
+          transform: visible ? 'scale(1)' : 'scale(0.6)',
+        }}
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  );
+}
+
+function ChecklistOutcome() {
+  const { ref, inView } = useChecklistInView();
+  const staggerMs = 150;
+
+  return (
+    <section id="outcome" className="px-6 md:px-10 py-24 md:py-32 border-t border-neutral-900">
+      <div ref={ref} className="max-w-7xl mx-auto">
+        <div
+          className="transition-all duration-700 ease-out"
+          style={{
+            opacity: inView ? 1 : 0,
+            transform: inView ? 'translateY(0)' : 'translateY(28px)',
+          }}
+        >
+          <p className="portfolio-template-mono mb-10 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+            Infrastructure Built
+          </p>
+        </div>
+        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-5 max-w-4xl">
+          {OXYTAP_CHECKLIST.map((item, i) => {
+            const visible = inView;
+            const delay = i * staggerMs;
+            return (
+              <div
+                key={item}
+                className="flex items-start gap-4 transition-all duration-500 ease-out"
+                style={{
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? 'translateY(0)' : 'translateY(8px)',
+                  transitionDelay: `${delay}ms`,
+                }}
+              >
+                <CheckIcon visible={visible} />
+                <span
+                  className="text-[0.9375rem] leading-relaxed text-neutral-300 md:text-[1rem] transition-all duration-500 ease-out"
+                  style={{
+                    opacity: visible ? 1 : 0,
+                    transform: visible ? 'translateY(0)' : 'translateY(8px)',
+                    transitionDelay: `${delay + 40}ms`,
+                  }}
+                >
+                  {item}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Outcome({ project }: { project: PortfolioProject }) {
+  if (project.slug === 'oxytap') {
+    return <ChecklistOutcome />;
+  }
+
   return (
     <section id="outcome" className="px-6 md:px-10 py-24 md:py-32 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto">
