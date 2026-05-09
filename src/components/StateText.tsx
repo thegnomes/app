@@ -302,35 +302,45 @@ function renderCharReveal(
 function State2CumulativeText({
   isVisible,
   isExiting,
+  transitionDuration = 600,
 }: {
   isVisible: boolean;
   isExiting?: boolean;
+  transitionDuration?: number;
 }) {
-  const [beatState, setBeatState] = useState({ current: -1, previous: -1 });
+  const [currentBeat, setCurrentBeat] = useState(-1);
+  const [beatPhase, setBeatPhase] = useState<LinePhase>('hidden');
 
   useEffect(() => {
     if (!isVisible) {
-      const resetTimer = setTimeout(() => {
-        setBeatState({ current: -1, previous: -1 });
-      }, 0);
-      return () => clearTimeout(resetTimer);
+      setCurrentBeat(-1);
+      setBeatPhase('hidden');
+      return;
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const showBeat = (index: number) => {
+      setCurrentBeat(index);
+      setBeatPhase('hidden');
+      timers.push(setTimeout(() => setBeatPhase('active'), 60));
+    };
+
+    const hideBeat = () => {
+      setBeatPhase('leaving');
+    };
+
+    showBeat(0);
+
+    timers.push(setTimeout(() => hideBeat(), STATE2_ABSORPTION_DURATION - 500));
+    timers.push(setTimeout(() => showBeat(1), STATE2_ABSORPTION_DURATION));
+
     timers.push(
-      setTimeout(() => {
-        setBeatState({ current: 0, previous: -1 });
-      }, 0)
+      setTimeout(() => hideBeat(), STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION - 500)
     );
     timers.push(
-      setTimeout(() => {
-        setBeatState({ current: 1, previous: 0 });
-      }, STATE2_ABSORPTION_DURATION)
+      setTimeout(() => showBeat(2), STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION)
     );
-    timers.push(
-      setTimeout(() => {
-        setBeatState({ current: 2, previous: 1 });
-      }, STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION)
-    );
+
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
@@ -340,30 +350,28 @@ function State2CumulativeText({
     ['To become more than itself,', 'an idea must be released.'],
   ];
 
-  const currentBeat = beatState.current;
-
-  // Only render the current beat — pure replacement, no stacking
   if (currentBeat < 0 || currentBeat >= beats.length) return null;
   const beat = beats[currentBeat];
 
+  const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
+
   return (
-    <div className="box-border flex w-[33vw] max-w-[calc(100vw-2rem)] flex-col items-center justify-center px-5 py-2 text-center sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
+    <div className="box-border flex w-full flex-col items-center justify-end px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:items-center sm:justify-center">
       <div
-        key={currentBeat}
-        className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
+        className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-snug sm:leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
         style={{
           opacity: isExiting ? 0 : 1,
           transform: `translate3d(0, ${isExiting ? -6 : 0}px, 0)`,
           filter: `blur(${isExiting ? 2 : 0}px)`,
-          transitionDuration: `${isExiting ? HEADER_FADE_DURATION_MS : 500}ms`,
+          transitionDuration: `${isExiting ? transitionDuration : 500}ms`,
           transitionProperty: isExiting ? 'opacity, transform, filter' : 'transform',
           pointerEvents: 'none',
           textShadow: '0 0 1px rgba(255,255,255,0.08)',
         }}
       >
-        {(beat as string[]).map((line, li) => (
+        {beat.map((line, li) => (
           <div key={li} style={{ marginTop: li > 0 ? '0.35em' : 0 }}>
-            {line}
+            {renderCharReveal(line, linePhase, transitionDuration, 12, { x: 8, y: 0 }, 'transition-all ease-out')}
           </div>
         ))}
       </div>
@@ -518,7 +526,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       return (
         <div
           key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute inset-0 flex items-center justify-center transition-all ease-out"
+          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-end justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
           style={{
             opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
@@ -528,6 +536,7 @@ export function StateText({ state }: { state: TextSceneState }) {
           <State2CumulativeText
             isVisible={instance.lineVisibilities[0] ?? false}
             isExiting={isGhost || isLeaving}
+            transitionDuration={duration}
           />
         </div>
       );
@@ -536,7 +545,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute inset-0 flex items-center justify-center transition-all ease-out"
+        className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-end justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
         style={{
           opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
@@ -564,7 +573,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             return (
               <div
                 key={i}
-                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-relaxed`}
+                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-snug sm:leading-relaxed break-keep`}
                 style={{ textShadow, marginTop: i > 0 ? '0.35em' : 0 }}
               >
                 {renderCharReveal(
