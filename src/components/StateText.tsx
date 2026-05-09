@@ -356,7 +356,7 @@ function State2CumulativeText({
   const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
 
   return (
-    <div className="box-border flex w-full flex-col items-center justify-end px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:items-center sm:justify-center">
+    <div className="box-border flex w-full flex-col items-center justify-center px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:items-center sm:justify-center">
       <div
         className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-snug sm:leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
         style={{
@@ -370,7 +370,7 @@ function State2CumulativeText({
         }}
       >
         {beat.map((line, li) => (
-          <div key={li} style={{ marginTop: li > 0 ? '0.35em' : 0 }}>
+          <div key={li} style={{ marginTop: li > 0 ? '0.2em' : 0 }}>
             {renderCharReveal(line, linePhase, transitionDuration, 12, { x: 8, y: 0 }, 'transition-all ease-out')}
           </div>
         ))}
@@ -526,7 +526,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       return (
         <div
           key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-end justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
+          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
           style={{
             opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
@@ -545,7 +545,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-end justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
+        className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
         style={{
           opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
@@ -574,7 +574,7 @@ export function StateText({ state }: { state: TextSceneState }) {
               <div
                 key={i}
                 className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-snug sm:leading-relaxed break-keep`}
-                style={{ textShadow, marginTop: i > 0 ? '0.35em' : 0 }}
+                style={{ textShadow, marginTop: i > 0 ? '0.2em' : 0 }}
               >
                 {renderCharReveal(
                   line,

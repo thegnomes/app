@@ -717,8 +717,11 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
             targetZ = CAMERA_Z_STATE2_END;
           }
         } else if (currentState === 3) {
-          // State 3: slightly wider to reveal orbit
-          targetZ = CAMERA_Z_STATE3_ORBIT;
+          // State 3: smooth zoom-out envelope over first 3000ms for cinematic orbit reveal
+          const zoomOutDuration = 3000;
+          const zoomT = Math.min(1, stateElapsed / zoomOutDuration);
+          const easedZoom = easeInOutCubic(zoomT);
+          targetZ = CAMERA_Z_STATE2_END + (CAMERA_Z_STATE3_ORBIT - CAMERA_Z_STATE2_END) * easedZoom;
         } else if (currentState === 4) {
           // Collapse: back to default, no aggressive movement
           targetZ = CAMERA_Z_DEFAULT;

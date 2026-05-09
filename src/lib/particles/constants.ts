@@ -129,8 +129,8 @@ export const CAMERA_Z_STATE2_CLOSE = CAMERA_Z - 45;
 /** Camera Z at end of State 2.3 (Intent / stabilized) — back to readable */
 export const CAMERA_Z_STATE2_END = CAMERA_Z;
 
-/** Camera Z for State 3 orbit reveal — slightly wider than default */
-export const CAMERA_Z_STATE3_ORBIT = CAMERA_Z + 25;
+/** Camera Z for State 3 orbit reveal — wider than default for cinematic pull-back */
+export const CAMERA_Z_STATE3_ORBIT = CAMERA_Z + 40;
 
 // ============================================
 // Color Constants

@@ -303,11 +303,12 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
   }, [playAstro]);
 
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     if (playAstro) {
       const raf1 = requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setScaleNebula(1);
-          setScaleAstro(0.5);
+          setScaleAstro(isMobile ? 0.35 : 0.5);
           setDrifted(true);
         });
       });
@@ -315,7 +316,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     } else {
       requestAnimationFrame(() => {
         setScaleNebula(2);
-        setScaleAstro(1);
+        setScaleAstro(isMobile ? 0.7 : 1);
         setDrifted(false);
       });
     }

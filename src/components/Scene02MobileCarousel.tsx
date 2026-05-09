@@ -279,6 +279,11 @@ export function Scene02MobileCarousel({ items, isVisible }: Scene02MobileCarouse
         </button>
       </div>
 
+      {/* Shared marquee */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 px-4">
+        <MobileMarquee />
+      </div>
+
       {/* Dot indicators */}
       <div className="pointer-events-auto absolute inset-x-0 bottom-[calc(21svh+env(safe-area-inset-bottom))] z-30 flex justify-center gap-2">
         {items.map((item, index) => (
@@ -325,7 +330,7 @@ function MobileMarquee() {
 
   return (
     <div className="overflow-hidden select-none">
-      <div className="relative whitespace-nowrap font-russo text-sm tracking-wider text-white/70">
+      <div className="relative whitespace-nowrap font-russo text-lg tracking-wider text-white/70">
         <div ref={rowRef} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-10">{repeated}</span>
           <span className="inline-block whitespace-nowrap pr-10">{repeated}</span>
@@ -398,11 +403,10 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
         </p>
       </div>
 
-      {/* Bottom marquee + CTA */}
+      {/* Bottom CTA */}
       <div className="pointer-events-none absolute inset-x-0 bottom-[calc(2rem+env(safe-area-inset-bottom))] z-20 px-6 text-center">
-        <MobileMarquee />
         <span
-          className="mt-4 inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-full border bg-white/10 px-5 text-sm font-semibold uppercase text-white shadow-[0_0_28px_rgba(255,255,255,0.16)] backdrop-blur-md transition-all duration-300 group-active:scale-95"
+          className="inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-full border bg-white/10 px-5 text-sm font-semibold uppercase text-white shadow-[0_0_28px_rgba(255,255,255,0.16)] backdrop-blur-md transition-all duration-300 group-active:scale-95"
           style={{
             borderColor: `${accentColor}8a`,
             boxShadow: `0 0 28px ${accentColor}38`,

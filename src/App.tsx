@@ -106,7 +106,6 @@ function App() {
   }, [redirectToScene02]);
 
   const handleFinalVideoEnded = useCallback(() => {
-    setShowFinalVideo(false);
     redirectToScene02();
   }, [redirectToScene02]);
 
