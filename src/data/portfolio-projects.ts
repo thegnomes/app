@@ -33,12 +33,12 @@ export const totoProject: PortfolioProject = {
   titleAccent: '#washnotwipe',
   tag: 'Creative Direction',
   year: '2018 - 2021',
-  coreCompetency: 'Creative Direction',
+  coreCompetency: 'Campaign Platform & Production Direction',
   description:
-    'Turned a sensitive hygiene category into a reusable, family-friendly campaign platform through tongue-in-cheek humour.',
+    'Championed #washnotwipe as a reusable hygiene campaign platform, then helped bring it to life across TVC, OOH, influencer content, and campaign extensions.',
   client: 'TOTO via Onezine',
-  role: 'Creative Direction',
-  deliverables: 'Campaign platform, KV, OOH, social, influencer, V2, Home Tour, creative kits',
+  role: 'Creative Direction / Production Lead / Campaign Execution',
+  deliverables: 'Campaign concept, copywriting, TVC storyboarding, casting, directing, location planning, OOH media selection, influencer coordination, client management, V2 campaign extension',
   philosophyLabel: 'Brief',
   philosophyHeading:
     'The challenge was to build top-of-mind awareness without making toilet hygiene feel awkward, crude, or overly functional.',
@@ -51,9 +51,9 @@ export const totoProject: PortfolioProject = {
   proof: [
     {
       num: '01',
-      title: '#washnotwipe',
-      desc: 'A direct behavioural proposition',
-      detail: 'I championed #washnotwipe as the campaign spine \u2014 simple enough to remember, clean enough to stay family-friendly, and flexible enough to translate across OOH, social, influencer content, and later campaign extensions.',
+      title: 'Campaign Platform',
+      desc: 'Concept, copy, campaign spine',
+      detail: 'I championed #washnotwipe as the campaign platform \u2014 a direct behavioural proposition that made TOTO\u2019s product benefit easy to remember, repeat, and recognise. The line gave the campaign a clear spine that could carry across TVC, OOH, social, influencer content, and later extensions.',
       images: [
         { src: '/portfolio/TOTO/wnwv1.png', alt: 'Wash Not Wipe hero' },
         { src: '/portfolio/TOTO/feature-01.jpg', alt: 'Feature 01' },
@@ -63,9 +63,9 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '02',
-      title: 'Built to Travel',
-      desc: 'OOH, social, influencer, and campaign extensions',
-      detail: 'The platform was designed for reusability. It gave the campaign a repeatable verbal hook and visual logic that could hold across different formats without losing the central behaviour.',
+      title: 'TVC & OOH Launch',
+      desc: '3-part TVC, casting, storyboarding, directing, locations, rolling mall ad',
+      detail: 'I spearheaded the 3-part TVC launch for #washnotwipe, managing the production from storyboarding and casting to directing, location planning, and coordination. I was also responsible for selecting the OOH medium, including a rolling mall ad placement, and tracking performance metrics after launch.',
       images: [
         { src: '/portfolio/TOTO/wnw-toilet.mp4', alt: 'Toilet spot' },
         { src: '/portfolio/TOTO/wnw-kitchen.mp4', alt: 'Kitchen spot' },
@@ -74,25 +74,18 @@ export const totoProject: PortfolioProject = {
     },
     {
       num: '03',
-      title: 'Beyond Launch',
-      desc: 'V2 and Home Tour adaptation',
-      detail: 'The idea extended beyond a single launch phase. Because the campaign was built around a behaviour rather than one execution, it had enough flexibility to support future campaign expressions.',
+      title: 'V2 / Influencer Extension',
+      desc: 'Influencer POC, client coordination, budget and expectation management',
+      detail: 'For #washnotwipe V2, I acted as the main point of contact between the influencer and TOTO, managing expectations, budget, creative alignment, and delivery on both sides. This helped extend the platform beyond the initial launch while keeping the campaign coherent.',
       images: [
         { src: '/portfolio/TOTO/wnw2.mp4', alt: 'V2 campaign' },
         { src: '/portfolio/TOTO/wnw2-home-tour.mp4', alt: 'Home Tour' },
       ],
     },
-    {
-      num: '04',
-      title: 'Agency-of-Choice Account',
-      desc: 'Four-year account relationship',
-      detail: 'The campaign platform contributed to TOTO becoming Onezine\u2019s agency-of-choice account for four years, with the account growing to roughly S$200k in the first year.',
-      images: [],
-    },
   ],
-  visionLabel: 'Strategic Thesis',
+  visionLabel: 'Strategic Move',
   visionQuote:
-    'A good campaign does not just land once. It gives the brand a line of behaviour people can remember, repeat, and recognise.',
+    'Instead of avoiding the awkwardness of the category, #washnotwipe made the product behaviour direct and memorable, while tongue-in-cheek humour kept the message clean, family-friendly, and adaptable across formats.',
   gallery: [
     { src: '/portfolio/TOTO/wnwv1.png', alt: '#washnotwipe master key visual', layout: 'full', speed: 0.25 },
     { src: '/portfolio/TOTO/feature-01.jpg', alt: 'OOH / campaign visual', layout: 'half', speed: 0.2 },
@@ -118,10 +111,10 @@ export const totoProject: PortfolioProject = {
     { label: 'Email', href: 'mailto:hello@onezine.co' },
   ],
   outcomeStats: [
-    { value: '4', suffix: ' Years', label: 'Agency relationship' },
-    { prefix: 'S$', value: '200', suffix: 'K', label: 'First-year revenue' },
-    { value: '3', suffix: '+', label: 'Campaign extensions' },
-    { value: '6', suffix: '+', label: 'Channel types' },
+    { value: '4', suffix: ' Years', label: 'Agency-of-choice account' },
+    { prefix: 'S$', value: '200', suffix: 'K', label: 'First-year account growth' },
+    { value: '3', suffix: '-Part', label: 'TVC launch campaign' },
+    { value: 'V2', label: 'Influencer / Home Tour extension' },
   ],
 };
 
