@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
@@ -138,8 +138,6 @@ function VideoPlayer({
   poster?: string;
 }) {
   const resolved = resolveAssetUrl(src);
-  // External URLs (Vercel Blob, CDN) are used directly.
-  // Local paths still try both .webm and .mp4 variants.
   const isExternal = resolved.startsWith('http');
   const safariStyle = isSafari ? { mixBlendMode: 'screen' as const, filter: 'brightness(1)' as const } : undefined;
   if (isExternal) {
@@ -199,7 +197,6 @@ function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: s
 
       const s = speedRef.current;
 
-      // Row 1 moves left
       const r1 = row1Ref.current;
       if (r1) {
         const first = r1.children[0] as HTMLElement | undefined;
@@ -211,7 +208,6 @@ function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: s
         }
       }
 
-      // Row 2 moves right
       const r2 = row2Ref.current;
       if (r2) {
         const first = r2.children[0] as HTMLElement | undefined;
@@ -250,6 +246,94 @@ function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: s
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
           <span className="inline-block whitespace-nowrap pr-8">{textBottom}</span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Timeline Indicator ─── */
+
+const SECTION_LABELS = [
+  { id: 'problem', label: 'Problem / Brief', short: 'Brief' },
+  { id: 'strategic', label: 'Strategic Move', short: 'Strategy' },
+  { id: 'execution', label: 'Execution / Proof', short: 'Proof' },
+  { id: 'outcome', label: 'Outcome', short: 'Outcome' },
+  { id: 'next', label: 'Next Project', short: 'Next' },
+];
+
+function SectionTimeline() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const centers = SECTION_LABELS.map((s) => {
+        const el = document.getElementById(s.id);
+        if (!el) return Infinity;
+        const rect = el.getBoundingClientRect();
+        return Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2);
+      });
+      const min = Math.min(...centers);
+      const idx = centers.indexOf(min);
+      if (idx !== -1) setActiveIndex(idx);
+
+      const first = document.getElementById(SECTION_LABELS[0].id);
+      const last = document.getElementById(SECTION_LABELS[SECTION_LABELS.length - 1].id);
+      if (first && last) {
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollProgress = window.scrollY / docHeight;
+        setProgress(Math.min(1, Math.max(0, scrollProgress)));
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleClick = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-0">
+      <div className="relative flex flex-col items-center">
+        {/* Vertical track */}
+        <div className="absolute top-0 bottom-0 w-px bg-neutral-800" />
+        {/* Progress fill */}
+        <div
+          className="absolute top-0 w-px bg-neutral-400 transition-all duration-300"
+          style={{ height: `${(activeIndex / (SECTION_LABELS.length - 1)) * 100}%` }}
+        />
+        {SECTION_LABELS.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => handleClick(s.id)}
+            className="group relative flex items-center py-3"
+          >
+            {/* Node */}
+            <span
+              className={`relative z-10 block rounded-full border transition-all duration-500 ${
+                i === activeIndex
+                  ? 'w-3 h-3 bg-neutral-100 border-neutral-100 scale-110'
+                  : i < activeIndex
+                  ? 'w-2 h-2 bg-neutral-500 border-neutral-500'
+                  : 'w-2 h-2 bg-transparent border-neutral-600 group-hover:border-neutral-400'
+              }`}
+            />
+            {/* Label */}
+            <span
+              className={`absolute right-5 whitespace-nowrap text-[10px] uppercase tracking-widest transition-all duration-300 ${
+                i === activeIndex
+                  ? 'text-neutral-200 translate-x-0 opacity-100'
+                  : 'text-neutral-600 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0'
+              }`}
+            >
+              {s.label}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -324,7 +408,9 @@ function Hero({ project }: { project: PortfolioProject }) {
           <span className="inline-block px-3 py-1 text-[10px] uppercase tracking-widest text-neutral-300 border border-neutral-700 rounded-full">
             {project.tag}
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-neutral-500">{project.year}</span>
+          <span className="text-[11px] md:text-xs uppercase tracking-widest text-neutral-300 font-medium bg-neutral-800/60 px-3 py-1 rounded-full">
+            {project.year}
+          </span>
         </div>
 
         {project.scrollFlowTitle ? (
@@ -365,36 +451,28 @@ function Hero({ project }: { project: PortfolioProject }) {
   );
 }
 
-function Overview({ project }: { project: PortfolioProject }) {
+function ProblemBrief({ project }: { project: PortfolioProject }) {
   return (
-    <section id="overview" className="px-6 md:px-10 py-2 md:py-4">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-        <div className="md:col-span-4">
-          <FadeIn>
-            <Label>{project.philosophyLabel}</Label>
-          </FadeIn>
-          <FadeIn delay={100}>
-            <div className="mt-6 space-y-2">
-              <p className="font-russo text-[1.875rem] font-medium text-white md:text-[2.25rem]">{project.year}</p>
-              <p className="font-russo text-[1.25rem] font-medium text-white md:text-[1.5rem]">{project.coreCompetency}</p>
-            </div>
-          </FadeIn>
-        </div>
-        <div className="md:col-span-8">
-          <FadeIn delay={100}>
-            <AuroraTextReveal
-              as="p"
-              className="mb-8 font-russo text-[1.5rem] font-medium leading-snug md:text-[1.875rem] lg:text-[2.25rem]"
-              fromColor={project.accentColor || '#f59e0b'}
-              toColor={project.accentSecondaryColor || '#ea580c'}
-            >
-              {project.philosophyHeading}
-            </AuroraTextReveal>
-          </FadeIn>
-          <FadeIn delay={200}>
-            <p className="max-w-2xl text-[1rem] leading-relaxed text-neutral-400 md:text-[1.125rem]">{project.philosophyBody}</p>
-          </FadeIn>
-        </div>
+    <section id="problem" className="px-6 md:px-10 py-16 md:py-24">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <Label>{project.philosophyLabel}</Label>
+        </FadeIn>
+        <FadeIn delay={100}>
+          <AuroraTextReveal
+            as="p"
+            className="mb-8 font-russo text-[1.5rem] font-medium leading-snug md:text-[1.875rem] lg:text-[2.25rem]"
+            fromColor={project.accentColor || '#f59e0b'}
+            toColor={project.accentSecondaryColor || '#ea580c'}
+          >
+            {project.philosophyHeading}
+          </AuroraTextReveal>
+        </FadeIn>
+        <FadeIn delay={200}>
+          <p className="max-w-none text-[1rem] leading-relaxed text-neutral-400 md:text-[1.125rem]">
+            {project.philosophyBody}
+          </p>
+        </FadeIn>
       </div>
     </section>
   );
@@ -894,21 +972,21 @@ function DesktopPoW({ project }: { project: PortfolioProject }) {
   );
 }
 
-function DualModeView({ project }: { project: PortfolioProject }) {
+function ExecutionProof({ project }: { project: PortfolioProject }) {
   return (
-    <>
+    <div id="execution">
       <MobilePoWAccordion project={project} />
       <DesktopPoW project={project} />
-    </>
+    </div>
   );
 }
 
-function Vision({ project }: { project: PortfolioProject }) {
+function StrategicMove({ project }: { project: PortfolioProject }) {
   return (
-    <section className="px-6 md:px-10 py-24 md:py-40">
+    <section id="strategic" className="px-6 md:px-10 py-24 md:py-40">
       <div className="max-w-5xl mx-auto text-center">
         <FadeIn>
-          <Label>{project.visionLabel}</Label>
+          <Label>Strategic Move</Label>
         </FadeIn>
         <FadeIn delay={150}>
           <AuroraTextReveal
@@ -925,31 +1003,121 @@ function Vision({ project }: { project: PortfolioProject }) {
   );
 }
 
-function Process({ project }: { project: PortfolioProject }) {
+function AnimatedStat({
+  prefix = '',
+  value,
+  suffix = '',
+  label,
+  accentColor,
+  delay = 0,
+}: {
+  prefix?: string;
+  value: string;
+  suffix?: string;
+  label: string;
+  accentColor?: string;
+  delay?: number;
+}) {
+  const { ref, inView } = useInView(0.3);
+  const [display, setDisplay] = useState('0');
+  const numericValue = parseFloat(value);
+  const hasDecimal = value.includes('.');
+  const isNumeric = !isNaN(numericValue);
+
+  useEffect(() => {
+    if (!inView || !isNumeric) {
+      if (!isNumeric) setDisplay(value);
+      return;
+    }
+    const duration = 2000;
+    const startTime = performance.now();
+    const startVal = 0;
+    const endVal = numericValue;
+
+    const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
+
+    let raf = 0;
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutQuart(progress);
+      const current = startVal + (endVal - startVal) * eased;
+      if (hasDecimal) {
+        setDisplay(current.toFixed(1));
+      } else {
+        setDisplay(Math.round(current).toString());
+      }
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      raf = requestAnimationFrame(tick);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+  }, [inView, numericValue, hasDecimal, isNumeric, value, delay]);
+
   return (
-    <section id="process" className="px-6 md:px-10 py-24 md:py-36 border-t border-neutral-900">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
-        {project.approachItems.map((item) => (
-          <div key={item.label}>
-            <FadeIn>
-              <Label>{item.label}</Label>
-            </FadeIn>
-            <FadeIn delay={100}>
-              <h3 className="mb-6 font-russo text-[1.5rem] font-medium text-neutral-100 md:text-[1.875rem]">{item.heading}</h3>
-            </FadeIn>
-            <FadeIn delay={200}>
-              <p className="text-[1rem] leading-relaxed text-neutral-400 md:text-[1.125rem]">{item.body}</p>
-            </FadeIn>
-          </div>
-        ))}
+    <div ref={ref} className="text-center">
+      <div
+        className="font-russo text-[2.5rem] font-medium tracking-tight text-white md:text-[3.5rem] lg:text-[4rem] transition-all duration-700"
+        style={{
+          opacity: inView ? 1 : 0,
+          transform: inView ? 'translateY(0)' : 'translateY(20px)',
+          transitionDelay: `${delay}ms`,
+        }}
+      >
+        <span className="text-neutral-400">{prefix}</span>
+        <span style={{ color: accentColor || '#f59e0b' }}>{display}</span>
+        <span className="text-neutral-400">{suffix}</span>
+      </div>
+      <p
+        className="mt-2 text-[0.75rem] uppercase tracking-widest text-neutral-500 md:text-[0.8125rem] transition-all duration-700"
+        style={{
+          opacity: inView ? 1 : 0,
+          transform: inView ? 'translateY(0)' : 'translateY(12px)',
+          transitionDelay: `${delay + 100}ms`,
+        }}
+      >
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function Outcome({ project }: { project: PortfolioProject }) {
+  return (
+    <section id="outcome" className="px-6 md:px-10 py-24 md:py-32 border-t border-neutral-900">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <Label>Outcome</Label>
+        </FadeIn>
+        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12">
+          {project.outcomeStats.map((stat, i) => (
+            <AnimatedStat
+              key={stat.label}
+              prefix={stat.prefix}
+              value={stat.value}
+              suffix={stat.suffix}
+              label={stat.label}
+              accentColor={project.accentColor}
+              delay={i * 120}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
-function Footer({ project }: { project: PortfolioProject }) {
+function NextProject({ project }: { project: PortfolioProject }) {
   return (
-    <footer className="px-6 md:px-10 py-16 md:py-24 border-t border-neutral-900">
+    <footer id="next" className="px-6 md:px-10 py-16 md:py-24 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10 mb-16">
@@ -1035,13 +1203,13 @@ export default function PortfolioTemplate({ project, children }: { project: Port
     <main className="portfolio-template-shell min-h-screen bg-[#0a0a0a]">
       <Nav />
       <Hero project={project} />
-      <Overview project={project} />
-      <DualModeView project={project} />
-      <Vision project={project} />
-
-      <Process project={project} />
+      <SectionTimeline />
+      <ProblemBrief project={project} />
+      <StrategicMove project={project} />
+      <ExecutionProof project={project} />
+      <Outcome project={project} />
       {children}
-      <Footer project={project} />
+      <NextProject project={project} />
     </main>
   );
 }

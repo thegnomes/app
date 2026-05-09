@@ -24,6 +24,7 @@ export interface PortfolioProject {
   accentColor?: string;
   accentSecondaryColor?: string;
   scrollFlowTitle?: { top: string; bottom: string };
+  outcomeStats: { value: string; prefix?: string; suffix?: string; label: string }[];
 }
 
 export const totoProject: PortfolioProject = {
@@ -115,6 +116,12 @@ export const totoProject: PortfolioProject = {
   nextProject: { name: 'OxyTap', accent: 'Ecosystem', href: '/oxytap-portfolio.html' },
   socials: [
     { label: 'Email', href: 'mailto:hello@onezine.co' },
+  ],
+  outcomeStats: [
+    { value: '4', suffix: ' Years', label: 'Agency relationship' },
+    { prefix: 'S$', value: '200', suffix: 'K', label: 'First-year revenue' },
+    { value: '3', suffix: '+', label: 'Campaign extensions' },
+    { value: '6', suffix: '+', label: 'Channel types' },
   ],
 };
 
@@ -209,6 +216,12 @@ export const nft11Project: PortfolioProject = {
   nextProject: { name: 'TOTO', accent: '#washnotwipe', href: '/toto-portfolio.html' },
   socials: [
     { label: 'Email', href: 'mailto:hello@nft11.co' },
+  ],
+  outcomeStats: [
+    { prefix: '~', value: '60', suffix: 'K', label: 'Organic community' },
+    { value: '150', suffix: '+', label: 'Newsletters sent' },
+    { prefix: '+', value: '200', suffix: '%', label: 'Engagement lift' },
+    { prefix: 'US$', value: '1.5', suffix: 'M', label: 'Raised in under 30 days' },
   ],
 };
 
@@ -306,5 +319,11 @@ export const oxytapProject: PortfolioProject = {
   nextProject: { name: 'NFT11', accent: 'Universe Building', href: '/nft11-portfolio.html' },
   socials: [
     { label: 'Email', href: 'mailto:hello@oxytap.co' },
+  ],
+  outcomeStats: [
+    { value: '4', suffix: '+', label: 'Integrated systems' },
+    { value: '5', suffix: '', label: 'Years of brand history' },
+    { value: '2', suffix: '+', label: 'Operational platforms' },
+    { value: '1', suffix: '', label: 'Unified brand voice' },
   ],
 };
