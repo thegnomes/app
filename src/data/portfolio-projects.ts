@@ -188,7 +188,7 @@ export const nft11Project: PortfolioProject = {
   ],
   visionLabel: 'Strategic Move',
   visionQuote:
-    'Make football and Web3 feel like one world.',
+    'Make football and Web3 feel like one world. Football already had emotional pull. Web3 already had speculative momentum. The strategic move was to connect both through a common ritual.',
   gallery: [
     { src: '/portfolio/NFT11/2fd5464f-fc5c-4067-b984-50653c85ed79_rw_1920.png', alt: 'NFT11 brand and world-building visual', layout: 'full', speed: 0.25 },
     { src: '/portfolio/NFT11/final/nft11-trailer.mp4', alt: 'NFT11 game and product narrative', layout: 'full', speed: 0.2 },

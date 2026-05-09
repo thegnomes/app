@@ -1115,25 +1115,97 @@ function Outcome({ project }: { project: PortfolioProject }) {
   );
 }
 
+const ALL_PORTFOLIO_LINKS = [
+  {
+    slug: 'toto',
+    name: 'TOTO',
+    accent: '#washnotwipe',
+    href: '/toto-portfolio.html',
+    year: '2018 - 2021',
+    accentColor: '#3b82f6',
+  },
+  {
+    slug: 'nft11',
+    name: 'NFT11',
+    accent: '0-to-1 Web3 Launch',
+    href: '/nft11-portfolio.html',
+    year: '2021 - 2023',
+    accentColor: '#f59e0b',
+  },
+  {
+    slug: 'oxytap',
+    name: 'OxyTap',
+    accent: 'Brand-to-System Build',
+    href: '/oxytap-portfolio.html',
+    year: '2023 - 2025',
+    accentColor: '#67e8f9',
+  },
+];
+
 function NextProject({ project }: { project: PortfolioProject }) {
+  const otherProjects = ALL_PORTFOLIO_LINKS.filter((p) => p.slug !== project.slug)
+    .sort((a, b) => parseInt(a.year.slice(0, 4)) - parseInt(b.year.slice(0, 4)));
+
+  const earlier = otherProjects[0];
+  const later = otherProjects[1];
+
   return (
     <footer id="next" className="px-6 md:px-10 py-16 md:py-24 border-t border-neutral-900">
       <div className="max-w-7xl mx-auto">
         <FadeIn>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10 mb-16">
-            <div>
-              <Label>Next Project</Label>
-              <a
-                href={project.nextProject.href}
-                className="font-russo text-[1.875rem] font-medium text-neutral-100 transition-colors hover:text-neutral-400 md:text-[3rem]"
-              >
-                {project.nextProject.name}{' '}
-                <span className="font-russo">
-                  {project.nextProject.accent}
-                </span>
-                <span className="inline-block ml-3 align-middle">→</span>
-              </a>
-            </div>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-12 mb-16">
+            {/* Earlier project — left */}
+            {earlier && (
+              <div className="text-left">
+                <p className="portfolio-template-mono mb-3 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+                  Earlier
+                </p>
+                <a
+                  href={earlier.href}
+                  className="group inline-block font-russo text-[1.5rem] font-medium transition-colors md:text-[2.25rem] lg:text-[3rem]"
+                  style={{ color: 'rgba(255,255,255,0.9)' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = earlier.accentColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.9)';
+                  }}
+                >
+                  <span className="inline-block mr-3 align-middle text-neutral-500 transition-colors group-hover:text-neutral-300">←</span>
+                  {earlier.name}{' '}
+                  <span className="font-russo">{earlier.accent}</span>
+                </a>
+              </div>
+            )}
+
+            {/* Later project — right */}
+            {later && (
+              <div className="text-left md:text-right">
+                <p className="portfolio-template-mono mb-3 text-[11px] uppercase tracking-[0.2em] text-neutral-500">
+                  Later
+                </p>
+                <a
+                  href={later.href}
+                  className="group inline-block font-russo text-[1.5rem] font-medium transition-colors md:text-[2.25rem] lg:text-[3rem]"
+                  style={{ color: 'rgba(255,255,255,0.9)' }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = later.accentColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.9)';
+                  }}
+                >
+                  {later.name}{' '}
+                  <span className="font-russo">{later.accent}</span>
+                  <span className="inline-block ml-3 align-middle text-neutral-500 transition-colors group-hover:text-neutral-300">→</span>
+                </a>
+              </div>
+            )}
+          </div>
+        </FadeIn>
+
+        <FadeIn delay={100}>
+          <div className="flex flex-col gap-6 mb-12 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-6">
               {project.socials
                 .filter((s) => !s.href.includes('instagram.com') && !s.href.includes('twitter.com') && !s.href.includes('x.com'))
@@ -1152,7 +1224,7 @@ function NextProject({ project }: { project: PortfolioProject }) {
           </div>
         </FadeIn>
 
-        <FadeIn delay={100}>
+        <FadeIn delay={150}>
           <div className="flex flex-col gap-4 text-[0.75rem] text-neutral-600 md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} LEAVEEVERYTHINGTOCHANCE. All rights reserved.</p>
           </div>
