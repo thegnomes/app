@@ -24,6 +24,12 @@ export const STATE2_COLOR_SHIFT_DURATION = 2500;
 export const STATE2_DURATION =
   STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION + STATE2_COLOR_SHIFT_DURATION;
 
+/** App-level hold duration for State 2 before fail (ms) */
+export const STATE2_APP_HOLD_MS = 4000;
+
+/** Time scale to compress State 2 visual substates into the app hold window */
+export const STATE2_TIME_SCALE = STATE2_DURATION / STATE2_APP_HOLD_MS;
+
 /** Duration for particles to stabilize in their orbits */
 export const STABILIZE_DURATION = 5000;
 

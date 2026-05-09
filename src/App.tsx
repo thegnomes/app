@@ -15,7 +15,7 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const STATE2_HOLD_DURATION = STATE2_DURATION;
+const STATE2_FAIL_AFTER_SUBSTATE3_MS = 4000;
 
 const FINAL_VIDEO_DELAY_MS = 2200;
 
@@ -47,6 +47,7 @@ function App() {
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   const pointerDownRef = useRef(false);
+  const state2StartTimeRef = useRef<number>(0);
 
   // Camera pan state
   const panStateRef = useRef({
@@ -377,6 +378,7 @@ function App() {
       setTextState('2');
       setShowFinalVideo(false);
       inState2Ref.current = true;
+      state2StartTimeRef.current = performance.now();
 
       dispatchState2SubstateEvent(1, 0, STATE2_ABSORPTION_DURATION);
       const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
@@ -391,48 +393,50 @@ function App() {
       );
       substateTimersRef.current.push(
         setTimeout(() => {
-          dispatchState2SubstateEvent(
-            3,
-            substate3Start,
-            STATE2_DURATION
-          );
+          dispatchState2SubstateEvent(3, substate3Start, STATE2_DURATION);
+          // Start fail timer when substate 3 begins
+          holdTimerRef.current = setTimeout(() => {
+            inState2Ref.current = false;
+            holdTimerRef.current = null;
+            if (pointerDownRef.current && stateRef.current === 2) {
+              clearState2Timers();
+              stateRef.current = 4;
+              setState(4);
+              setTextState(5);
+              setShowFinalVideo(false);
+            }
+          }, STATE2_FAIL_AFTER_SUBSTATE3_MS);
         }, substate3Start)
       );
-
-      holdTimerRef.current = setTimeout(() => {
-        inState2Ref.current = false;
-        holdTimerRef.current = null;
-
-        // Auto-advance to State 3 if the user is still holding.
-        // This prevents the sequence from hanging if pointerup never comes.
-        if (pointerDownRef.current && stateRef.current === 2) {
-          window.dispatchEvent(
-            new CustomEvent('particle:state3-release-trigger', {
-              detail: { releasedAtMs: performance.now() },
-            })
-          );
-          stateRef.current = 3;
-          setState(3);
-          setTextState(3);
-        }
-      }, STATE2_HOLD_DURATION);
     };
 
     const handlePointerUp = () => {
       pointerDownRef.current = false;
 
       if (inState2Ref.current) {
-        // Released early during State 2 — fail / collapse
         clearState2Timers();
         inState2Ref.current = false;
-        setState(4);
-        setTextState(5);
-        setShowFinalVideo(false);
+
+        // Determine if we are in substate 3 based on elapsed time
+        const state2Elapsed = performance.now() - state2StartTimeRef.current;
+        const substate3Start = STATE2_ABSORPTION_DURATION + STATE2_STABILIZE_DURATION;
+        const inSubstate3 = state2Elapsed >= substate3Start;
+
+        if (inSubstate3) {
+          // Released during substate 3 — success
+          stateRef.current = 3;
+          setState(3);
+          setTextState(3);
+          setShowFinalVideo(false);
+        } else {
+          // Released before substate 3 — fail / collapse
+          stateRef.current = 4;
+          setState(4);
+          setTextState(5);
+          setShowFinalVideo(false);
+        }
         return;
       }
-
-      // If State 2 already finished while holding, the hold timer already
-      // advanced us to State 3. Nothing more to do on release.
     };
 
     window.addEventListener('pointerdown', handlePointerDown);
