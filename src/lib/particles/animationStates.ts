@@ -19,7 +19,7 @@ import {
   STATE2_SPIKE_FREQUENCY,
   STATE2_SPIKE_FREQUENCY_JITTER,
 } from './constants';
-import { easeOutCubic, easeInCubic, easeInOutCubic } from './geometry';
+import { easeOutCubic, easeInCubic, easeInOutCubic, easeInQuad } from './geometry';
 import type { PlanetInstance } from './scene';
 
 // ============================================
