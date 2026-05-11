@@ -376,7 +376,7 @@ function Nav() {
           href="/mywork.html"
           className="rounded-full bg-neutral-100 px-4 py-2 text-[0.5rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[0.6rem] md:text-[0.75rem]"
         >
-          Back to site
+          Back to Work
         </a>
       </div>
     </nav>

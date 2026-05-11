@@ -412,7 +412,7 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
             boxShadow: `0 0 28px ${accentColor}38`,
           }}
         >
-          Tap to Enter Profile
+          View Case Study
           <ArrowUpRight className="size-4" aria-hidden="true" />
         </span>
       </div>

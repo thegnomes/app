@@ -231,7 +231,7 @@ function DisclaimerTerminal({
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.3em]"
           style={{ color: '#1a2a32', fontFamily: "'Orbitron', sans-serif" }}
         >
-          nebula-hero v1.0
+          LEAVEEVERYTHINGTOCHANCE
         </div>
       </div>
     </DialogContent>
