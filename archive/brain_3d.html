@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Brain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; }
+        body { background: #050508; }
+        #canvas { width: 100vw; height: 100vh; }
+        
+        .ui {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-family: system-ui, sans-serif;
+            font-size: 13px;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 15, 20, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 220px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .control-group label {
+            color: rgba(255,255,255,0.5);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            accent-color: #00d4ff;
+            cursor: pointer;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        button {
+            flex: 1;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            color: #00d4ff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        button:hover { background: rgba(0, 212, 255, 0.2); }
+        button.active { 
+            background: rgba(0, 212, 255, 0.35); 
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+        
+        .loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #050508;
+            z-index: 100;
+            transition: opacity 0.4s;
+        }
+        
+        .loading-text {
+            color: rgba(255,255,255,0.7);
+            font-family: system-ui;
+            font-size: 13px;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    
+    <div class="loading" id="loading">
+        <div class="loading-text">GENERATING BRAIN</div>
+    </div>
+    
+    <div class="controls" id="controls" style="display:none;">
+        <div class="control-group">
+            <label>Rotation Speed</label>
+            <input type="range" id="speed" min="-1" max="1" value="0.2" step="0.05">
+        </div>
+        <div class="control-group">
+            <label>Surface Opacity</label>
+            <input type="range" id="opacity" min="0" max="1" value="0.6" step="0.1">
+        </div>
+        <div class="btn-row">
+            <button id="surfaceBtn" class="active">Surface</button>
+            <button id="networkBtn">Network</button>
+        </div>
+        <div class="btn-row">
+            <button id="pulseBtn" class="active">Pulse</button>
+            <button id="wireBtn">Wire</button>
+        </div>
+    </div>
+    
+    <div class="ui">Drag to rotate • Scroll to zoom</div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        import { OrbitControls } from 'https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+        
+        // ===== CONFIG =====
+        const config = {
+            rotationSpeed: 0.2,
+            surfaceOpacity: 0.6,
+            showSurface: true,
+            showNetwork: false,
+            showWireframe: false,
+            pulseEnabled: true
+        };
+        
+        // ===== SCENE =====
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050508, 0.012);
+        
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 55);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x050508, 1);
+        document.getElementById('canvas').appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.04;
+        controls.minDistance = 30;
+        controls.maxDistance = 100;
+        controls.target.set(0, 2, 0);
+        
+        // ===== BRAIN GROUP =====
+        const brainGroup = new THREE.Group();
+        scene.add(brainGroup);
+        
+        // ===== GENERATE BRAIN MESH =====
+        function createBrainMesh() {
+            // High resolution icosahedron as base
+            const geometry = new THREE.IcosahedronGeometry(1, 60);
+            const positions = geometry.attributes.position;
+            const normals = geometry.attributes.normal;
+            
+            const newPositions = [];
+            const newNormals = [];
+            const foldValues = [];
+            
+            // Process each vertex
+            for(let i = 0; i < positions.count; i++) {
+                let x = positions.getX(i);
+                let y = positions.getY(i);
+                let z = positions.getZ(i);
+                
+                // Determine hemisphere
+                const isLeft = x < 0;
+                const sign = isLeft ? -1 : 1;
+                
+                // === BASE BRAIN SHAPE ===
+                // Ellipsoid deformation
+                x = sign * 0.5 + x * 9;  // Width with gap
+                y = y * 11;               // Height
+                z = z * 10;               // Depth
+                
+                // Frontal lobe bulge (front is positive x for right, negative for left)
+                const frontalFactor = Math.max(0, sign * x / 8);
+                if(frontalFactor > 0.3) {
+                    x += sign * frontalFactor * 1.5;
+                }
+                
+                // Occipital taper (back narrows)
+                const backFactor = Math.max(0, -sign * x / 8);
+                if(backFactor > 0.4) {
+                    z *= (1 - backFactor * 0.3);
+                }
+                
+                // Temporal lobe (lower side bulge)
+                if(y < -3 && Math.abs(z) < 6) {
+                    const tempFactor = Math.exp(-Math.pow(y + 5, 2) / 8);
+                    x += sign * tempFactor * 2;
+                }
+                
+                // === CORTICAL FOLDING ===
+                // Create gyri and sulci using sine waves
+                const foldY = Math.sin(y * 0.4 + z * 0.2) * Math.cos(x * 0.15);
+                const foldZ = Math.sin(z * 0.5 + x * sign * 0.1) * 0.5;
+                const fineDetail = Math.sin(x * 2) * Math.sin(y * 2) * Math.sin(z * 2) * 0.2;
+                
+                const fold = (foldY * 0.6 + foldZ * 0.3 + fineDetail * 0.1) * 1.8;
+                
+                // Apply along normal
+                const nx = normals.getX(i);
+                const ny = normals.getY(i);
+                const nz = normals.getZ(i);
+                
+                newPositions.push(
+                    x + nx * fold,
+                    y + ny * fold,
+                    z + nz * fold
+                );
+                
+                newNormals.push(nx, ny, nz);
+                foldValues.push(fold);
+            }
+            
+            const newGeo = new THREE.BufferGeometry();
+            newGeo.setAttribute('position', new THREE.Float32BufferAttribute(newPositions, 3));
+            newGeo.setAttribute('normal', new THREE.Float32BufferAttribute(newNormals, 3));
+            newGeo.setAttribute('fold', new THREE.Float32BufferAttribute(foldValues, 1));
+            newGeo.setIndex(geometry.index);
+            newGeo.computeVertexNormals();
+            
+            return newGeo;
+        }
+        
+        const brainGeo = createBrainMesh();
+        
+        // ===== BRAIN MATERIAL =====
+        const brainMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uOpacity: { value: config.surfaceOpacity },
+                uWireframe: { value: 0.0 }
+            },
+            vertexShader: `
+                attribute float fold;
+                varying vec3 vNormal;
+                varying vec3 vPos;
+                varying float vFold;
+                
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vPos = position;
+                    vFold = fold;
+                    
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vNormal;
+                varying vec3 vPos;
+                varying float vFold;
+                uniform float uTime;
+                uniform float uOpacity;
+                uniform float uWireframe;
+                
+                void main() {
+                    vec3 viewDir = normalize(cameraPosition - vPos);
+                    float fresnel = pow(1.0 - abs(dot(vNormal, viewDir)), 2.0);
+                    
+                    // Base gray color
+                    vec3 baseColor = vec3(0.72, 0.70, 0.73);
+                    
+                    // Darken in sulci (fold valleys)
+                    float sulcusDarken = smoothstep(-1.0, 1.0, vFold) * 0.15;
+                    baseColor -= sulcusDarken;
+                    
+                    // Cyan rim glow
+                    vec3 rimColor = vec3(0.0, 0.75, 1.0) * fresnel * 1.5;
+                    
+                    // Wireframe grid pattern
+                    float gridScale = 3.0;
+                    vec2 gridUV = vec2(
+                        dot(vPos, vec3(0.5, 0.0, 0.5)),
+                        dot(vPos, vec3(0.0, 1.0, 0.0))
+                    ) * gridScale;
+                    
+                    vec2 grid = abs(fract(gridUV) - 0.5);
+                    float line = 1.0 - step(0.45, max(grid.x, grid.y));
+                    
+                    float pulse = sin(uTime * 1.5 + vPos.y * 0.2) * 0.5 + 0.5;
+                    vec3 gridColor = vec3(0.0, 0.9, 1.0) * line * pulse;
+                    
+                    vec3 finalColor = baseColor + rimColor;
+                    
+                    if(uWireframe > 0.5) {
+                        finalColor = mix(finalColor, gridColor, 0.6);
+                    }
+                    
+                    float alpha = uOpacity + fresnel * 0.2;
+                    if(uWireframe > 0.5 && line > 0.0) {
+                        alpha = max(alpha, 0.9 * pulse);
+                    }
+                    
+                    gl_FragColor = vec4(finalColor, alpha);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const brainMesh = new THREE.Mesh(brainGeo, brainMaterial);
+        brainGroup.add(brainMesh);
+        
+        // ===== WIRE OVERLAY =====
+        const wireGeo = brainGeo.clone();
+        const wireMat = new THREE.MeshBasicMaterial({
+            color: 0x0088aa,
+            wireframe: true,
+            transparent: true,
+            opacity: 0
+        });
+        const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+        brainGroup.add(wireMesh);
+        
+        // ===== INTERNAL NEURAL NETWORK =====
+        // Generate nodes throughout brain volume
+        const nodeCount = 2500;
+        const nodePositions = [];
+        const nodePhases = [];
+        
+        for(let i = 0; i < nodeCount; i++) {
+            // Random position within brain bounds
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            // Bias toward surface for realistic distribution
+            const r = 5 + Math.pow(Math.random(), 0.5) * 8;
+            
+            const x = r * Math.sin(phi) * Math.cos(theta);
+            const y = r * Math.sin(phi) * Math.sin(theta) * 1.1;
+            const z = r * Math.cos(phi);
+            
+            // Only keep points inside brain shape
+            if(Math.abs(x) > 2 && Math.abs(x) < 10) {
+                nodePositions.push(x, y, z);
+                nodePhases.push(Math.random() * Math.PI * 2);
+            }
+        }
+        
+        const actualNodeCount = nodePositions.length / 3;
+        
+        const nodeGeo = new THREE.BufferGeometry();
+        nodeGeo.setAttribute('position', new THREE.Float32BufferAttribute(nodePositions, 3));
+        nodeGeo.setAttribute('phase', new THREE.Float32BufferAttribute(nodePhases, 1));
+        
+        const nodeMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uPulse: { value: 1.0 }
+            },
+            vertexShader: `
+                attribute float phase;
+                uniform float uTime;
+                uniform float uPulse;
+                varying float vAlpha;
+                
+                void main() {
+                    vec3 pos = position;
+                    
+                    // Pulsing effect
+                    float pulse = sin(uTime * 2.0 + phase) * 0.5 + 0.5;
+                    pos *= 1.0 + pulse * 0.03 * uPulse;
+                    
+                    vAlpha = 0.3 + pulse * 0.7;
+                    
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = (1.5 + pulse * 1.5) * (400.0 / -mvPosition.z);
+                }
+            `,
+            fragmentShader: `
+                varying float vAlpha;
+                
+                void main() {
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if(dist > 0.5) discard;
+                    
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    alpha *= vAlpha;
+                    
+                    vec3 color = vec3(0.0, 0.8, 1.0);
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        
+        const nodes = new THREE.Points(nodeGeo, nodeMat);
+        nodes.visible = false;
+        brainGroup.add(nodes);
+        
+        // ===== NEURAL CONNECTIONS =====
+        const connectionCount = 400;
+        const connPositions = [];
+        const connPhases = [];
+        
+        for(let i = 0; i < connectionCount; i++) {
+            const idx1 = Math.floor(Math.random() * actualNodeCount);
+            let idx2 = Math.floor(Math.random() * actualNodeCount);
+            
+            const x1 = nodePositions[idx1*3];
+            const y1 = nodePositions[idx1*3+1];
+            const z1 = nodePositions[idx1*3+2];
+            
+            // Find nearby node
+            let bestIdx = idx2;
+            let bestDist = 999;
+            for(let j = 0; j < 5; j++) {
+                const testIdx = Math.floor(Math.random() * actualNodeCount);
+                const x2 = nodePositions[testIdx*3];
+                const y2 = nodePositions[testIdx*3+1];
+                const z2 = nodePositions[testIdx*3+2];
+                const d = Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+                if(d < bestDist && d > 3) {
+                    bestDist = d;
+                    bestIdx = testIdx;
+                }
+            }
+            
+            connPositions.push(
+                nodePositions[idx1*3], nodePositions[idx1*3+1], nodePositions[idx1*3+2],
+                nodePositions[bestIdx*3], nodePositions[bestIdx*3+1], nodePositions[bestIdx*3+2]
+            );
+            connPhases.push(Math.random() * Math.PI * 2);
+        }
+        
+        const connGeo = new THREE.BufferGeometry();
+        connGeo.setAttribute('position', new THREE.Float32BufferAttribute(connPositions, 3));
+        connGeo.setAttribute('phase', new THREE.Float32BufferAttribute(connPhases, 1));
+        
+        const connMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 }
+            },
+            vertexShader: `
+                attribute float phase;
+                uniform float uTime;
+                varying float vAlpha;
+                
+                void main() {
+                    float pulse = sin(uTime * 1.5 + phase) * 0.5 + 0.5;
+                    vAlpha = 0.05 + pulse * 0.15;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying float vAlpha;
+                
+                void main() {
+                    gl_FragColor = vec4(0.0, 0.6, 0.9, vAlpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        
+        const connections = new THREE.LineSegments(connGeo, connMat);
+        connections.visible = false;
+        brainGroup.add(connections);
+        
+        // ===== ANIMATION =====
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+            
+            // Update uniforms
+            brainMaterial.uniforms.uTime.value = time;
+            nodeMat.uniforms.uTime.value = time;
+            connMat.uniforms.uTime.value = time;
+            
+            // Auto rotation
+            brainGroup.rotation.y += config.rotationSpeed * 0.01;
+            
+            // Pulse sync
+            if(config.pulseEnabled) {
+                nodeMat.uniforms.uPulse.value = 1.0;
+            } else {
+                nodeMat.uniforms.uPulse.value = 0.0;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // ===== UI CONTROLS =====
+        document.getElementById('speed').addEventListener('input', e => {
+            config.rotationSpeed = parseFloat(e.target.value);
+        });
+        
+        document.getElementById('opacity').addEventListener('input', e => {
+            config.surfaceOpacity = parseFloat(e.target.value);
+            brainMaterial.uniforms.uOpacity.value = config.surfaceOpacity;
+        });
+        
+        document.getElementById('surfaceBtn').addEventListener('click', function() {
+            config.showSurface = !config.showSurface;
+            this.classList.toggle('active');
+            brainMesh.visible = config.showSurface;
+        });
+        
+        document.getElementById('networkBtn').addEventListener('click', function() {
+            config.showNetwork = !config.showNetwork;
+            this.classList.toggle('active');
+            nodes.visible = config.showNetwork;
+            connections.visible = config.showNetwork;
+        });
+        
+        document.getElementById('pulseBtn').addEventListener('click', function() {
+            config.pulseEnabled = !config.pulseEnabled;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('wireBtn').addEventListener('click', function() {
+            config.showWireframe = !config.showWireframe;
+            this.classList.toggle('active');
+            brainMaterial.uniforms.uWireframe.value = config.showWireframe ? 1.0 : 0.0;
+        });
+        
+        // ===== INIT =====
+        setTimeout(() => {
+            document.getElementById('loading').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'flex';
+            }, 400);
+            animate();
+        }, 300);
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

@@ -97,7 +97,7 @@ function App() {
   const redirectToScene02 = useCallback(() => {
     if (redirectedRef.current) return;
     redirectedRef.current = true;
-    window.location.href = '/scene02.html';
+    window.location.href = '/mywork.html';
   }, []);
 
   const handleSkipToScene02 = useCallback(() => {
@@ -116,14 +116,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const existing = document.head.querySelector('link[data-scene02-prefetch="true"]');
+    const existing = document.head.querySelector('link[data-mywork-prefetch="true"]');
     if (existing) return;
 
     const link = document.createElement('link');
     link.rel = 'prefetch';
     link.as = 'document';
-    link.href = '/scene02.html';
-    link.dataset.scene02Prefetch = 'true';
+    link.href = '/mywork.html';
+    link.dataset.myworkPrefetch = 'true';
     document.head.appendChild(link);
 
     return () => {
@@ -546,6 +546,18 @@ function App() {
         assetsLoaded={assetsLoaded}
       />
       <Footer />
+
+      {/* Persistent View Work CTA — visible after disclaimer closes */}
+      {assetsLoaded && !showDisclaimer && !showFinalVideo && (
+        <div className="pointer-events-none fixed top-4 right-4 z-50 hidden sm:block">
+          <a
+            href="/mywork.html"
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-2 text-[11px] font-medium uppercase tracking-widest text-white/80 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/60 hover:text-white"
+          >
+            View Work
+          </a>
+        </div>
+      )}
     </div>
   );
 }

@@ -373,7 +373,7 @@ function Nav() {
           </a>
         ))}
         <a
-          href="/scene02"
+          href="/mywork.html"
           className="rounded-full bg-neutral-100 px-4 py-2 text-[0.5rem] font-medium tracking-wide text-neutral-900 transition-colors hover:bg-neutral-300 sm:text-[0.6rem] md:text-[0.75rem]"
         >
           Back to site
@@ -437,15 +437,36 @@ function Hero({ project }: { project: PortfolioProject }) {
 
         <div className="flex flex-wrap items-center gap-8 md:gap-12">
           {[
+            { label: 'Role', value: project.role },
+            { label: 'Core Competency', value: project.coreCompetency },
             { label: 'Client', value: project.client },
             { label: 'Deliverables', value: project.deliverables },
           ].map((meta) => (
-            <div key={meta.label}>
+            <div key={meta.label} className="max-w-[18rem]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-neutral-500">{meta.label}</p>
               <p className="text-[0.875rem] font-medium text-neutral-100">{meta.value}</p>
             </div>
           ))}
         </div>
+
+        {/* Quick outcome stats — recruiter scanability */}
+        {project.outcomeStats.length > 0 && (
+          <div className="mt-8 flex flex-wrap items-center gap-6 md:gap-10">
+            {project.outcomeStats.slice(0, 2).map((stat) => (
+              <div key={stat.label} className="flex items-baseline gap-1.5">
+                <span className="text-[11px] text-neutral-400">{stat.prefix ?? ''}</span>
+                <span
+                  className="font-russo text-[1.25rem] font-medium tracking-tight md:text-[1.5rem]"
+                  style={{ color: project.accentColor || '#f59e0b' }}
+                >
+                  {stat.value}
+                </span>
+                <span className="text-[11px] text-neutral-400">{stat.suffix ?? ''}</span>
+                <span className="ml-1 text-[10px] uppercase tracking-widest text-neutral-500">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

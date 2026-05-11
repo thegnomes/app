@@ -10,6 +10,18 @@
       "destination": "/brain.mp4"
     }
   ],
+  "redirects": [
+    {
+      "source": "/scene02",
+      "destination": "/mywork.html",
+      "permanent": true
+    },
+    {
+      "source": "/scene02.html",
+      "destination": "/mywork.html",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/brain.mp4",

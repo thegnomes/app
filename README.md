@@ -1,73 +1,40 @@
-# React + TypeScript + Vite
+# LeaveEverythingtoChance — Portfolio '26
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive portfolio built with React, TypeScript, Three.js, and Vite. It opens with a short particle experience (NebulaHero) and leads into a curated work showcase.
 
-Currently, two official plugins are available:
+## Route Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Route | Description |
+|-------|-------------|
+| `/` | Intro — interactive particle experience with video transitions |
+| `/mywork.html` | Work showcase — project galaxies and case study index |
+| `/toto-portfolio.html` | TOTO — Creative Direction case study |
+| `/nft11-portfolio.html` | NFT11 — Universe Building case study |
+| `/oxytap-portfolio.html` | OxyTap — Prototype-to-Ship case study |
+| `/portfolio.html` | Redirects to `/toto-portfolio.html` |
 
-## React Compiler
+Legacy `/scene02` and `/scene02.html` URLs redirect to `/mywork.html`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **Framework:** React 19
+- **Language:** TypeScript 5.9
+- **Build Tool:** Vite 7
+- **3D Graphics:** Three.js 0.183
+- **Styling:** Tailwind CSS 3.4
+- **UI Components:** shadcn/ui, Radix UI
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Setup
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+npm run build
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build & Deploy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Build command: `node ./node_modules/vite/bin/vite.js build`
+- Output directory: `dist`
+- Deployed on Vercel

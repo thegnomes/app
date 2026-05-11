@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MorphFlow Brain Particles</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; background: #0a0a0f; }
+        #canvas { width: 100vw; height: 100vh; }
+        .ui {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-family: system-ui;
+            font-size: 14px;
+            pointer-events: none;
+            text-align: center;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            max-width: 300px;
+        }
+        button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        button:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+        button.active { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5); }
+        .loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: system-ui;
+            z-index: 100;
+            background: #0a0a0f;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+    <div class="loading" id="loading">Initializing Neural Network...</div>
+    
+    <div class="controls" id="controls" style="display:none;">
+        <button onclick="morphTo(0)" id="btn-0">Sphere</button>
+        <button onclick="morphTo(1)" id="btn-1">Cube</button>
+        <button onclick="morphTo(2)" id="btn-2">Pyramid</button>
+        <button onclick="morphTo(3)" id="btn-3">Torus</button>
+        <button onclick="morphTo(4)" id="btn-4">Galaxy</button>
+        <button onclick="morphTo(5)" id="btn-5">Wave</button>
+        <button onclick="morphTo(6)" id="btn-6" class="active">Brain</button>
+    </div>
+    
+    <div class="ui">
+        Click canvas to morph • Drag to rotate<br>
+        <span style="font-size:12px; opacity:0.6;">Locally running • No Framer required</span>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://esm.sh/three@0.160.0';
+        
+        const config = {
+            particleCount: 3000,
+            particleSize: 3,
+            glowStrength: 2.5,
+            autoRotate: true,
+            rotationSpeed: 0.3,
+            morphSpeed: 0.025,
+            enableSwirl: true,
+            swirlStrength: 0.3,
+            colorScheme: ["#ff6b9d", "#feca57", "#48dbfb", "#ff9ff3", "#54a0ff", "#5f27cd"]
+        };
+
+        let currentShape = 6; // Start with brain
+        let targetShape = 6;
+        let morphProgress = 0;
+        let isMorphing = false;
+        let time = 0;
+        
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0a0f, 0.02);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 45;
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x0a0a0f, 1);
+        document.getElementById('canvas').appendChild(renderer.domElement);
+
+        // Camera controls state
+        let rotY = 0, rotX = 0, targetRotY = 0, targetRotX = 0;
+        let isDragging = false, lastMouse = { x: 0, y: 0 };
+
+        // Mouse events
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            targetRotY += (e.clientX - lastMouse.x) * 0.01;
+            targetRotX += (e.clientY - lastMouse.y) * 0.01;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+        
+        // Touch events
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            targetRotY += (e.touches[0].clientX - lastMouse.x) * 0.01;
+            targetRotX += (e.touches[0].clientY - lastMouse.y) * 0.01;
+            lastMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+
+        // Click to morph
+        renderer.domElement.addEventListener('click', (e) => {
+            if (Math.abs(e.clientX - lastMouse.x) < 5 && Math.abs(e.clientY - lastMouse.y) < 5) {
+                targetShape = (currentShape + 1) % 7;
+                isMorphing = true;
+                morphProgress = 0;
+                updateButtons();
+            }
+        });
+
+        function updateButtons() {
+            document.querySelectorAll('.controls button').forEach((btn, i) => {
+                btn.classList.toggle('active', i === targetShape);
+            });
+        }
+
+        // Make morphTo global for buttons
+        window.morphTo = (shape) => {
+            if (shape === currentShape) return;
+            targetShape = shape;
+            isMorphing = true;
+            morphProgress = 0;
+            updateButtons();
+        };
+
+        // Noise implementation
+        const perm = new Array(512);
+        for (let i = 0; i < 256; i++) perm[i] = i;
+        for (let i = 255; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [perm[i], perm[j]] = [perm[j], perm[i]];
+        }
+        for (let i = 0; i < 256; i++) perm[i + 256] = perm[i];
+
+        const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+        const lerp = (a, b, t) => a + t * (b - a);
+        const grad = (hash, x, y, z) => {
+            const h = hash & 15;
+            const u = h < 8 ? x : y;
+            const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+            return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+        };
+
+        const noise3D = (x, y, z) => {
+            const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+            x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+            const u = fade(x), v = fade(y), w = fade(z);
+            const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;
+            const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;
+            return lerp(
+                lerp(
+                    lerp(grad(perm[AA], x, y, z), grad(perm[BA], x - 1, y, z), u),
+                    lerp(grad(perm[AB], x, y - 1, z), grad(perm[BB], x - 1, y - 1, z), u),
+                    v
+                ),
+                lerp(
+                    lerp(grad(perm[AA + 1], x, y, z - 1), grad(perm[BA + 1], x - 1, y, z - 1), u),
+                    lerp(grad(perm[AB + 1], x, y - 1, z - 1), grad(perm[BB + 1], x - 1, y - 1, z - 1), u),
+                    v
+                ),
+                w
+            );
+        };
+
+        const noise4D = (x, y, z, w) => noise3D(x + w * 0.5, y + w * 0.3, z + w * 0.7);
+
+        // Shape generators
+        const generateShape = (type) => {
+            const positions = new Float32Array(config.particleCount * 3);
+            const colors = new Float32Array(config.particleCount * 3);
+            
+            for (let i = 0; i < config.particleCount; i++) {
+                let x = 0, y = 0, z = 0;
+                const idx = i * 3;
+                
+                if (type === 6) {
+                    // BRAIN SHAPE
+                    const hemisphere = i < config.particleCount / 2 ? 0 : 1;
+                    const offsetX = hemisphere === 0 ? -5.5 : 5.5;
+                    
+                    // Base ellipsoid
+                    let theta = Math.random() * Math.PI * 2;
+                    let phi = Math.acos(2 * Math.random() - 1);
+                    const r = 0.85 + Math.random() * 0.15;
+                    
+                    let x = 10 * r * Math.sin(phi) * Math.cos(theta) + offsetX;
+                    let y = 12 * r * Math.sin(phi) * Math.sin(theta);
+                    let z = 9 * r * Math.cos(phi);
+                    
+                    // Cortical folding (gyri and sulci)
+                    const fold1 = noise3D(x * 0.4, y * 0.4, z * 0.4);
+                    const fold2 = noise3D(x * 0.8 + 100, y * 0.8, z * 0.8);
+                    const displacement = (fold1 * 1.5 + fold2 * 0.5) * 2.5;
+                    
+                    const nx = (x - offsetX) / 10;
+                    const ny = y / 12;
+                    const nz = z / 9;
+                    
+                    x += nx * displacement;
+                    y += ny * displacement;
+                    z += nz * displacement;
+                    
+                    // Corpus callosum bridge
+                    if (Math.random() < 0.08) {
+                        const bridgeT = Math.random();
+                        x = (hemisphere === 0 ? -1 : 1) * (1 - bridgeT) * 5 + (Math.random() - 0.5) * 2;
+                        y = (Math.random() - 0.5) * 4;
+                        z = (Math.random() - 0.5) * 6;
+                    }
+                    
+                    positions[idx] = x;
+                    positions[idx + 1] = y;
+                    positions[idx + 2] = z;
+                    
+                    // Neural coloring
+                    const activity = Math.abs(fold1);
+                    const c = new THREE.Color(config.colorScheme[0]);
+                    const activeC = new THREE.Color(config.colorScheme[3]);
+                    c.lerp(activeC, activity * 0.5);
+                    c.offsetHSL(0, 0, (Math.random() - 0.5) * 0.1);
+                    
+                    colors[idx] = c.r;
+                    colors[idx + 1] = c.g;
+                    colors[idx + 2] = c.b;
+                } else {
+                    // Standard shapes
+                    const baseColor = new THREE.Color(config.colorScheme[type]);
+                    
+                    switch(type) {
+                        case 0: // Sphere
+                            const phi = Math.acos(1 - 2 * (i + 0.5) / config.particleCount);
+                            const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+                            const rad = 14;
+                            x = rad * Math.sin(phi) * Math.cos(theta);
+                            y = rad * Math.sin(phi) * Math.sin(theta);
+                            z = rad * Math.cos(phi);
+                            break;
+                        case 1: // Cube
+                            const side = Math.floor(Math.random() * 6);
+                            const u = (Math.random() - 0.5) * 22;
+                            const v = (Math.random() - 0.5) * 22;
+                            const s = 11;
+                            if (side === 0) { x = s; y = u; z = v; }
+                            else if (side === 1) { x = -s; y = u; z = v; }
+                            else if (side === 2) { x = u; y = s; z = v; }
+                            else if (side === 3) { x = u; y = -s; z = v; }
+                            else if (side === 4) { x = u; y = v; z = s; }
+                            else { x = u; y = v; z = -s; }
+                            break;
+                        case 2: // Pyramid
+                            const h = 16, b = 13;
+                            const layer = Math.random() * h;
+                            const scale = 1 - (layer / h);
+                            const angle = Math.random() * Math.PI * 2;
+                            const radP = Math.random() * b * scale;
+                            x = radP * Math.cos(angle);
+                            z = radP * Math.sin(angle);
+                            y = layer - h / 2;
+                            break;
+                        case 3: // Torus
+                            const R = 11, r = 4.5;
+                            const uu = Math.random() * Math.PI * 2;
+                            const vv = Math.random() * Math.PI * 2;
+                            x = (R + r * Math.cos(vv)) * Math.cos(uu);
+                            y = (R + r * Math.cos(vv)) * Math.sin(uu);
+                            z = r * Math.sin(vv);
+                            break;
+                        case 4: // Galaxy
+                            const arm = Math.floor(Math.random() * 4);
+                            const armAngle = (arm * Math.PI * 2) / 4;
+                            const dist = Math.random() * 18;
+                            const spiral = dist * 0.5;
+                            const finalAngle = armAngle + spiral;
+                            x = dist * Math.cos(finalAngle);
+                            z = dist * Math.sin(finalAngle);
+                            y = (Math.random() - 0.5) * 1.5;
+                            break;
+                        case 5: // Wave
+                            const wx = (Math.random() - 0.5) * 32;
+                            const wz = (Math.random() - 0.5) * 32;
+                            const distW = Math.sqrt(wx * wx + wz * wz);
+                            x = wx;
+                            z = wz;
+                            y = Math.sin(distW * 0.3) * 5 + Math.sin(wx * 0.5) * 2.5;
+                            break;
+                    }
+                    
+                    positions[idx] = x;
+                    positions[idx + 1] = y;
+                    positions[idx + 2] = z;
+                    
+                    const c = baseColor.clone().offsetHSL(0, 0, (Math.random() - 0.5) * 0.15);
+                    colors[idx] = c.r;
+                    colors[idx + 1] = c.g;
+                    colors[idx + 2] = c.b;
+                }
+            }
+            return { positions, colors };
+        };
+
+        // Generate all shapes
+        const shapeTargets = [];
+        for (let i = 0; i < 7; i++) {
+            shapeTargets.push(generateShape(i));
+        }
+
+        // Starfield
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(1000 * 3);
+        for (let i = 0; i < 1000; i++) {
+            const r = 50 + Math.random() * 150;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            starPos[i * 3 + 2] = r * Math.cos(phi);
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.4,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending
+        });
+        const starfield = new THREE.Points(starGeo, starMat);
+        scene.add(starfield);
+
+        // Particles
+        const geometry = new THREE.BufferGeometry();
+        const posArray = new Float32Array(shapeTargets[6].positions);
+        const colArray = new Float32Array(shapeTargets[6].colors);
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colArray, 3));
+
+        // Shader material
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uSize: { value: config.particleSize * window.devicePixelRatio },
+                uGlow: { value: config.glowStrength / 10 }
+            },
+            vertexShader: `
+                attribute vec3 color;
+                varying vec3 vColor;
+                varying float vZ;
+                uniform float uSize;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = uSize * (300.0 / -mvPosition.z);
+                    vZ = mvPosition.z;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                varying float vZ;
+                uniform float uGlow;
+                void main() {
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float dist = length(coord);
+                    if (dist > 0.5) discard;
+                    float strength = 1.0 - (dist * 2.0);
+                    strength = pow(strength, 1.0 + uGlow * 0.5);
+                    float fade = smoothstep(-80.0, -10.0, vZ);
+                    gl_FragColor = vec4(vColor * strength * 2.5, strength * fade);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Animation
+        const originalPos = new Float32Array(posArray);
+        
+        const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+        document.getElementById('loading').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('controls').style.display = 'flex';
+        }, 500);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+
+            // Camera rotation
+            if (!isDragging && config.autoRotate) {
+                targetRotY += config.rotationSpeed * 0.005;
+            }
+            rotY += (targetRotY - rotY) * 0.05;
+            rotX += (targetRotX - rotX) * 0.05;
+
+            camera.position.x = Math.sin(rotY) * Math.cos(rotX) * 45;
+            camera.position.z = Math.cos(rotY) * Math.cos(rotX) * 45;
+            camera.position.y = Math.sin(rotX) * 45;
+            camera.lookAt(0, 0, 0);
+
+            // Morphing
+            if (isMorphing) {
+                morphProgress += config.morphSpeed;
+                if (morphProgress >= 1) {
+                    morphProgress = 1;
+                    currentShape = targetShape;
+                    isMorphing = false;
+                    for (let i = 0; i < config.particleCount * 3; i++) {
+                        originalPos[i] = shapeTargets[currentShape].positions[i];
+                    }
+                }
+
+                const eased = easeInOutCubic(morphProgress);
+                const startPos = shapeTargets[currentShape].positions;
+                const endPos = shapeTargets[targetShape].positions;
+                const startCol = shapeTargets[currentShape].colors;
+                const endCol = shapeTargets[targetShape].colors;
+
+                const pos = geometry.attributes.position.array;
+                const col = geometry.attributes.color.array;
+
+                for (let i = 0; i < config.particleCount; i++) {
+                    const idx = i * 3;
+                    pos[idx] = startPos[idx] + (endPos[idx] - startPos[idx]) * eased;
+                    pos[idx + 1] = startPos[idx + 1] + (endPos[idx + 1] - startPos[idx + 1]) * eased;
+                    pos[idx + 2] = startPos[idx + 2] + (endPos[idx + 2] - startPos[idx + 2]) * eased;
+                    
+                    col[idx] = startCol[idx] + (endCol[idx] - startCol[idx]) * eased;
+                    col[idx + 1] = startCol[idx + 1] + (endCol[idx + 1] - startCol[idx + 1]) * eased;
+                    col[idx + 2] = startCol[idx + 2] + (endCol[idx + 2] - startCol[idx + 2]) * eased;
+                }
+                geometry.attributes.position.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
+            }
+
+            // Swirl effect
+            if (config.enableSwirl && !isMorphing) {
+                const pos = geometry.attributes.position.array;
+                for (let i = 0; i < config.particleCount; i++) {
+                    const idx = i * 3;
+                    const ox = originalPos[idx], oy = originalPos[idx + 1], oz = originalPos[idx + 2];
+                    const n1 = noise4D(ox * 0.02, oy * 0.02, oz * 0.02, time * 0.5);
+                    const n2 = noise4D(ox * 0.02 + 100, oy * 0.02, oz * 0.02, time * 0.5);
+                    const n3 = noise4D(ox * 0.02, oy * 0.02 + 100, oz * 0.02, time * 0.5);
+                    pos[idx] = ox + n1 * config.swirlStrength * 6;
+                    pos[idx + 1] = oy + n2 * config.swirlStrength * 6;
+                    pos[idx + 2] = oz + n3 * config.swirlStrength * 6;
+                }
+                geometry.attributes.position.needsUpdate = true;
+            }
+
+            starfield.rotation.y += 0.0002;
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
