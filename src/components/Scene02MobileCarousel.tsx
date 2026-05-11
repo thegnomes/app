@@ -330,7 +330,7 @@ function MobileMarquee() {
 
   return (
     <div className="overflow-hidden select-none">
-      <div className="relative whitespace-nowrap font-russo text-lg tracking-wider text-white/70">
+      <div className="relative whitespace-nowrap font-russo text-2xl tracking-wider text-white/70">
         <div ref={rowRef} className="inline-flex will-change-transform">
           <span className="inline-block whitespace-nowrap pr-10">{repeated}</span>
           <span className="inline-block whitespace-nowrap pr-10">{repeated}</span>
@@ -403,8 +403,8 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
         </p>
       </div>
 
-      {/* Bottom CTA */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-[calc(2rem+env(safe-area-inset-bottom))] z-20 px-6 text-center">
+      {/* Center CTA — overlaps galaxy animation */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 px-6 text-center">
         <span
           className="inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-full border bg-white/10 px-5 text-sm font-semibold uppercase text-white shadow-[0_0_28px_rgba(255,255,255,0.16)] backdrop-blur-md transition-all duration-300 group-active:scale-95"
           style={{
