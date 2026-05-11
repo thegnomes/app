@@ -4,6 +4,7 @@ import { GravityParticles } from './GravityParticles';
 import { Scene02MobileCarousel, type Scene02GalaxyItem } from './Scene02MobileCarousel';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
 import { resolveAssetUrl } from '@/lib/assets';
+import { preloadVideo } from '@/lib/safeMediaPreload';
 import { nft11Project, oxytapProject, totoProject } from '@/data/portfolio-projects';
 
 const PORTFOLIO_VIDEO_SOURCES = [
@@ -252,18 +253,11 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       }
     };
 
-    const preloaders: HTMLVideoElement[] = [];
-    for (const src of PORTFOLIO_VIDEO_SOURCES) {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.muted = true;
-      video.playsInline = true;
-      video.crossOrigin = 'anonymous';
-      video.src = resolveAssetUrl(src);
-      video.oncanplaythrough = checkAllLoaded;
-      video.onerror = checkAllLoaded; // Don't block on individual failures
-      preloaders.push(video);
-    }
+    const promises = PORTFOLIO_VIDEO_SOURCES.map((src) =>
+      preloadVideo(resolveAssetUrl(src), { timeoutMs: 8000, preload: 'metadata' }).then(() => {
+        checkAllLoaded();
+      })
+    );
 
     // Fallback: mark ready after 8s regardless
     const fallbackTimer = setTimeout(() => {
@@ -273,10 +267,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     return () => {
       cancelled = true;
       clearTimeout(fallbackTimer);
-      for (const v of preloaders) {
-        v.src = '';
-        v.load();
-      }
     };
   }, [isActive]);
 

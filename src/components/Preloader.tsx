@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { preloadVideo, preloadImage, preloadFont } from '@/lib/safeMediaPreload';
 
 interface PreloaderProps {
   assets: string[];
@@ -32,39 +33,21 @@ export function Preloader({ assets, onComplete }: PreloaderProps) {
     const promises = assets.map((src) => {
       const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(src);
       if (isVideo) {
-        return new Promise<void>((resolve) => {
-          const video = document.createElement('video');
-          video.preload = 'auto';
-          video.muted = true;
-          video.playsInline = true;
-          video.src = src;
-          const onReady = () => {
-            cleanup();
-            resolve();
-          };
-          const cleanup = () => {
-            video.removeEventListener('canplaythrough', onReady);
-            video.removeEventListener('error', onReady);
-          };
-          video.addEventListener('canplaythrough', onReady);
-          video.addEventListener('error', onReady);
-          if (video.readyState >= 4) {
-            onReady();
-          }
+        return preloadVideo(src, { timeoutMs: 5000, preload: 'metadata' }).then(() => {
+          checkComplete();
         });
       }
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.src = src;
+      return preloadImage(src, 5000).then(() => {
+        checkComplete();
       });
     });
 
-    // Also wait for fonts (same as App.tsx beginning preloader)
-    promises.push(document.fonts.ready.then(() => {}));
-
-    promises.forEach((p) => p.then(checkComplete));
+    // Fonts preload — always resolves, never blocks forever
+    promises.push(
+      preloadFont(3000).then(() => {
+        checkComplete();
+      })
+    );
 
     return () => {
       mountedRef.current = false;

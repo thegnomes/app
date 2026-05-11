@@ -135,9 +135,10 @@ function App() {
     };
   }, []);
 
-  // Preload main app videos + scene02 videos for continuity
+  // Preload critical first-screen assets (main videos + fonts).
+  // Scene02 assets are loaded non-blockingly in the background.
   useEffect(() => {
-    const mainVideoSources = [
+    const criticalVideoSources = [
       resolveAssetUrl('/idle_brain.webm'),
       resolveAssetUrl('/brain_zoom.webm'),
       resolveAssetUrl('/zoom-compiled-edit-latest-web.webm'),
@@ -147,16 +148,17 @@ function App() {
       '/scene02/looking-astro-loop2.webm',
       '/scene02/looking-astro-loop2.mov'
     ).map((source) => source.src);
-    const allVideoSources = [...mainVideoSources, ...scene02VideoSources];
+
     const images: HTMLImageElement[] = [];
     let loadedImages = 0;
     let fontsReady = false;
     const videoResults = new Map<string, PreloadResult>();
-    const totalAssets = allVideoSources.length + scene02ImageSources.length + 1;
+    // Critical assets: main videos + images + fonts
+    const criticalTotal = criticalVideoSources.length + scene02ImageSources.length + 1;
 
     const updateProgress = () => {
       let total = 0;
-      allVideoSources.forEach((src) => {
+      criticalVideoSources.forEach((src) => {
         const r = videoResults.get(src);
         if (r?.success) {
           total += 1;
@@ -166,14 +168,14 @@ function App() {
       });
       total += loadedImages;
       total += fontsReady ? 1 : 0;
-      const pct = Math.min(100, Math.round((total / totalAssets) * 100));
+      const pct = Math.min(100, Math.round((total / criticalTotal) * 100));
       setLoadProgress(pct);
     };
 
     const interval = setInterval(updateProgress, 100);
 
-    const videoPromises = allVideoSources.map((src) =>
-      preloadVideo(src, { timeoutMs: 4000, preload: 'metadata' }).then((res) => {
+    const criticalVideoPromises = criticalVideoSources.map((src) =>
+      preloadVideo(src, { timeoutMs: 5000, preload: 'metadata' }).then((res) => {
         videoResults.set(src, res);
         return res;
       })
@@ -209,10 +211,10 @@ function App() {
       });
     });
 
-    const promises = [...videoPromises, ...imagePromises];
+    const promises = [...criticalVideoPromises, ...imagePromises];
 
     promises.push(
-      preloadFont().then((ok) => {
+      preloadFont(3000).then((ok) => {
         fontsReady = ok;
       })
     );
@@ -221,6 +223,11 @@ function App() {
       clearInterval(interval);
       setLoadProgress(100);
       setAssetsLoaded(true);
+    });
+
+    // Non-blocking background preload for Scene02 videos
+    scene02VideoSources.forEach((src) => {
+      preloadVideo(src, { timeoutMs: 8000, preload: 'metadata' }).catch(() => {});
     });
 
     return () => {

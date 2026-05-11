@@ -42,8 +42,6 @@ function DisclaimerTerminal({
   loadProgress,
   assetsLoaded,
 }: Omit<DisclaimerDialogProps, 'open'>) {
-  const canProceed = assetsLoaded;
-
   return (
     <DialogContent
       showCloseButton={false}
@@ -180,12 +178,12 @@ function DisclaimerTerminal({
                 </div>
               </div>
 
-              {/* CTA Buttons — always visible, disabled until loaded */}
+              {/* CTA Buttons — Skip is always enabled; Full Experience waits for assets */}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  disabled={!canProceed}
+                  disabled={!assetsLoaded}
                   className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[13px]"
                   style={{
                     borderColor: NEON.primary,
@@ -200,8 +198,7 @@ function DisclaimerTerminal({
                 <button
                   type="button"
                   onClick={onSkip}
-                  disabled={!canProceed}
-                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[13px]"
+                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
                   style={{
                     borderColor: NEON.faint,
                     background: 'rgba(0, 0, 0, 0.45)',
