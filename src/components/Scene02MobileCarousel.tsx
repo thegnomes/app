@@ -394,7 +394,7 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
 
       {/* Top text */}
       <div className="pointer-events-none absolute inset-x-0 top-[calc(2.75rem+env(safe-area-inset-top))] z-20 px-6 text-center">
-        <p className="scene02-mono text-xs uppercase text-white/65">{item.project.year}</p>
+        <p className="scene02-mono text-sm uppercase text-white/65">{item.project.year}</p>
         <h2 className="mt-3 font-russo text-[4rem] uppercase leading-none text-white drop-shadow-[0_0_28px_rgba(0,0,0,0.85)]">
           {title}
         </h2>

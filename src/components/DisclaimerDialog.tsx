@@ -140,7 +140,7 @@ function DisclaimerTerminal({
 
             {/* Main text area */}
             <div
-              className="mt-3 rounded p-4 text-[13px] font-medium leading-[1.5] sm:mt-4 sm:p-5 sm:text-[15px]"
+              className="mt-4 rounded p-5 text-[15px] font-medium leading-[1.55] sm:mt-5 sm:p-6 sm:text-[17px] md:text-[18px]"
               style={{
                 background: 'rgba(0, 0, 0, 0.45)',
                 border: `2px solid ${NEON.faint}`,

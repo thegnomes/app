@@ -30,7 +30,7 @@ interface StateTextConfig {
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
     role: 'thesis',
-    lines: ['I have a theory. Our shared universe is our collective mind made visible.'],
+    lines: ['Every idea begins as drift.'],
     transitionDuration: 800,
     lingerPrevious: 0,
     lineDelay: 200,
@@ -39,8 +39,8 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   1: {
     role: 'atmosphere',
     lines: [
-      'Across the endless void, most thoughts do not matter —',
-      'until inspiration clicks.',
+      'A loose field of thoughts, scattered without form —',
+      'until something pulls them inward.',
     ],
     transitionDuration: 800,
     lingerPrevious: 420,
@@ -50,7 +50,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   8: {
     role: 'spark',
-    lines: ['A spark appears.'],
+    lines: ['*Click* — a spark finds gravity.'],
     transitionDuration: 450,
     lingerPrevious: 0,
     lineDelay: 0,
@@ -75,7 +75,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   3: {
     role: 'payoff',
-    lines: ['A vision begins when other ideas are drawn into orbit.'],
+    lines: ['The idea ignites.'],
     transitionDuration: 650,
     lingerPrevious: 260,
     lineDelay: 200,
@@ -91,7 +91,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   5: {
     role: 'collapse',
-    lines: ['Formation collapses. Some things burn brightly, then fade back into the dark.'],
+    lines: ['The centre fails to hold. Some sparks burn briefly, then return to the dark.'],
     transitionDuration: 650,
     lingerPrevious: 320,
     lineDelay: 200,
@@ -103,18 +103,19 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     lines: [
       'At the edge of fantasy and reality,',
       'a traveller appears.',
-      'Plotting coordinates for ideas —',
-      'through narrative, platforms,',
-      'and the systems that bring them into form.',
+      'Not to invent from nothing,',
+      'but to read the stars already forming —',
+      'and chart what they could become.',
     ],
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 400,
+    lineDelays: [1500, 2100, 3600, 4200, 4800],
     charStagger: 14,
   },
   7: {
     role: 'resolution',
-    lines: ['Its influence becomes order, setting an entire universe in motion.'],
+    lines: ['Its gravity draws other thoughts into orbit.'],
     transitionDuration: 750,
     lingerPrevious: 260,
     lineDelay: 200,
@@ -268,35 +269,65 @@ function renderCharReveal(
   className?: string
 ): ReactNode {
   if (!text) return null;
-  const chars = text.split('');
-  return chars.map((char, i) => {
-    const isHidden = linePhase === 'hidden';
-    const isGhost = linePhase === 'ghost';
-    const isLeaving = linePhase === 'leaving';
-    const delay = isHidden || isGhost || isLeaving ? 0 : i * charStaggerMs;
 
-    const tx = isHidden ? enterOffset.x : isGhost ? 0 : isLeaving ? 0 : 0;
-    const ty = isHidden ? enterOffset.y : isGhost ? -3 : isLeaving ? -6 : 0;
+  const segments: { text: string; emphasized: boolean }[] = [];
+  const pattern = /\*([^*]+)\*/g;
+  let lastIndex = 0;
+  let match;
 
-    return (
-      <span
-        key={`${char}-${i}`}
-        className={`inline-block ${className || ''}`}
-        style={{
-          opacity: isLeaving ? 0 : isGhost ? 0.18 : isHidden ? 0 : 1,
-          transform: `translate3d(${tx}px, ${ty}px, 0)`,
-          filter: `blur(${isLeaving ? 2 : isGhost ? 1 : 0}px)`,
-          transitionDuration: `${transitionDuration}ms`,
-          transitionDelay: `${delay}ms`,
-          transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          transitionProperty: isGhost || isLeaving ? 'opacity, transform, filter' : 'transform, opacity',
-          whiteSpace: 'pre',
-        }}
-      >
-        {char}
-      </span>
-    );
-  });
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ text: text.slice(lastIndex, match.index), emphasized: false });
+    }
+    segments.push({ text: match[1], emphasized: true });
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    segments.push({ text: text.slice(lastIndex), emphasized: false });
+  }
+
+  const elements: ReactNode[] = [];
+  let charIndex = 0;
+
+  for (const segment of segments) {
+    const chars = segment.text.split('');
+    for (const char of chars) {
+      const isHidden = linePhase === 'hidden';
+      const isGhost = linePhase === 'ghost';
+      const isLeaving = linePhase === 'leaving';
+      const delay = isHidden || isGhost || isLeaving ? 0 : charIndex * charStaggerMs;
+
+      const tx = isHidden ? enterOffset.x : isGhost ? 0 : isLeaving ? 0 : 0;
+      const ty = isHidden ? enterOffset.y : isGhost ? -3 : isLeaving ? -6 : 0;
+
+      elements.push(
+        <span
+          key={`${char}-${charIndex}`}
+          className={`inline-block ${className || ''}`}
+          style={{
+            opacity: isLeaving ? 0 : isGhost ? 0.18 : isHidden ? 0 : 1,
+            transform: `translate3d(${tx}px, ${ty}px, 0)`,
+            filter: `blur(${isLeaving ? 2 : isGhost ? 1 : 0}px)`,
+            transitionDuration: `${transitionDuration}ms`,
+            transitionDelay: `${delay}ms`,
+            transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            transitionProperty: isGhost || isLeaving ? 'opacity, transform, filter' : 'transform, opacity',
+            whiteSpace: 'pre',
+            ...(segment.emphasized && {
+              color: '#e8ffff',
+              textShadow: '0 0 6px rgba(180, 240, 255, 0.5), 0 0 14px rgba(160, 230, 255, 0.25)',
+              letterSpacing: '0.03em',
+            }),
+          }}
+        >
+          {char}
+        </span>
+      );
+      charIndex++;
+    }
+  }
+
+  return elements;
 }
 
 function State2CumulativeText({
@@ -345,9 +376,9 @@ function State2CumulativeText({
   }, [isVisible]);
 
   const beats = [
-    ['A thought given purpose', 'becomes a notion.'],
-    ['A notion tested by time', 'begins to take shape as an idea.'],
-    ['To become more than itself,', 'an idea must be released.'],
+    ['The first thought gathers mass.', 'It is not an idea yet.'],
+    ['*Hold* — pressure gives it shape.', 'What was scattered begins to hold.'],
+    ['Intent becomes the core.', '*Release* it, or let it collapse.'],
   ];
 
   if (currentBeat < 0 || currentBeat >= beats.length) return null;

@@ -133,7 +133,7 @@ export function GalaxyColumn({
           verticalOffset={18}
           className={`transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
           direction="reverse"
-          itemClassName="font-orbitron text-[10px] font-medium tracking-[0.38em] text-white/85 sm:text-[11px] md:text-[12px] lg:text-[14px]"
+          itemClassName="font-orbitron text-[12px] font-medium tracking-[0.38em] text-white/85 sm:text-[13px] md:text-[14px] lg:text-[16px]"
           itemStyle={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.85))' }}
         />
       </div>
