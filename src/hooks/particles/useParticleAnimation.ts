@@ -615,7 +615,9 @@ export function useParticleAnimation({ state, config, refs, data, cameraPanRef }
 
         if (refs.solarVideoCoreVideo.current) {
           if (shouldShowSolarCore && refs.solarVideoCoreVideo.current.paused) {
-            void refs.solarVideoCoreVideo.current.play();
+            void refs.solarVideoCoreVideo.current.play().catch(() => {
+              // Solar core video playback failed — particle visual remains
+            });
           } else if (!shouldShowSolarCore && !refs.solarVideoCoreVideo.current.paused) {
             refs.solarVideoCoreVideo.current.pause();
           }

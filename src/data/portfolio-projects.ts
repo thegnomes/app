@@ -14,6 +14,10 @@ export interface PortfolioProject {
   philosophyBody: string;
   proof: { num: string; title: string; desc: string; detail: string; images?: { src: string; alt: string }[]; link?: { href: string; label: string } }[];
   heroVideo?: string;
+  heroVideoWebm?: string;
+  heroVideoMp4?: string;
+  poster?: string;
+  fallbackImage?: string;
   visionLabel: string;
   visionQuote: string;
   gallery: { src: string; alt: string; layout: 'full' | 'half'; speed?: number }[];

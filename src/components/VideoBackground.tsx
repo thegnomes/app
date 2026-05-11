@@ -32,7 +32,15 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
         hasTransitionedRef.current = false;
         onTransition();
         hasTransitionedRef.current = true;
-        zoomVideoRef.current?.play();
+        zoomVideoRef.current?.play().catch(() => {
+          // Zoom video failed — still fade out and clean up
+          setIsFadingOut(true);
+          fadeTimerRef.current = window.setTimeout(() => {
+            fadeTimerRef.current = null;
+            setIsVisible(false);
+            setIsZooming(false);
+          }, 800);
+        });
       });
     }
   }, [autoTrigger, isZooming, onTransition]);
@@ -75,7 +83,10 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
-      zoomVideoRef.current?.play();
+      zoomVideoRef.current?.play().catch(() => {
+        // Zoom video failed on click — still transition
+        onTransition();
+      });
       onTransition();
     }
   };
@@ -101,7 +112,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             className={`w-full h-full object-contain ${isSafari ? 'mix-blend-screen' : ''}`}
           >
             <source src={resolveAssetUrl('/idle_brain.webm')} type="video/webm" />
@@ -114,7 +125,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
         ref={zoomVideoRef}
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         className={`
           absolute inset-0 w-full h-full object-cover
           ${isZooming ? 'opacity-100' : 'opacity-0 pointer-events-none'}

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ParticleCanvas } from './components/ParticleCanvas';
+import { preloadVideo, preloadFont } from '@/lib/safeMediaPreload';
+import type { PreloadResult } from '@/lib/safeMediaPreload';
 import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
 import { VideoBackground } from './components/VideoBackground';
@@ -146,20 +148,20 @@ function App() {
       '/scene02/looking-astro-loop2.mov'
     ).map((source) => source.src);
     const allVideoSources = [...mainVideoSources, ...scene02VideoSources];
-    const videos: HTMLVideoElement[] = [];
     const images: HTMLImageElement[] = [];
     let loadedImages = 0;
     let fontsReady = false;
+    const videoResults = new Map<string, PreloadResult>();
     const totalAssets = allVideoSources.length + scene02ImageSources.length + 1;
 
     const updateProgress = () => {
       let total = 0;
-      videos.forEach((v) => {
-        if (v.readyState >= 4) {
+      allVideoSources.forEach((src) => {
+        const r = videoResults.get(src);
+        if (r?.success) {
           total += 1;
-        } else if (v.duration && v.buffered.length > 0) {
-          const buffered = v.buffered.end(v.buffered.length - 1);
-          total += Math.min(1, buffered / v.duration);
+        } else if (r && r.readyState >= 1) {
+          total += 0.5;
         }
       });
       total += loadedImages;
@@ -170,30 +172,12 @@ function App() {
 
     const interval = setInterval(updateProgress, 100);
 
-    const videoPromises = allVideoSources.map((src) => {
-      const video = document.createElement('video');
-      video.preload = 'auto';
-      video.muted = true;
-      video.playsInline = true;
-      video.src = src;
-      video.load();
-      videos.push(video);
-      return new Promise<void>((resolve) => {
-        const cleanup = () => {
-          video.removeEventListener('canplaythrough', onReady);
-          video.removeEventListener('error', onReady);
-        };
-        const onReady = () => {
-          cleanup();
-          resolve();
-        };
-        video.addEventListener('canplaythrough', onReady);
-        video.addEventListener('error', onReady);
-        if (video.readyState >= 4) {
-          onReady();
-        }
-      });
-    });
+    const videoPromises = allVideoSources.map((src) =>
+      preloadVideo(src, { timeoutMs: 4000, preload: 'metadata' }).then((res) => {
+        videoResults.set(src, res);
+        return res;
+      })
+    );
 
     const imagePromises = scene02ImageSources.map((src) => {
       const image = new Image();
@@ -228,8 +212,8 @@ function App() {
     const promises = [...videoPromises, ...imagePromises];
 
     promises.push(
-      document.fonts.ready.then(() => {
-        fontsReady = true;
+      preloadFont().then((ok) => {
+        fontsReady = ok;
       })
     );
 
@@ -241,10 +225,6 @@ function App() {
 
     return () => {
       clearInterval(interval);
-      videos.forEach((video) => {
-        video.src = '';
-        video.load();
-      });
       images.forEach((image) => {
         image.onload = null;
         image.onerror = null;

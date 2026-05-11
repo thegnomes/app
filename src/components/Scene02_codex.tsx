@@ -64,7 +64,9 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       if (nebulaParallaxRef.current) {
         nebulaParallaxRef.current.style.transform = 'translate3d(0, 0, 0)';
       }
-      void video.play();
+      void video.play().catch(() => {
+        // Astronaut video failed to play — visual is already shown via CSS
+      });
     } else {
       video.pause();
       video.currentTime = 0;
@@ -215,7 +217,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               muted
               playsInline
               loop
-              preload="auto"
+              preload="metadata"
               className="h-full w-full origin-top object-contain object-top"
               style={{
                 transform: `scale(${scaleAstro})`,

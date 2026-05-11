@@ -1,8 +1,13 @@
-import { isSafari } from '@/lib/isSafari';
-
 interface AlphaVideoSource {
   src: string;
   type: string;
+}
+
+function canPlayHevcAlpha(): boolean {
+  if (typeof document === 'undefined') return false;
+  const video = document.createElement('video');
+  // HEVC with alpha in MP4 container (Safari-compatible)
+  return video.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"') === 'probably';
 }
 
 export function getAlphaVideoSources(webmSrc: string, movSrc?: string): AlphaVideoSource[] {
@@ -11,6 +16,7 @@ export function getAlphaVideoSources(webmSrc: string, movSrc?: string): AlphaVid
 
   const movSource = { src: movSrc, type: 'video/quicktime' };
 
-  // Safari/WebKit can select WebM but drop VP9 alpha, so prefer HEVC alpha there.
-  return isSafari ? [movSource, webmSource] : [webmSource, movSource];
+  // Use canPlayType to detect HEVC alpha support instead of UA sniffing.
+  // Safari on macOS/iOS supports HEVC with alpha; prefer it there.
+  return canPlayHevcAlpha() ? [movSource, webmSource] : [webmSource, movSource];
 }

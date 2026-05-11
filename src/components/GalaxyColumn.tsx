@@ -35,8 +35,8 @@ export function GalaxyColumn({
     if (!video || !overlay) return;
 
     if (isHovered) {
-      void video.play();
-      void overlay.play();
+      void video.play().catch(() => undefined);
+      void overlay.play().catch(() => undefined);
     } else {
       video.pause();
       video.currentTime = 0;
@@ -85,7 +85,7 @@ export function GalaxyColumn({
             muted
             playsInline
             loop
-            preload="auto"
+            preload="metadata"
             className="h-full w-full object-contain"
           >
             {videoSources.map((source) => (
@@ -99,7 +99,7 @@ export function GalaxyColumn({
           muted
           playsInline
           loop
-          preload="auto"
+          preload="metadata"
           className={`pointer-events-none absolute left-1/2 top-1/2 z-20 h-[145%] w-[145%] -translate-x-1/2 -translate-y-1/2 object-contain mix-blend-screen transition-opacity duration-500 ${
             isHovered ? 'opacity-80' : 'opacity-0'
           }`}

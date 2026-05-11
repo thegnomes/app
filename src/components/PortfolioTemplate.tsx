@@ -140,6 +140,8 @@ function VideoPlayer({
   const resolved = resolveAssetUrl(src);
   const isExternal = resolved.startsWith('http');
   const safariStyle = isSafari ? { mixBlendMode: 'screen' as const, filter: 'brightness(1)' as const } : undefined;
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
   if (isExternal) {
     return (
       <video
@@ -147,10 +149,11 @@ function VideoPlayer({
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         poster={poster ? resolveAssetUrl(poster) : undefined}
         className={className}
         style={safariStyle}
+        onError={() => setFailed(true)}
       >
         <source src={resolved} type={`video/${resolved.replace(/.*\./, '')}`} />
       </video>
@@ -163,10 +166,11 @@ function VideoPlayer({
       muted
       loop
       playsInline
-      preload="auto"
+      preload="metadata"
       poster={poster ? resolveAssetUrl(poster) : undefined}
       className={className}
       style={safariStyle}
+      onError={() => setFailed(true)}
     >
       <source src={`${base}.webm`} type="video/webm" />
       <source src={`${base}.mp4`} type="video/mp4" />
@@ -384,20 +388,29 @@ function Nav() {
 }
 
 function Hero({ project }: { project: PortfolioProject }) {
-  const heroImage = project.gallery[0]?.src ?? '/portfolio/hero.jpg';
+  const heroImage = project.fallbackImage ?? project.poster ?? project.gallery[0]?.src ?? '/portfolio/hero.jpg';
+  const hasHeroVideo = Boolean(project.heroVideo || project.heroVideoWebm || project.heroVideoMp4);
 
   return (
     <section className="relative min-h-screen flex flex-col justify-end pb-10 md:pb-16 px-6 md:px-10 overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 z-0">
-        {project.heroVideo ? (
-          <VideoPlayer
-            src={project.heroVideo}
-            poster={heroImage}
+        <img src={resolveAssetUrl(heroImage)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
+        {hasHeroVideo ? (
+          <video
+            poster={resolveAssetUrl(heroImage)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
             className="absolute inset-0 w-full h-full object-cover scale-105"
-          />
-        ) : (
-          <img src={resolveAssetUrl(heroImage)} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
-        )}
+          >
+            {/* TODO: add heroVideoMp4 / heroVideoWebm sources when assets exist */}
+            {project.heroVideoWebm && <source src={resolveAssetUrl(project.heroVideoWebm)} type="video/webm" />}
+            {project.heroVideoMp4 && <source src={resolveAssetUrl(project.heroVideoMp4)} type="video/mp4" />}
+            {project.heroVideo && <source src={resolveAssetUrl(project.heroVideo)} type="video/mp4" />}
+          </video>
+        ) : null}
         <div className="absolute inset-0 bg-white/5" />
       </div>
 

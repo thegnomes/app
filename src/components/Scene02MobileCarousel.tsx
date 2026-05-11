@@ -380,7 +380,7 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
           muted
           playsInline
           loop
-          preload="auto"
+          preload="metadata"
           className={cn(
             'h-[62svh] w-[150vw] max-w-none object-contain transition-all duration-700 ease-out',
             isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-35 blur-[1px]'
