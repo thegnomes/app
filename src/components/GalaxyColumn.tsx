@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
+import { resolveAssetUrl } from '@/lib/assets';
 import { RingText } from './RingText';
 
 interface GalaxyColumnProps {
@@ -28,6 +29,13 @@ export function GalaxyColumn({
   const [isHovered, setIsHovered] = useState(false);
   const videoSources = getAlphaVideoSources(srcWebm, srcMov);
   const overlaySources = getAlphaVideoSources('/webm/target-lock.webm', '/webm/target-lock.mov');
+
+  // Derive poster from webm path: /webm/name.webm -> /webm/name.png
+  const posterSrc = resolveAssetUrl(srcWebm.replace(/\.webm$/i, '.png'));
+  const overlayPosterSrc = resolveAssetUrl('/webm/target-lock.png');
+
+  const [videoReady, setVideoReady] = useState(false);
+  const [overlayReady, setOverlayReady] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -80,13 +88,24 @@ export function GalaxyColumn({
         }}
       >
         <div className="relative z-10 h-full w-full">
+          {/* Poster fallback — visible immediately, stays if video fails */}
+          <img
+            src={posterSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-contain"
+            style={{ opacity: videoReady ? 0 : 1, transition: 'opacity 0.8s ease-out' }}
+          />
           <video
             ref={videoRef}
             muted
             playsInline
             loop
             preload="metadata"
-            className="h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain"
+            style={{ opacity: videoReady ? 1 : 0, transition: 'opacity 0.8s ease-out' }}
+            onCanPlay={() => setVideoReady(true)}
+            onCanPlayThrough={() => setVideoReady(true)}
+            onLoadedData={() => setVideoReady(true)}
           >
             {videoSources.map((source) => (
               <source key={source.src} src={source.src} type={source.type} />
@@ -94,6 +113,14 @@ export function GalaxyColumn({
           </video>
         </div>
 
+        {/* Poster fallback for overlay */}
+        <img
+          src={overlayPosterSrc}
+          alt=""
+          className={`pointer-events-none absolute left-1/2 top-1/2 z-20 h-[145%] w-[145%] -translate-x-1/2 -translate-y-1/2 object-contain mix-blend-screen transition-opacity duration-500 ${
+            isHovered && !overlayReady ? 'opacity-80' : 'opacity-0'
+          }`}
+        />
         <video
           ref={overlayRef}
           muted
@@ -101,8 +128,11 @@ export function GalaxyColumn({
           loop
           preload="metadata"
           className={`pointer-events-none absolute left-1/2 top-1/2 z-20 h-[145%] w-[145%] -translate-x-1/2 -translate-y-1/2 object-contain mix-blend-screen transition-opacity duration-500 ${
-            isHovered ? 'opacity-80' : 'opacity-0'
+            isHovered && overlayReady ? 'opacity-80' : 'opacity-0'
           }`}
+          onCanPlay={() => setOverlayReady(true)}
+          onCanPlayThrough={() => setOverlayReady(true)}
+          onLoadedData={() => setOverlayReady(true)}
         >
           {overlaySources.map((source) => (
             <source key={source.src} src={source.src} type={source.type} />

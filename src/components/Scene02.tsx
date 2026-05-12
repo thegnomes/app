@@ -238,6 +238,9 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
     '/scene02/looking-astro-loop2.webm',
     '/scene02/looking-astro-loop2.mov'
   );
+  // TODO: poster is in /webm/ while video is in /scene02/; ideally move to /scene02/looking-astro-loop2.png
+  const astroPoster = resolveAssetUrl('/webm/looking-astro-loop2.png');
+  const [astroVideoReady, setAstroVideoReady] = useState(false);
 
   // Preload portfolio showcase videos when Scene02 becomes active
   useEffect(() => {
@@ -431,22 +434,38 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               transform: 'translate3d(0, 0, 0)',
             }}
           >
-            <video
-              ref={astroRef}
-              muted
-              playsInline
-              loop
-              preload="metadata"
-              className="h-full w-full origin-center object-contain object-center"
-              style={{
-                transform: `scale(${scaleAstro})`,
-                transition: 'transform 10s ease-out',
-              }}
-            >
-              {astroVideoSources.map((source) => (
-                <source key={source.src} src={source.src} type={source.type} />
-              ))}
-            </video>
+            <div className="relative h-full w-full">
+              {/* Poster fallback — visible immediately, stays if video fails */}
+              <img
+                src={astroPoster}
+                alt=""
+                className="absolute inset-0 h-full w-full origin-center object-contain object-center"
+                style={{
+                  transform: `scale(${scaleAstro})`,
+                  transition: 'transform 10s ease-out',
+                }}
+              />
+              <video
+                ref={astroRef}
+                muted
+                playsInline
+                loop
+                preload="metadata"
+                className="absolute inset-0 h-full w-full origin-center object-contain object-center"
+                style={{
+                  transform: `scale(${scaleAstro})`,
+                  transition: 'transform 10s ease-out, opacity 1.2s ease-out',
+                  opacity: astroVideoReady ? 1 : 0,
+                }}
+                onCanPlay={() => setAstroVideoReady(true)}
+                onCanPlayThrough={() => setAstroVideoReady(true)}
+                onLoadedData={() => setAstroVideoReady(true)}
+              >
+                {astroVideoSources.map((source) => (
+                  <source key={source.src} src={source.src} type={source.type} />
+                ))}
+              </video>
+            </div>
           </div>
         </div>
       </div>

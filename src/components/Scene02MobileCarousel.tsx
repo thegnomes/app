@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { getAlphaVideoSources } from '@/lib/alphaVideoSources';
+import { resolveAssetUrl } from '@/lib/assets';
 import { cn } from '@/lib/utils';
 
 const MOBILE_MARQUEE_TEXT = 'CHANCE WOON \u2014 CREATIVE STRATEGIST';
@@ -343,6 +344,8 @@ interface GalaxySlideProps {
 
 function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
   const videoSources = getAlphaVideoSources(item.srcWebm, item.srcMov);
+  const posterSrc = resolveAssetUrl(item.srcWebm.replace(/\.webm$/i, '.png'));
+  const [videoReady, setVideoReady] = useState(false);
   const title = item.displayTitle ?? item.project.title;
   const accentColor = item.project.accentColor ?? '#ffffff';
   const accentSecondaryColor = item.project.accentSecondaryColor ?? accentColor;
@@ -368,23 +371,39 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
       {/* Vignette overlay */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.48),rgba(0,0,0,0)_28%,rgba(0,0,0,0)_62%,rgba(0,0,0,0.72))]" />
 
-      {/* Galaxy video */}
+      {/* Galaxy video with poster fallback */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          loop
-          preload="metadata"
-          className={cn(
-            'h-[62svh] w-[150vw] max-w-none object-contain transition-all duration-700 ease-out',
-            isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-35 blur-[1px]'
-          )}
-        >
-          {videoSources.map((source) => (
-            <source key={source.src} src={source.src} type={source.type} />
-          ))}
-        </video>
+        <div className="relative h-[62svh] w-[150vw] max-w-none">
+          {/* Poster — visible immediately, stays if video fails */}
+          <img
+            src={posterSrc}
+            alt=""
+            className={cn(
+              'absolute inset-0 h-full w-full object-contain transition-all duration-700 ease-out',
+              isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-35 blur-[1px]'
+            )}
+            style={{ opacity: videoReady ? 0 : undefined }}
+          />
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            loop
+            preload="metadata"
+            className={cn(
+              'absolute inset-0 h-full w-full object-contain transition-all duration-700 ease-out',
+              isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-35 blur-[1px]'
+            )}
+            style={{ opacity: videoReady ? undefined : 0 }}
+            onCanPlay={() => setVideoReady(true)}
+            onCanPlayThrough={() => setVideoReady(true)}
+            onLoadedData={() => setVideoReady(true)}
+          >
+            {videoSources.map((source) => (
+              <source key={source.src} src={source.src} type={source.type} />
+            ))}
+          </video>
+        </div>
       </div>
 
       {/* Top text */}

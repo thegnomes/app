@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ParticleCanvas } from './components/ParticleCanvas';
 import { preloadVideo, preloadFont } from '@/lib/safeMediaPreload';
+import { warmMyWorkCriticalAssets } from '@/lib/preloadMyWorkAssets';
 import type { PreloadResult } from '@/lib/safeMediaPreload';
 import { StateText, type TextSceneState } from './components/StateText';
 import { Footer } from './components/Footer';
@@ -89,10 +90,18 @@ function App() {
     setShowFinalVideo(false);
   }, []);
 
+  const myWorkWarmupRef = useRef<Promise<void> | null>(null);
+
   const redirectToScene02 = useCallback(() => {
     if (redirectedRef.current) return;
     redirectedRef.current = true;
-    window.location.href = '/mywork.html';
+
+    const warmup = myWorkWarmupRef.current ?? warmMyWorkCriticalAssets();
+    const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, 1200));
+
+    void Promise.race([warmup, timeout]).then(() => {
+      window.location.href = '/mywork.html';
+    });
   }, []);
 
   const handleSkipToScene02 = useCallback(() => {
@@ -241,8 +250,6 @@ function App() {
       autoZoomTimerRef.current = null;
       if (stateRef.current !== 0) return;
       setAutoZoom(true);
-      setState(1);
-      setTextState(1);
       setShowFinalVideo(false);
     }, 3800);
     return () => {
@@ -323,7 +330,8 @@ function App() {
 
       const target = e.target as HTMLElement;
       if (target.closest('.control-panel')) return;
-      if (stateRef.current === 0 && target.closest('.video-background')) return;
+      if (target.closest('.video-background')) return;
+      if (target.closest('a, button, [role="button"]')) return;
 
       // Only work in State 1
       if (stateRef.current !== 1) return;
@@ -464,6 +472,12 @@ function App() {
       clearTimeout(timerId);
       textSequenceTimerRef.current = null;
     };
+  }, [textState]);
+
+  // Begin warming mywork assets as soon as the successful path reaches textState 7
+  useEffect(() => {
+    if (textState !== 7) return;
+    myWorkWarmupRef.current = warmMyWorkCriticalAssets();
   }, [textState]);
 
   useEffect(() => {

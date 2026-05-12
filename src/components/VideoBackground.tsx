@@ -8,10 +8,10 @@ interface VideoBackgroundProps {
   autoTrigger?: boolean;
 }
 
-// Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
 const TRANSITION_TIME = 0;
 const FADE_DURATION_MS = 800;
-const PLAY_FAILURE_VISUAL_DELAY_MS = 1200;
+const ZOOM_HANDOFF_FALLBACK_DELAY_MS = 1200;
+const PLAY_FAILURE_FADE_DELAY_MS = 2400;
 
 export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
@@ -20,24 +20,34 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
   const hasTransitionedRef = useRef(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const playFailureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const zoomHandoffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playFailureFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearPlayFailureTimer = useCallback(() => {
-    if (playFailureTimerRef.current) {
-      clearTimeout(playFailureTimerRef.current);
-      playFailureTimerRef.current = null;
+  const clearZoomHandoffTimer = useCallback(() => {
+    if (zoomHandoffTimerRef.current) {
+      clearTimeout(zoomHandoffTimerRef.current);
+      zoomHandoffTimerRef.current = null;
     }
   }, []);
+
+  const clearPlaybackFallbackTimers = useCallback(() => {
+    clearZoomHandoffTimer();
+    if (playFailureFadeTimerRef.current) {
+      clearTimeout(playFailureFadeTimerRef.current);
+      playFailureFadeTimerRef.current = null;
+    }
+  }, [clearZoomHandoffTimer]);
 
   const transitionOnce = useCallback(() => {
     if (hasTransitionedRef.current) return;
     hasTransitionedRef.current = true;
+    clearZoomHandoffTimer();
     onTransition();
-  }, [onTransition]);
+  }, [clearZoomHandoffTimer, onTransition]);
 
   const startFadeOut = useCallback(() => {
     if (fadeTimerRef.current) return;
-    clearPlayFailureTimer();
+    clearPlaybackFallbackTimers();
     setIsFadingOut(true);
     fadeTimerRef.current = window.setTimeout(() => {
       fadeTimerRef.current = null;
@@ -45,25 +55,33 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
       setIsZooming(false);
       setIsFadingOut(false);
     }, FADE_DURATION_MS);
-  }, [clearPlayFailureTimer]);
+  }, [clearPlaybackFallbackTimers]);
+
+  const scheduleZoomHandoffFallback = useCallback(() => {
+    if (hasTransitionedRef.current || zoomHandoffTimerRef.current) return;
+    zoomHandoffTimerRef.current = window.setTimeout(() => {
+      zoomHandoffTimerRef.current = null;
+      transitionOnce();
+    }, ZOOM_HANDOFF_FALLBACK_DELAY_MS);
+  }, [transitionOnce]);
 
   const handleZoomPlaybackFailure = useCallback(() => {
-    transitionOnce();
-    if (playFailureTimerRef.current) return;
-    playFailureTimerRef.current = window.setTimeout(() => {
-      playFailureTimerRef.current = null;
+    if (playFailureFadeTimerRef.current) return;
+    playFailureFadeTimerRef.current = window.setTimeout(() => {
+      playFailureFadeTimerRef.current = null;
       startFadeOut();
-    }, PLAY_FAILURE_VISUAL_DELAY_MS);
-  }, [startFadeOut, transitionOnce]);
+    }, PLAY_FAILURE_FADE_DELAY_MS);
+  }, [startFadeOut]);
 
   const playZoomVideo = useCallback(() => {
+    scheduleZoomHandoffFallback();
     const playPromise = zoomVideoRef.current?.play();
     if (!playPromise) {
       handleZoomPlaybackFailure();
       return;
     }
     void playPromise.catch(handleZoomPlaybackFailure);
-  }, [handleZoomPlaybackFailure]);
+  }, [handleZoomPlaybackFailure, scheduleZoomHandoffFallback]);
 
   useEffect(() => {
     if (isActive) {
@@ -80,11 +98,10 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
       requestAnimationFrame(() => {
         setIsZooming(true);
         setIsFadingOut(false);
-        transitionOnce();
         playZoomVideo();
       });
     }
-  }, [autoTrigger, isZooming, playZoomVideo, transitionOnce]);
+  }, [autoTrigger, isZooming, playZoomVideo]);
 
   const handleTimeUpdate = () => {
     const video = zoomVideoRef.current;
@@ -111,16 +128,15 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
         clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = null;
       }
-      clearPlayFailureTimer();
+      clearPlaybackFallbackTimers();
       video?.pause();
     };
-  }, [clearPlayFailureTimer]);
+  }, [clearPlaybackFallbackTimers]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
       setIsFadingOut(false);
-      transitionOnce();
       playZoomVideo();
     }
   };
