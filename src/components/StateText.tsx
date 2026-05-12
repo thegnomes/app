@@ -36,7 +36,7 @@ interface StateTextCopy {
 }
 
 const INSTRUCTION_TEXT_CLASS =
-  'text-[11px] font-medium uppercase tracking-[0.22em] text-cyan-300/90 sm:text-[12px] md:text-[13px]';
+  'text-[17px] font-medium uppercase tracking-[0.22em] text-cyan-300/90 sm:text-[12px] md:text-[13px]';
 const INSTRUCTION_TEXT_SHADOW =
   '0 0 8px rgba(34,211,238,0.9), 0 0 18px rgba(14,165,233,0.65)';
 
@@ -68,11 +68,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   8: {
     role: 'spark',
-    copy: {
-      header: '',
-      subtext: 'The formation begins.',
-      instruction: 'Hold to keep it forming.',
-    },
+    lines: [],
     transitionDuration: 900,
     lingerPrevious: 0,
     lineDelay: 180,
@@ -210,7 +206,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'thesis':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[18px] sm:text-[21px] md:text-[24px]',
+        sizeClass: 'text-[27px] sm:text-[21px] md:text-[24px]',
         trackingClass: 'tracking-[0.12em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -219,7 +215,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'atmosphere':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        sizeClass: 'text-[26px] sm:text-[20px] md:text-[23px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -228,7 +224,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'spark':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        sizeClass: 'text-[24px] sm:text-[19px] md:text-[22px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -237,7 +233,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'payoff':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        sizeClass: 'text-[26px] sm:text-[20px] md:text-[23px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -246,7 +242,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'resolution':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[17px] sm:text-[20px] md:text-[23px]',
+        sizeClass: 'text-[26px] sm:text-[20px] md:text-[23px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -255,7 +251,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'collapse':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        sizeClass: 'text-[24px] sm:text-[19px] md:text-[22px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -264,7 +260,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     case 'reveal':
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[16px] sm:text-[19px] md:text-[22px]',
+        sizeClass: 'text-[24px] sm:text-[19px] md:text-[22px]',
         trackingClass: 'tracking-[0.1em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -273,7 +269,7 @@ function getRoleTypography(role: TextRole): TypographySpec {
     default:
       return {
         fontClass: 'font-orbitron',
-        sizeClass: 'text-[14px]',
+        sizeClass: 'text-[21px]',
         trackingClass: 'tracking-[0.12em]',
         uppercase: false,
         toneClass: 'text-white',
@@ -488,8 +484,8 @@ function State2CumulativeText({
     const className = isInstruction
       ? INSTRUCTION_TEXT_CLASS
       : part.kind === 'subtext'
-        ? 'text-[15px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
-        : 'text-[17px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
+        ? 'text-[23px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
+        : 'text-[26px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
     const charStagger = isInstruction ? 8 : part.kind === 'subtext' ? 10 : 12;
 
     return (
@@ -731,7 +727,7 @@ export function StateText({ state }: { state: TextSceneState }) {
             const textClasses = isInstruction
               ? `${typography.fontClass} ${INSTRUCTION_TEXT_CLASS}`
               : isSubtext
-                ? `${typography.fontClass} text-[15px] font-normal tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]`
+                ? `${typography.fontClass} text-[23px] font-normal tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]`
                 : `${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''}`;
             const charStagger = isInstruction ? 8 : isSubtext ? 10 : config.charStagger;
             return (
