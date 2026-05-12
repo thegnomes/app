@@ -6,6 +6,7 @@ interface VideoBackgroundProps {
   isActive: boolean;
   onTransition: () => void;
   autoTrigger?: boolean;
+  inputLockedUntil?: number;
 }
 
 const TRANSITION_TIME = 0;
@@ -13,7 +14,12 @@ const FADE_DURATION_MS = 800;
 const ZOOM_HANDOFF_FALLBACK_DELAY_MS = 1200;
 const PLAY_FAILURE_FADE_DELAY_MS = 2400;
 
-export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBackgroundProps) {
+export function VideoBackground({
+  isActive,
+  onTransition,
+  autoTrigger,
+  inputLockedUntil = 0,
+}: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -134,6 +140,7 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
   }, [clearPlaybackFallbackTimers]);
 
   const handleClick = () => {
+    if (Date.now() < inputLockedUntil) return;
     if (!isZooming && isActive) {
       setIsZooming(true);
       setIsFadingOut(false);

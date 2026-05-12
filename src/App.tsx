@@ -20,6 +20,8 @@ import {
 
 const FINAL_VIDEO_DELAY_MS = 1800;
 const HOLD_INTENT_DELAY_MS = 180;
+const INITIAL_SPARK_REVEAL_MS = 650;
+const POST_DISCLAIMER_INPUT_LOCK_MS = 1400;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -31,6 +33,7 @@ function App() {
   const [loadProgress, setLoadProgress] = useState(0);
   const astronautTextTriggeredRef = useRef(false);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [introInputLockedUntil, setIntroInputLockedUntil] = useState(0);
   const showDisclaimerRef = useRef(true);
   useEffect(() => {
     showDisclaimerRef.current = showDisclaimer;
@@ -113,6 +116,11 @@ function App() {
     setShowDisclaimer(false);
     redirectToScene02();
   }, [redirectToScene02]);
+
+  const handleFullExperience = useCallback(() => {
+    setIntroInputLockedUntil(Date.now() + POST_DISCLAIMER_INPUT_LOCK_MS);
+    setShowDisclaimer(false);
+  }, []);
 
   const handleFinalVideoEnded = useCallback(() => {
     redirectToScene02();
@@ -256,7 +264,7 @@ function App() {
       if (stateRef.current !== 0) return;
       setAutoZoom(true);
       setShowFinalVideo(false);
-    }, 3800);
+    }, 3800 + POST_DISCLAIMER_INPUT_LOCK_MS);
     return () => {
       if (autoZoomTimerRef.current) {
         clearTimeout(autoZoomTimerRef.current);
@@ -356,19 +364,20 @@ function App() {
         textSequenceTimerRef.current = null;
       }
 
-      // First tap shows spark/pre-hold text only
+      const holdDelay = hasSparkedRef.current ? HOLD_INTENT_DELAY_MS : INITIAL_SPARK_REVEAL_MS;
+
+      // First press shows spark/pre-hold text before the formation begins.
       if (!hasSparkedRef.current) {
         hasSparkedRef.current = true;
         setTextState(8);
-        return;
       }
 
-      // Subsequent press-and-hold starts formation after hold-intent delay
+      // Press-and-hold starts formation after a short intent delay.
       pointerDownRef.current = true;
       holdIntentTimerRef.current = window.setTimeout(() => {
         holdIntentTimerRef.current = null;
         commitToState2();
-      }, HOLD_INTENT_DELAY_MS);
+      }, holdDelay);
     };
 
     const commitToState2 = () => {
@@ -541,6 +550,7 @@ function App() {
           isActive={state === 0}
           onTransition={handleVideoTransition}
           autoTrigger={autoZoom}
+          inputLockedUntil={introInputLockedUntil}
         />
       </div>
       <div className="particle-canvas-container">
@@ -555,7 +565,7 @@ function App() {
       {/* Astronaut text is now rendered through StateText as textState 6 */}
       <DisclaimerDialog
         open={showDisclaimer}
-        onClose={() => setShowDisclaimer(false)}
+        onClose={handleFullExperience}
         onSkip={handleSkipToScene02}
         loadProgress={loadProgress}
         assetsLoaded={assetsLoaded}
