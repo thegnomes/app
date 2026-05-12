@@ -105,7 +105,6 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     role: 'reveal',
     lines: [
       'At the edge of fantasy and reality,',
-      'a traveller appears.',
       'Not to invent from nothing,',
       'but to read the stars already forming —',
       'and chart what they could become.',
@@ -113,7 +112,6 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 400,
-    lineDelays: [0, 2000, 2000, 2000, 2000],
     charStagger: 14,
   },
   7: {
@@ -134,8 +132,6 @@ interface TextBlockInstance {
   lineVisibilities: boolean[];
   exitDuration?: number;
 }
-
-const HEADER_FADE_DURATION_MS = 1400;
 
 function hasText(config: StateTextConfig, state: TextSceneState): boolean {
   return config.lines.length > 0 || state === '2';
@@ -347,9 +343,11 @@ function State2CumulativeText({
 
   useEffect(() => {
     if (!isVisible) {
-      setCurrentBeat(-1);
-      setBeatPhase('hidden');
-      return;
+      const frameId = requestAnimationFrame(() => {
+        setCurrentBeat(-1);
+        setBeatPhase('hidden');
+      });
+      return () => cancelAnimationFrame(frameId);
     }
     const timers: ReturnType<typeof setTimeout>[] = [];
 
@@ -363,7 +361,7 @@ function State2CumulativeText({
       setBeatPhase('leaving');
     };
 
-    showBeat(0);
+    timers.push(setTimeout(() => showBeat(0), 0));
 
     timers.push(setTimeout(() => hideBeat(), STATE2_ABSORPTION_DURATION - 500));
     timers.push(setTimeout(() => showBeat(1), STATE2_ABSORPTION_DURATION));
@@ -419,6 +417,91 @@ function State2CumulativeText({
   );
 }
 
+function RevealTextSequence({
+  isVisible,
+  isExiting,
+  transitionDuration = 800,
+}: {
+  isVisible: boolean;
+  isExiting?: boolean;
+  transitionDuration?: number;
+}) {
+  const [currentBeat, setCurrentBeat] = useState(0);
+  const [beatPhase, setBeatPhase] = useState<LinePhase>('hidden');
+  const firstBeatVisibleMs = 1400;
+  const replacementPauseMs = 80;
+
+  useEffect(() => {
+    if (!isVisible) {
+      const frameId = requestAnimationFrame(() => {
+        setCurrentBeat(0);
+        setBeatPhase('hidden');
+      });
+      return () => cancelAnimationFrame(frameId);
+    }
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    timers.push(setTimeout(() => setBeatPhase('active'), 60));
+    timers.push(setTimeout(() => setBeatPhase('leaving'), firstBeatVisibleMs));
+    timers.push(
+      setTimeout(() => {
+        setCurrentBeat(1);
+        setBeatPhase('hidden');
+      }, firstBeatVisibleMs + transitionDuration)
+    );
+    timers.push(
+      setTimeout(() => {
+        setBeatPhase('active');
+      }, firstBeatVisibleMs + transitionDuration + replacementPauseMs)
+    );
+
+    return () => timers.forEach(clearTimeout);
+  }, [firstBeatVisibleMs, isVisible, replacementPauseMs, transitionDuration]);
+
+  const beats = [
+    {
+      lines: ['At the edge of fantasy and reality,'],
+      className: 'text-black',
+      textShadow: '0 0 10px rgba(255,255,255,0.52), 0 0 22px rgba(255,255,255,0.34)',
+    },
+    {
+      lines: [
+        'Not to invent from nothing,',
+        'but to read the stars already forming —',
+        'and chart what they could become.',
+      ],
+      className: 'text-white',
+      textShadow: '0 0 1px rgba(255,255,255,0.12)',
+    },
+  ];
+
+  const beat = beats[currentBeat] ?? beats[0];
+  const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
+
+  return (
+    <div className="box-border flex w-full flex-col items-center justify-center px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
+      <div
+        className={`font-orbitron text-[16px] sm:text-[19px] md:text-[22px] font-normal leading-snug sm:leading-relaxed tracking-[0.1em] transition-all ease-out ${beat.className}`}
+        style={{
+          opacity: linePhase === 'leaving' ? 0 : linePhase === 'hidden' ? 0 : 1,
+          transform: `translate3d(0, ${linePhase === 'leaving' ? -8 : linePhase === 'hidden' ? 6 : 0}px, 0)`,
+          filter: `blur(${linePhase === 'leaving' ? 4 : linePhase === 'hidden' ? 2 : 0}px)`,
+          transitionDuration: `${transitionDuration}ms`,
+          transitionProperty: 'opacity, transform, filter',
+          textShadow: beat.textShadow,
+        }}
+      >
+        {beat.lines.map((line, li) => (
+          <div key={line} style={{ marginTop: li > 0 ? '0.2em' : 0 }}>
+            {renderCharReveal(line, linePhase, transitionDuration, 14, { x: 12, y: 0 }, 'transition-all ease-out')}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function createTextInstance(state: TextSceneState, id: number): TextBlockInstance {
   const config = STATE_TEXT_CONFIG[state];
   return {
@@ -426,7 +509,7 @@ function createTextInstance(state: TextSceneState, id: number): TextBlockInstanc
     state,
     config,
     phase: 'enter',
-    lineVisibilities: state === '2' ? [false] : config.lines.map(() => false),
+    lineVisibilities: state === '2' || state === 6 ? [false] : config.lines.map(() => false),
   };
 }
 
@@ -464,9 +547,9 @@ export function StateText({ state }: { state: TextSceneState }) {
     if (
       outgoing &&
       isTransitionable(outgoing.phase) &&
-      hasText(outgoing.config, outgoing.state) &&
-      nextConfig.lingerPrevious > 0
+      hasText(outgoing.config, outgoing.state)
     ) {
+      const exitDelay = Math.max(20, nextConfig.lingerPrevious);
       const previousInstance: TextBlockInstance = {
         ...outgoing,
         phase: 'visible',
@@ -483,12 +566,12 @@ export function StateText({ state }: { state: TextSceneState }) {
         setPrevious((prev) =>
           prev?.id === previousInstance.id ? { ...prev, phase: 'leaving' } : prev
         );
-      }, nextConfig.lingerPrevious);
+      }, exitDelay);
       queueTimer(() => {
         setPrevious((prev) =>
           prev?.id === previousInstance.id ? null : prev
         );
-      }, nextConfig.lingerPrevious + nextConfig.transitionDuration);
+      }, exitDelay + nextConfig.transitionDuration);
     } else {
       setPrevious(null);
     }
@@ -497,7 +580,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     nextIdRef.current += 1;
     setActive(nextInstance);
 
-    if (nextInstance.state === '2') {
+    if (nextInstance.state === '2' || nextInstance.state === 6) {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
@@ -570,11 +653,35 @@ export function StateText({ state }: { state: TextSceneState }) {
           style={{
             opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
+            filter: `blur(${isLeaving ? 4 : isGhost ? 2 : 0}px)`,
             transitionDuration: `${duration}ms`,
+            transitionProperty: 'opacity, transform, filter',
           }}
         >
           <State2CumulativeText
             isVisible={instance.lineVisibilities[0] ?? false}
+            isExiting={isGhost || isLeaving}
+            transitionDuration={duration}
+          />
+        </div>
+      );
+    }
+
+    if (instance.state === 6) {
+      return (
+        <div
+          key={`${mode}-${instance.id}-${instance.state}`}
+          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
+          style={{
+            opacity: isLeaving ? 0 : 1,
+            transform: `translate3d(0, ${blockY}px, 0)`,
+            filter: `blur(${isLeaving ? 4 : isGhost ? 2 : 0}px)`,
+            transitionDuration: `${duration}ms`,
+            transitionProperty: 'opacity, transform, filter',
+          }}
+        >
+          <RevealTextSequence
+            isVisible={!isLeaving}
             isExiting={isGhost || isLeaving}
             transitionDuration={duration}
           />
@@ -589,7 +696,9 @@ export function StateText({ state }: { state: TextSceneState }) {
         style={{
           opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,
+          filter: `blur(${isLeaving ? 4 : isGhost ? 2 : 0}px)`,
           transitionDuration: `${duration}ms`,
+          transitionProperty: 'opacity, transform, filter',
         }}
       >
         <div className="flex flex-col items-center justify-center text-center px-5">

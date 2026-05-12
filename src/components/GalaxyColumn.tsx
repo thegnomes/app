@@ -6,7 +6,6 @@ interface GalaxyColumnProps {
   srcWebm: string;
   srcMov: string;
   label: string;
-  subtitle: string;
   year: string;
   href: string;
   alignTop?: boolean;
@@ -18,7 +17,6 @@ export function GalaxyColumn({
   srcWebm,
   srcMov,
   label,
-  subtitle,
   year,
   href,
   alignTop = false,
@@ -135,23 +133,9 @@ export function GalaxyColumn({
           verticalOffset={18}
           className={`transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
           direction="reverse"
-          itemClassName="font-orbitron text-[12px] font-bold tracking-[0.38em] text-white sm:text-[13px] md:text-[14px] lg:text-[16px]"
-          itemStyle={{
-            filter: 'drop-shadow(0 0 12px rgba(0,0,0,0.95)) drop-shadow(0 0 14px rgba(255,255,255,0.28))',
-          }}
+          itemClassName="font-orbitron text-[12px] font-medium tracking-[0.38em] text-white/85 sm:text-[13px] md:text-[14px] lg:text-[16px]"
+          itemStyle={{ filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.85))' }}
         />
-        <div
-          className={`pointer-events-none absolute left-1/2 top-[72%] z-30 w-[min(19rem,82%)] -translate-x-1/2 text-center transition-opacity duration-500 ${
-            isHovered ? 'opacity-100' : 'opacity-85'
-          }`}
-        >
-          <p className="font-orbitron text-[11px] font-bold uppercase tracking-[0.24em] text-white drop-shadow-[0_0_14px_rgba(0,0,0,0.95)] md:text-[12px] lg:text-[13px]">
-            {year}
-          </p>
-          <p className="mt-2 font-russo text-[12px] font-semibold uppercase leading-tight tracking-[0.12em] text-white/95 drop-shadow-[0_0_16px_rgba(0,0,0,0.95)] md:text-[13px] lg:text-[14px]">
-            {subtitle}
-          </p>
-        </div>
       </div>
     </a>
   );

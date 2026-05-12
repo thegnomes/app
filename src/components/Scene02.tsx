@@ -409,7 +409,6 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
             srcWebm={galaxy.srcWebm}
             srcMov={galaxy.srcMov}
             label={galaxy.displayTitle ?? galaxy.project.title}
-            subtitle={galaxy.project.coreCompetency}
             year={galaxy.project.year}
             href={galaxy.href}
             alignTop={galaxy.alignTop}

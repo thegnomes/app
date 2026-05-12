@@ -17,8 +17,6 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const STATE2_FAIL_AFTER_SUBSTATE3_MS = 4000;
-
 const FINAL_VIDEO_DELAY_MS = 0;
 
 function App() {
@@ -45,7 +43,6 @@ function App() {
   }, [state]);
 
   // State transition refs
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const substateTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const inState2Ref = useRef(false);
   const pointerDownRef = useRef(false);
@@ -67,10 +64,6 @@ function App() {
   });
 
   const clearState2Timers = useCallback(() => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
     substateTimersRef.current.forEach((timerId) => clearTimeout(timerId));
     substateTimersRef.current = [];
   }, []);
@@ -334,7 +327,7 @@ function App() {
 
       // Only work in State 1
       if (stateRef.current !== 1) return;
-      if (inState2Ref.current || holdTimerRef.current) return;
+      if (inState2Ref.current) return;
 
       pointerDownRef.current = true;
 
@@ -380,18 +373,6 @@ function App() {
       substateTimersRef.current.push(
         setTimeout(() => {
           dispatchState2SubstateEvent(3, substate3Start, STATE2_DURATION);
-          // Start fail timer when substate 3 begins
-          holdTimerRef.current = setTimeout(() => {
-            inState2Ref.current = false;
-            holdTimerRef.current = null;
-            if (pointerDownRef.current && stateRef.current === 2) {
-              clearState2Timers();
-              stateRef.current = 4;
-              setState(4);
-              setTextState(5);
-              setShowFinalVideo(false);
-            }
-          }, STATE2_FAIL_AFTER_SUBSTATE3_MS);
         }, substate3Start)
       );
     };
@@ -493,14 +474,10 @@ function App() {
       finalVideoTimerRef.current = null;
     }
 
-    if (FINAL_VIDEO_DELAY_MS > 0) {
-      finalVideoTimerRef.current = setTimeout(() => {
-        finalVideoTimerRef.current = null;
-        setShowFinalVideo(true);
-      }, FINAL_VIDEO_DELAY_MS);
-    } else {
+    finalVideoTimerRef.current = setTimeout(() => {
+      finalVideoTimerRef.current = null;
       setShowFinalVideo(true);
-    }
+    }, FINAL_VIDEO_DELAY_MS);
 
     return () => {
       if (finalVideoTimerRef.current) {
