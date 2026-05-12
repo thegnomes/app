@@ -18,10 +18,11 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 1800;
+const FINAL_VIDEO_DELAY_MS = 900;
+const IGNITION_TEXT_DURATION_MS = 3000;
 const SPARK_TO_FORMATION_DELAY_MS = 420;
 const POST_DISCLAIMER_INPUT_LOCK_MS = 1400;
-const AUTO_ZOOM_DELAY_MS = 12000;
+const AUTO_ZOOM_DELAY_MS = 6000;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -496,7 +497,7 @@ function App() {
   }, [state]);
 
   // Sequence through successful orbit text beats:
-  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution).
+  // State 3 (payoff) -> timed delay -> State 7 (resolution).
   // State 6 is only entered by FinalVideoOverlay when its astronaut phase begins.
   useEffect(() => {
     if (textState !== 3) return;
@@ -508,7 +509,7 @@ function App() {
         if (prev === 3) return 7;
         return prev;
       });
-    }, 2000);
+    }, IGNITION_TEXT_DURATION_MS);
 
     textSequenceTimerRef.current = timerId;
     return () => {

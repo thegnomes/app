@@ -35,6 +35,11 @@ interface StateTextCopy {
   instruction: string;
 }
 
+const INSTRUCTION_TEXT_CLASS =
+  'text-[11px] font-medium uppercase tracking-[0.22em] text-cyan-300/90 sm:text-[12px] md:text-[13px]';
+const INSTRUCTION_TEXT_SHADOW =
+  '0 0 8px rgba(34,211,238,0.9), 0 0 18px rgba(14,165,233,0.65)';
+
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
     role: 'thesis',
@@ -45,7 +50,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     },
     transitionDuration: 1400,
     lingerPrevious: 0,
-    lineDelay: 200,
+    lineDelay: 100,
     charStagger: 18,
   },
   1: {
@@ -53,7 +58,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     copy: {
       header: 'A spark begins it.',
       subtext: 'Energy for a star. Inspiration for an idea.',
-      instruction: 'Click to spark an idea.',
+      instruction: 'Click and hold to commit to an idea.',
     },
     transitionDuration: 1400,
     lingerPrevious: 420,
@@ -64,7 +69,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   8: {
     role: 'spark',
     copy: {
-      header: 'A spark appears.',
+      header: '',
       subtext: 'The formation begins.',
       instruction: 'Hold to keep it forming.',
     },
@@ -481,7 +486,7 @@ function State2CumulativeText({
     const partPhase: LinePhase = partVisibilities[li] ? linePhase : 'hidden';
     const isInstruction = part.kind === 'instruction';
     const className = isInstruction
-      ? 'text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]'
+      ? INSTRUCTION_TEXT_CLASS
       : part.kind === 'subtext'
         ? 'text-[15px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
         : 'text-[17px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
@@ -493,6 +498,7 @@ function State2CumulativeText({
         className={className}
         style={{
           marginTop: li > 0 && !isInstruction ? '0.28em' : undefined,
+          textShadow: isInstruction ? INSTRUCTION_TEXT_SHADOW : undefined,
         }}
       >
         {renderCharReveal(part.text, partPhase, transitionDuration, charStagger, { x: 8, y: 0 }, 'transition-all ease-out')}
@@ -716,14 +722,14 @@ export function StateText({ state }: { state: TextSceneState }) {
             const isSubtext = part.kind === 'subtext';
             const isEmphasis = part.kind === 'line' && config.emphasisLines?.includes(part.sourceIndex);
             const textShadow = isInstruction
-              ? '0 0 1px rgba(255,255,255,0.05)'
+              ? INSTRUCTION_TEXT_SHADOW
               : linePhase === 'ghost'
                 ? '0 0 1px rgba(255,255,255,0.04)'
                 : linePhase === 'leaving'
                   ? '0 0 1px rgba(255,255,255,0.02)'
                   : typography.textShadow;
             const textClasses = isInstruction
-              ? `${typography.fontClass} text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]`
+              ? `${typography.fontClass} ${INSTRUCTION_TEXT_CLASS}`
               : isSubtext
                 ? `${typography.fontClass} text-[15px] font-normal tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]`
                 : `${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''}`;
@@ -764,8 +770,8 @@ export function StateText({ state }: { state: TextSceneState }) {
                     ? 'ghost'
                     : 'active';
               const typography = getRoleTypography(config.role);
-              const textShadow = '0 0 1px rgba(255,255,255,0.05)';
-              const textClasses = `${typography.fontClass} text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]`;
+              const textShadow = INSTRUCTION_TEXT_SHADOW;
+              const textClasses = `${typography.fontClass} ${INSTRUCTION_TEXT_CLASS}`;
               return (
                 <div
                   key={i}
