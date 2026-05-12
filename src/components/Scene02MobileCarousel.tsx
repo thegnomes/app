@@ -41,7 +41,6 @@ export function Scene02MobileCarousel({ items, isVisible }: Scene02MobileCarouse
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const currentX = useRef(0);
-  const hintTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const hintRafRef = useRef(0);
   const hintOffsetRef = useRef(0);
   const hintStartTimeRef = useRef(0);
@@ -95,18 +94,14 @@ export function Scene02MobileCarousel({ items, isVisible }: Scene02MobileCarouse
     };
   }, [isVisible, showHint, activeIndex]);
 
-  // Reset hint when index changes (only show on first view)
-  useEffect(() => {
-    if (activeIndex !== 0) {
-      setShowHint(false);
-    }
-  }, [activeIndex]);
-
   const goTo = useCallback(
     (index: number) => {
       const clamped = Math.max(0, Math.min(index, items.length - 1));
       setActiveIndex(clamped);
       setDragOffset(0);
+      if (clamped !== 0) {
+        setShowHint(false);
+      }
     },
     [items.length]
   );
@@ -394,11 +389,13 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
 
       {/* Top text */}
       <div className="pointer-events-none absolute inset-x-0 top-[calc(2.75rem+env(safe-area-inset-top))] z-20 px-6 text-center">
-        <p className="scene02-mono text-sm uppercase text-white/65">{item.project.year}</p>
+        <p className="scene02-mono text-base font-semibold uppercase tracking-[0.22em] text-white/90 drop-shadow-[0_0_16px_rgba(0,0,0,0.95)]">
+          {item.project.year}
+        </p>
         <h2 className="mt-3 font-russo text-[4rem] uppercase leading-none text-white drop-shadow-[0_0_28px_rgba(0,0,0,0.85)]">
           {title}
         </h2>
-        <p className="mx-auto mt-2 max-w-[16rem] font-russo text-sm uppercase leading-tight tracking-wide text-white/80">
+        <p className="mx-auto mt-2 max-w-[18rem] font-russo text-base font-semibold uppercase leading-tight tracking-[0.08em] text-white/95 drop-shadow-[0_0_18px_rgba(0,0,0,0.95)]">
           {item.project.coreCompetency}
         </p>
       </div>

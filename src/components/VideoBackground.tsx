@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { isSafari } from '@/lib/isSafari';
 import { resolveAssetUrl } from '@/lib/assets';
 
@@ -10,6 +10,8 @@ interface VideoBackgroundProps {
 
 // Trigger starfield immediately on click so it starts as early as possible under zoom overlay.
 const TRANSITION_TIME = 0;
+const FADE_DURATION_MS = 800;
+const PLAY_FAILURE_VISUAL_DELAY_MS = 1200;
 
 export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBackgroundProps) {
   const [isZooming, setIsZooming] = useState(false);
@@ -18,10 +20,58 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
   const zoomVideoRef = useRef<HTMLVideoElement>(null);
   const hasTransitionedRef = useRef(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playFailureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearPlayFailureTimer = useCallback(() => {
+    if (playFailureTimerRef.current) {
+      clearTimeout(playFailureTimerRef.current);
+      playFailureTimerRef.current = null;
+    }
+  }, []);
+
+  const transitionOnce = useCallback(() => {
+    if (hasTransitionedRef.current) return;
+    hasTransitionedRef.current = true;
+    onTransition();
+  }, [onTransition]);
+
+  const startFadeOut = useCallback(() => {
+    if (fadeTimerRef.current) return;
+    clearPlayFailureTimer();
+    setIsFadingOut(true);
+    fadeTimerRef.current = window.setTimeout(() => {
+      fadeTimerRef.current = null;
+      setIsVisible(false);
+      setIsZooming(false);
+      setIsFadingOut(false);
+    }, FADE_DURATION_MS);
+  }, [clearPlayFailureTimer]);
+
+  const handleZoomPlaybackFailure = useCallback(() => {
+    transitionOnce();
+    if (playFailureTimerRef.current) return;
+    playFailureTimerRef.current = window.setTimeout(() => {
+      playFailureTimerRef.current = null;
+      startFadeOut();
+    }, PLAY_FAILURE_VISUAL_DELAY_MS);
+  }, [startFadeOut, transitionOnce]);
+
+  const playZoomVideo = useCallback(() => {
+    const playPromise = zoomVideoRef.current?.play();
+    if (!playPromise) {
+      handleZoomPlaybackFailure();
+      return;
+    }
+    void playPromise.catch(handleZoomPlaybackFailure);
+  }, [handleZoomPlaybackFailure]);
 
   useEffect(() => {
     if (isActive) {
-      requestAnimationFrame(() => setIsVisible(true));
+      hasTransitionedRef.current = false;
+      requestAnimationFrame(() => {
+        setIsFadingOut(false);
+        setIsVisible(true);
+      });
     }
   }, [isActive]);
 
@@ -29,44 +79,29 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
     if (autoTrigger && !isZooming) {
       requestAnimationFrame(() => {
         setIsZooming(true);
-        hasTransitionedRef.current = false;
-        onTransition();
-        hasTransitionedRef.current = true;
-        zoomVideoRef.current?.play().catch(() => {
-          // Zoom video failed — still fade out and clean up
-          setIsFadingOut(true);
-          fadeTimerRef.current = window.setTimeout(() => {
-            fadeTimerRef.current = null;
-            setIsVisible(false);
-            setIsZooming(false);
-          }, 800);
-        });
+        setIsFadingOut(false);
+        transitionOnce();
+        playZoomVideo();
       });
     }
-  }, [autoTrigger, isZooming, onTransition]);
+  }, [autoTrigger, isZooming, playZoomVideo, transitionOnce]);
 
   const handleTimeUpdate = () => {
     const video = zoomVideoRef.current;
-    if (!video || hasTransitionedRef.current) return;
+    if (!video) return;
     
     // Transition at specified mark - trigger starfield but DON'T fade video
     // Video has alpha transparency so it overlays on top of starfield
     if (video.currentTime >= TRANSITION_TIME) {
-      hasTransitionedRef.current = true;
       // Trigger transition to starfield (starts rendering underneath)
-      onTransition();
+      transitionOnce();
       // Note: Video keeps playing with alpha, no fade out
     }
   };
 
   const handleZoomEnded = () => {
     // Video ended naturally, now fade it out
-    setIsFadingOut(true);
-    fadeTimerRef.current = window.setTimeout(() => {
-      fadeTimerRef.current = null;
-      setIsVisible(false);
-      setIsZooming(false);
-    }, 800);
+    startFadeOut();
   };
 
   useEffect(() => {
@@ -76,18 +111,17 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
         clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = null;
       }
+      clearPlayFailureTimer();
       video?.pause();
     };
-  }, []);
+  }, [clearPlayFailureTimer]);
 
   const handleClick = () => {
     if (!isZooming && isActive) {
       setIsZooming(true);
-      zoomVideoRef.current?.play().catch(() => {
-        // Zoom video failed on click — still transition
-        onTransition();
-      });
-      onTransition();
+      setIsFadingOut(false);
+      transitionOnce();
+      playZoomVideo();
     }
   };
 

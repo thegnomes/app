@@ -253,11 +253,11 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
       }
     };
 
-    const promises = PORTFOLIO_VIDEO_SOURCES.map((src) =>
-      preloadVideo(resolveAssetUrl(src), { timeoutMs: 8000, preload: 'metadata' }).then(() => {
+    PORTFOLIO_VIDEO_SOURCES.forEach((src) => {
+      void preloadVideo(resolveAssetUrl(src), { timeoutMs: 8000, preload: 'metadata' }).then(() => {
         checkAllLoaded();
-      })
-    );
+      });
+    });
 
     // Fallback: mark ready after 8s regardless
     const fallbackTimer = setTimeout(() => {
@@ -409,6 +409,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
             srcWebm={galaxy.srcWebm}
             srcMov={galaxy.srcMov}
             label={galaxy.displayTitle ?? galaxy.project.title}
+            subtitle={galaxy.project.coreCompetency}
             year={galaxy.project.year}
             href={galaxy.href}
             alignTop={galaxy.alignTop}

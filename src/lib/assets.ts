@@ -2,8 +2,10 @@
  * Resolve an asset path to a full URL.
  *
  * - Paths starting with `http` are returned as-is (already a full URL).
- * - When `VITE_ASSET_BASE_URL` is set, local paths are remapped to match
+ * - When `VITE_ASSET_BASE_URL` is set, portfolio paths are remapped to match
  *   the Vercel Blob folder structure and prefixed with the base URL.
+ * - Root experience and Scene02 assets stay local so Vite/Vercel can serve
+ *   them from `public/`.
  * - Otherwise returns the path unchanged (works with local `public/` files).
  *
  * Set `VITE_ASSET_BASE_URL` in your `.env.local` file or Vercel dashboard
@@ -19,6 +21,7 @@ export function resolveAssetUrl(src: string): string {
 
   const base = import.meta.env.VITE_ASSET_BASE_URL || '';
   if (!base) return src;
+  if (!src.startsWith('/portfolio/')) return src;
 
   // Map local public/ paths to Vercel Blob paths.
   // Blob upload structure flattens the /portfolio/ prefix and

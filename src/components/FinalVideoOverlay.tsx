@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { resolveAssetUrl } from '@/lib/assets';
 import { isSafari } from '@/lib/isSafari';
 
@@ -11,46 +11,91 @@ interface FinalVideoOverlayProps {
 type VideoTextPhase = 'zoom' | 'gap' | 'astronaut' | null;
 
 const GAP_DURATION_MS = 1200;
+const PLAY_FAILURE_GAP_DELAY_MS = 1200;
+const FALLBACK_ASTRONAUT_READ_MS = 5500;
 
 const ZOOM_OUT_END_S = 5.5;
-const MAX_VIDEO_DURATION_MS = 20000; // generous fallback so normal playback is never clipped
 const STALL_THRESHOLD_MS = 4000;
 
 export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: FinalVideoOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [phase, setPhase] = useState<VideoTextPhase>(null);
-  const lastTimeRef = useRef(0);
+  const phaseRef = useRef<VideoTextPhase>(null);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const maxDurationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const gapTriggeredRef = useRef(false);
   const endedRef = useRef(false);
+  const playAttemptRef = useRef(0);
 
   useEffect(() => {
     videoRef.current?.load();
   }, []);
 
-  const clearTimers = () => {
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  const clearTimers = useCallback(() => {
     if (stallTimerRef.current) {
       clearTimeout(stallTimerRef.current);
       stallTimerRef.current = null;
     }
-    if (maxDurationTimerRef.current) {
-      clearTimeout(maxDurationTimerRef.current);
-      maxDurationTimerRef.current = null;
-    }
-  };
+    fallbackTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+    fallbackTimersRef.current = [];
+  }, []);
 
-  const triggerEnded = () => {
+  const triggerEnded = useCallback(() => {
     if (endedRef.current) return;
     endedRef.current = true;
     clearTimers();
     onEnded?.();
-  };
+  }, [clearTimers, onEnded]);
+
+  const startFallbackReveal = useCallback(
+    (playAttempt: number) => {
+      if (playAttemptRef.current !== playAttempt || endedRef.current) return;
+
+      clearTimers();
+
+      const currentPhase = phaseRef.current;
+      if (currentPhase === 'astronaut') {
+        fallbackTimersRef.current.push(
+          setTimeout(() => {
+            if (playAttemptRef.current === playAttempt) {
+              triggerEnded();
+            }
+          }, FALLBACK_ASTRONAUT_READ_MS)
+        );
+        return;
+      }
+
+      if (currentPhase !== 'gap') {
+        setPhase('zoom');
+      }
+
+      const gapDelay = currentPhase === 'gap' ? 0 : PLAY_FAILURE_GAP_DELAY_MS;
+      fallbackTimersRef.current.push(
+        setTimeout(() => {
+          if (playAttemptRef.current !== playAttempt || endedRef.current) return;
+          gapTriggeredRef.current = true;
+          setPhase('gap');
+        }, gapDelay),
+        setTimeout(() => {
+          if (playAttemptRef.current === playAttempt) {
+            triggerEnded();
+          }
+        }, gapDelay + GAP_DURATION_MS + FALLBACK_ASTRONAUT_READ_MS)
+      );
+    },
+    [clearTimers, triggerEnded]
+  );
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     if (!isActive) {
+      playAttemptRef.current += 1;
       video.pause();
       clearTimers();
       endedRef.current = false;
@@ -60,27 +105,24 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       return;
     }
 
+    clearTimers();
     endedRef.current = false;
+    gapTriggeredRef.current = false;
+    const playAttempt = playAttemptRef.current + 1;
+    playAttemptRef.current = playAttempt;
     video.currentTime = 0;
-    lastTimeRef.current = 0;
     requestAnimationFrame(() => {
       setPhase('zoom');
     });
 
-    // Absolute timeout: never trap the user even if video stalls
-    maxDurationTimerRef.current = setTimeout(() => {
-      triggerEnded();
-    }, MAX_VIDEO_DURATION_MS);
-
     void video.play().catch(() => {
-      // Playback failed — advance route so user is never stuck
-      triggerEnded();
+      startFallbackReveal(playAttempt);
     });
 
     return () => {
       clearTimers();
     };
-  }, [isActive]);
+  }, [clearTimers, isActive, startFallbackReveal]);
 
   useEffect(() => {
     if (phase !== 'gap') return;
@@ -90,8 +132,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
     }, GAP_DURATION_MS);
     return () => clearTimeout(timer);
   }, [phase, onAstronautPhase]);
-
-  const gapTriggeredRef = useRef(false);
 
   useEffect(() => {
     if (!isActive) {
@@ -107,10 +147,8 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
     // Reset stall timer whenever time progresses
     if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     stallTimerRef.current = setTimeout(() => {
-      // Video stalled — advance so user isn't trapped
-      triggerEnded();
+      startFallbackReveal(playAttemptRef.current);
     }, STALL_THRESHOLD_MS);
-    lastTimeRef.current = t;
 
     if (phase === 'zoom' && t >= ZOOM_OUT_END_S && !gapTriggeredRef.current) {
       gapTriggeredRef.current = true;
@@ -133,7 +171,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
         className="h-full w-full object-cover"
         style={isSafari ? { mixBlendMode: 'screen', filter: 'brightness(1)' } : undefined}
         onTimeUpdate={handleTimeUpdate}
-        onEnded={() => triggerEnded()}
+        onEnded={triggerEnded}
       >
         <source src={resolveAssetUrl('/zoom-compiled-edit-latest-web.webm')} type="video/webm" />
         <source src={resolveAssetUrl('/zoom-compiled-edit-latest.mp4')} type="video/mp4" />
