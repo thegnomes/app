@@ -164,8 +164,12 @@ export function VideoBackground({ isActive, onTransition, autoTrigger }: VideoBa
             playsInline
             preload="metadata"
             className={`w-full h-full object-contain ${isSafari ? 'mix-blend-screen' : ''}`}
+            onLoadedData={(e) => {
+              void (e.currentTarget as HTMLVideoElement).play().catch(() => {});
+            }}
           >
             <source src={resolveAssetUrl('/idle_brain.webm')} type="video/webm" />
+            <source src={resolveAssetUrl('/idle_brain.mp4')} type="video/mp4" />
           </video>
         </>
       )}

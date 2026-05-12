@@ -18,7 +18,8 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 0;
+const FINAL_VIDEO_DELAY_MS = 1800;
+const HOLD_INTENT_DELAY_MS = 180;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -37,6 +38,9 @@ function App() {
   const redirectedRef = useRef(false);
   const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalVideoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasSparkedRef = useRef(false);
+  const holdIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activePointerIdRef = useRef<number>(-1);
   // Use refs to track current state to avoid closure issues
   const stateRef = useRef<AppState>(state);
   useEffect(() => {
@@ -88,6 +92,7 @@ function App() {
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
+    hasSparkedRef.current = false;
   }, []);
 
   const myWorkWarmupRef = useRef<Promise<void> | null>(null);
@@ -268,6 +273,8 @@ function App() {
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
       if (stateRef.current !== 1) return;
+      // Do not start pan drag if spark is armed (formation intent takes priority)
+      if (hasSparkedRef.current) return;
 
       (canvas as HTMLElement).setPointerCapture?.(e.pointerId);
       panStateRef.current.isDragging = true;
@@ -337,7 +344,7 @@ function App() {
       if (stateRef.current !== 1) return;
       if (inState2Ref.current) return;
 
-      pointerDownRef.current = true;
+      activePointerIdRef.current = e.pointerId;
 
       // Cancel any active pan drag
       panStateRef.current.isDragging = false;
@@ -349,11 +356,19 @@ function App() {
         textSequenceTimerRef.current = null;
       }
 
-      // Show spark text immediately on every click
-      setTextState(8);
+      // First tap shows spark/pre-hold text only
+      if (!hasSparkedRef.current) {
+        hasSparkedRef.current = true;
+        setTextState(8);
+        return;
+      }
 
-      // Start State 2 immediately on press-and-hold
-      commitToState2();
+      // Subsequent press-and-hold starts formation after hold-intent delay
+      pointerDownRef.current = true;
+      holdIntentTimerRef.current = window.setTimeout(() => {
+        holdIntentTimerRef.current = null;
+        commitToState2();
+      }, HOLD_INTENT_DELAY_MS);
     };
 
     const commitToState2 = () => {
@@ -385,7 +400,18 @@ function App() {
       );
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.pointerId !== activePointerIdRef.current) return;
+      activePointerIdRef.current = -1;
+
+      // If hold-intent timer is pending and State 2 hasn't started, cancel it
+      if (holdIntentTimerRef.current && !inState2Ref.current) {
+        clearTimeout(holdIntentTimerRef.current);
+        holdIntentTimerRef.current = null;
+        pointerDownRef.current = false;
+        return;
+      }
+
       pointerDownRef.current = false;
 
       if (inState2Ref.current) {
@@ -431,7 +457,13 @@ function App() {
         finalVideoTimerRef.current = null;
       }
 
+      if (holdIntentTimerRef.current) {
+        clearTimeout(holdIntentTimerRef.current);
+        holdIntentTimerRef.current = null;
+      }
+
       pointerDownRef.current = false;
+      activePointerIdRef.current = -1;
 
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
@@ -446,6 +478,7 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
+        hasSparkedRef.current = false;
       }, 2500);
       return () => clearTimeout(t);
     }
