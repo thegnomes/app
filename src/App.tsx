@@ -19,9 +19,9 @@ import {
 } from '@/lib/particles/constants';
 
 const FINAL_VIDEO_DELAY_MS = 1800;
-const HOLD_INTENT_DELAY_MS = 180;
-const INITIAL_SPARK_REVEAL_MS = 650;
+const SPARK_TO_FORMATION_DELAY_MS = 420;
 const POST_DISCLAIMER_INPUT_LOCK_MS = 1400;
+const AUTO_ZOOM_DELAY_MS = 12000;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -41,7 +41,6 @@ function App() {
   const redirectedRef = useRef(false);
   const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalVideoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasSparkedRef = useRef(false);
   const holdIntentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activePointerIdRef = useRef<number>(-1);
   // Use refs to track current state to avoid closure issues
@@ -95,7 +94,6 @@ function App() {
     setState(1);
     setTextState(1);
     setShowFinalVideo(false);
-    hasSparkedRef.current = false;
   }, []);
 
   const myWorkWarmupRef = useRef<Promise<void> | null>(null);
@@ -255,7 +253,8 @@ function App() {
     };
   }, []);
 
-  // Auto-play text after assets load and disclaimer is dismissed
+  // Keep the opening calm after the disclaimer closes. If the user does not
+  // begin the experience manually, advance after a long idle period.
   useEffect(() => {
     if (!assetsLoaded) return;
     if (showDisclaimer) return;
@@ -264,7 +263,7 @@ function App() {
       if (stateRef.current !== 0) return;
       setAutoZoom(true);
       setShowFinalVideo(false);
-    }, 3800 + POST_DISCLAIMER_INPUT_LOCK_MS);
+    }, AUTO_ZOOM_DELAY_MS);
     return () => {
       if (autoZoomTimerRef.current) {
         clearTimeout(autoZoomTimerRef.current);
@@ -281,8 +280,6 @@ function App() {
     const handlePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
       if (stateRef.current !== 1) return;
-      // Do not start pan drag if spark is armed (formation intent takes priority)
-      if (hasSparkedRef.current) return;
 
       (canvas as HTMLElement).setPointerCapture?.(e.pointerId);
       panStateRef.current.isDragging = true;
@@ -364,20 +361,14 @@ function App() {
         textSequenceTimerRef.current = null;
       }
 
-      const holdDelay = hasSparkedRef.current ? HOLD_INTENT_DELAY_MS : INITIAL_SPARK_REVEAL_MS;
+      setTextState(8);
 
-      // First press shows spark/pre-hold text before the formation begins.
-      if (!hasSparkedRef.current) {
-        hasSparkedRef.current = true;
-        setTextState(8);
-      }
-
-      // Press-and-hold starts formation after a short intent delay.
+      // One continuous press: spark appears first, then formation begins if held.
       pointerDownRef.current = true;
       holdIntentTimerRef.current = window.setTimeout(() => {
         holdIntentTimerRef.current = null;
         commitToState2();
-      }, holdDelay);
+      }, SPARK_TO_FORMATION_DELAY_MS);
     };
 
     const commitToState2 = () => {
@@ -487,7 +478,6 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
-        hasSparkedRef.current = false;
       }, 2500);
       return () => clearTimeout(t);
     }
@@ -544,8 +534,8 @@ function App() {
   }, [textState]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black select-none">
-      <div className="video-background">
+    <div className="relative h-[100dvh] min-h-[100svh] w-full overflow-hidden bg-black select-none">
+      <div>
         <VideoBackground
           isActive={state === 0}
           onTransition={handleVideoTransition}

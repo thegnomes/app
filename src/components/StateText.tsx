@@ -655,7 +655,7 @@ export function StateText({ state }: { state: TextSceneState }) {
       return (
         <div
           key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
+          className="absolute inset-0 flex items-center justify-center transition-all ease-out"
           style={{
             opacity: isLeaving ? 0 : 1,
             transform: `translate3d(0, ${blockY}px, 0)`,
@@ -676,7 +676,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
-        className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
+        className="absolute inset-0 flex items-center justify-center transition-all ease-out"
         style={{
           opacity: isLeaving ? 0 : 1,
           transform: `translate3d(0, ${blockY}px, 0)`,

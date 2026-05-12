@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type PointerEvent as ReactPointerEvent } from 'react';
 import { isSafari } from '@/lib/isSafari';
 import { resolveAssetUrl } from '@/lib/assets';
 
@@ -139,7 +139,8 @@ export function VideoBackground({
     };
   }, [clearPlaybackFallbackTimers]);
 
-  const handleClick = () => {
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
     if (Date.now() < inputLockedUntil) return;
     if (!isZooming && isActive) {
       setIsZooming(true);
@@ -154,7 +155,7 @@ export function VideoBackground({
   return (
     <div
       className="video-background fixed inset-0 z-10 cursor-pointer flex items-center justify-center overflow-hidden"
-      onClick={handleClick}
+      onPointerDown={handlePointerDown}
       style={{
         opacity: isFadingOut ? 0 : 1,
         transition: isFadingOut ? 'opacity 0.8s ease-out' : 'none',
