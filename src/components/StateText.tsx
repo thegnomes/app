@@ -25,6 +25,7 @@ interface StateTextConfig {
   lineDelay: number;
   lineDelays?: number[];
   charStagger: number;
+  emphasisLines?: number[];
 }
 
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
@@ -40,13 +41,15 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     role: 'atmosphere',
     lines: [
       'A loose field of thoughts, scattered without form —',
-      'until something pulls them inward.',
+      'Click',
+      'and inspiration pulls them inward.',
     ],
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 500,
-    lineDelays: [1500, 3700],
+    lineDelays: [1500, 2500, 3700],
     charStagger: 16,
+    emphasisLines: [1],
   },
   8: {
     role: 'spark',
@@ -91,7 +94,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   5: {
     role: 'collapse',
-    lines: ['The centre fails to hold. Some sparks burn briefly, then return to the dark.'],
+    lines: ['Uncertainty breaks formation. The idea fades before it can hold.'],
     transitionDuration: 650,
     lingerPrevious: 320,
     lineDelay: 200,
@@ -110,7 +113,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 800,
     lingerPrevious: 420,
     lineDelay: 400,
-    lineDelays: [1500, 2100, 3600, 4200, 4800],
+    lineDelays: [0, 2000, 2000, 2000, 2000],
     charStagger: 14,
   },
   7: {
@@ -376,9 +379,9 @@ function State2CumulativeText({
   }, [isVisible]);
 
   const beats = [
-    ['The first thought gathers mass.', 'It is not an idea yet.'],
-    ['*Hold* — pressure gives it shape.', 'What was scattered begins to hold.'],
-    ['Intent becomes the core.', '*Release* it, or let it collapse.'],
+    { lines: ['A spark of gravity gathers mass.', 'But it is not an idea yet.'] },
+    { lines: ['Hold', 'and pressure pulls it tighter.', 'What was scattered begins to take shape.'], emphasisLine: 0 },
+    { lines: ['Release', 'the core,', 'or let it collapse.'], emphasisLine: 0 },
   ];
 
   if (currentBeat < 0 || currentBeat >= beats.length) return null;
@@ -400,8 +403,14 @@ function State2CumulativeText({
           textShadow: '0 0 1px rgba(255,255,255,0.08)',
         }}
       >
-        {beat.map((line, li) => (
-          <div key={li} style={{ marginTop: li > 0 ? '0.2em' : 0 }}>
+        {beat.lines.map((line, li) => (
+          <div
+            key={li}
+            style={{
+              marginTop: li > 0 ? '0.2em' : 0,
+              fontSize: li === beat.emphasisLine ? 'clamp(20px, 1.3em, 30px)' : undefined,
+            }}
+          >
             {renderCharReveal(line, linePhase, transitionDuration, 12, { x: 8, y: 0 }, 'transition-all ease-out')}
           </div>
         ))}
@@ -601,11 +610,16 @@ export function StateText({ state }: { state: TextSceneState }) {
                   ? '0 0 1px rgba(255,255,255,0.02)'
                   : typography.textShadow;
 
+            const isEmphasis = config.emphasisLines?.includes(i);
             return (
               <div
                 key={i}
                 className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-snug sm:leading-relaxed break-keep`}
-                style={{ textShadow, marginTop: i > 0 ? '0.2em' : 0 }}
+                style={{
+                  textShadow,
+                  marginTop: i > 0 ? '0.2em' : 0,
+                  fontSize: isEmphasis ? 'clamp(20px, 1.3em, 30px)' : undefined,
+                }}
               >
                 {renderCharReveal(
                   line,

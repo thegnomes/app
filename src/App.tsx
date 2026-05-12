@@ -19,7 +19,7 @@ import {
 
 const STATE2_FAIL_AFTER_SUBSTATE3_MS = 4000;
 
-const FINAL_VIDEO_DELAY_MS = 2200;
+const FINAL_VIDEO_DELAY_MS = 0;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
@@ -463,17 +463,17 @@ function App() {
   }, [state]);
 
   // Sequence through successful orbit text beats:
-  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution) -> [2500ms] -> State 4 (fadeout)
+  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution) -> [2000ms] -> State 6 (reveal)
   useEffect(() => {
     if (textState !== 3 && textState !== 7) return;
     if (textSequenceTimerRef.current) return;
 
-    const delay = textState === 3 ? 2000 : 2500;
+    const delay = textState === 3 ? 2000 : 2000;
     const timerId = setTimeout(() => {
       textSequenceTimerRef.current = null;
       setTextState((prev) => {
         if (prev === 3) return 7;
-        if (prev === 7) return 4;
+        if (prev === 7) return 6;
         return prev;
       });
     }, delay);
@@ -493,10 +493,14 @@ function App() {
       finalVideoTimerRef.current = null;
     }
 
-    finalVideoTimerRef.current = setTimeout(() => {
-      finalVideoTimerRef.current = null;
+    if (FINAL_VIDEO_DELAY_MS > 0) {
+      finalVideoTimerRef.current = setTimeout(() => {
+        finalVideoTimerRef.current = null;
+        setShowFinalVideo(true);
+      }, FINAL_VIDEO_DELAY_MS);
+    } else {
       setShowFinalVideo(true);
-    }, FINAL_VIDEO_DELAY_MS);
+    }
 
     return () => {
       if (finalVideoTimerRef.current) {
