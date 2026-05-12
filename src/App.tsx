@@ -484,20 +484,19 @@ function App() {
   }, [state]);
 
   // Sequence through successful orbit text beats:
-  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution) -> [2000ms] -> State 6 (reveal)
+  // State 3 (payoff) -> [2000ms delay] -> State 7 (resolution).
+  // State 6 is only entered by FinalVideoOverlay when its astronaut phase begins.
   useEffect(() => {
-    if (textState !== 3 && textState !== 7) return;
+    if (textState !== 3) return;
     if (textSequenceTimerRef.current) return;
 
-    const delay = textState === 3 ? 2000 : 2000;
     const timerId = setTimeout(() => {
       textSequenceTimerRef.current = null;
       setTextState((prev) => {
         if (prev === 3) return 7;
-        if (prev === 7) return 6;
         return prev;
       });
-    }, delay);
+    }, 2000);
 
     textSequenceTimerRef.current = timerId;
     return () => {
