@@ -292,7 +292,7 @@ function getRoleMotion(role: TextRole): MotionSpec {
     case 'spark':
       return { enterY: 4, exitY: -6, containerY: 0 };
     case 'marker':
-      return { enterY: 3, exitY: -6, containerY: 60 };
+      return { enterY: 3, exitY: -6, containerY: 0 };
     case 'payoff':
       return { enterY: 4, exitY: -6, containerY: 0 };
     case 'resolution':
