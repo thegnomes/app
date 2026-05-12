@@ -450,10 +450,8 @@ function Hero({ project }: { project: PortfolioProject }) {
 
         <div className="flex flex-wrap items-center gap-8 md:gap-12">
           {[
-            { label: 'Role', value: project.role },
             { label: 'Core Competency', value: project.coreCompetency },
             { label: 'Client', value: project.client },
-            { label: 'Deliverables', value: project.deliverables },
           ].map((meta) => (
             <div key={meta.label} className="max-w-[18rem]">
               <p className="mb-1 text-[10px] uppercase tracking-widest text-neutral-500">{meta.label}</p>

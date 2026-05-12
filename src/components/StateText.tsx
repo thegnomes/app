@@ -18,7 +18,8 @@ type TextRole =
 
 interface StateTextConfig {
   role: TextRole;
-  lines: string[];
+  lines?: string[];
+  copy?: StateTextCopy;
   transitionDuration: number;
   lingerPrevious: number;
   autoExitDelay?: number;
@@ -28,10 +29,20 @@ interface StateTextConfig {
   emphasisLines?: number[];
 }
 
+interface StateTextCopy {
+  header: string;
+  subtext: string;
+  instruction: string;
+}
+
 const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   0: {
     role: 'thesis',
-    lines: ['Every idea begins as drift.'],
+    copy: {
+      header: 'Stars and ideas form alike.',
+      subtext: 'Both begin as potential, waiting for the right conditions.',
+      instruction: 'Watch closely.',
+    },
     transitionDuration: 800,
     lingerPrevious: 0,
     lineDelay: 200,
@@ -39,24 +50,28 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   1: {
     role: 'atmosphere',
-    lines: [
-      'A loose field of thoughts, scattered without form —',
-      'Click',
-      'and inspiration pulls them inward.',
-    ],
+    copy: {
+      header: 'A spark begins it.',
+      subtext: 'Energy for a star. Inspiration for an idea.',
+      instruction: 'Click to spark an idea.',
+    },
     transitionDuration: 800,
     lingerPrevious: 420,
-    lineDelay: 500,
-    lineDelays: [1500, 2500, 3700],
+    lineDelay: 360,
+    lineDelays: [1500, 1900, 2400],
     charStagger: 16,
-    emphasisLines: [1],
   },
   8: {
     role: 'spark',
-    lines: ['*Click* — a spark finds gravity.'],
+    copy: {
+      header: 'A spark appears.',
+      subtext: 'The formation begins.',
+      instruction: 'Hold to keep it forming.',
+    },
     transitionDuration: 450,
     lingerPrevious: 0,
-    lineDelay: 0,
+    lineDelay: 180,
+    lineDelays: [0, 180, 420],
     charStagger: 14,
   },
   9: {
@@ -78,10 +93,14 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   3: {
     role: 'payoff',
-    lines: ['The idea ignites.'],
+    copy: {
+      header: 'Execution ignites the core.',
+      subtext: 'The idea crosses from thought into form.',
+      instruction: 'Let it unfold.',
+    },
     transitionDuration: 650,
     lingerPrevious: 260,
-    lineDelay: 200,
+    lineDelay: 260,
     charStagger: 12,
   },
   4: {
@@ -94,32 +113,39 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
   },
   5: {
     role: 'collapse',
-    lines: ['Uncertainty breaks formation. The idea fades before it can hold.'],
+    copy: {
+      header: 'Uncertainty breaks formation.',
+      subtext: 'The idea fades before it can hold.',
+      instruction: 'Try again with steadier intent.',
+    },
     transitionDuration: 650,
     lingerPrevious: 320,
-    lineDelay: 200,
+    lineDelay: 260,
     charStagger: 10,
     autoExitDelay: 3400,
   },
   6: {
     role: 'reveal',
-    lines: [
-      'At the edge of fantasy and reality,',
-      'Not to invent from nothing,',
-      'but to read the stars already forming —',
-      'and chart what they could become.',
-    ],
+    copy: {
+      header: 'At the edge of fantasy and reality,',
+      subtext: 'a traveller appears—charting a course through uncertainty.',
+      instruction: 'Enter the portfolio.',
+    },
     transitionDuration: 800,
     lingerPrevious: 420,
-    lineDelay: 400,
+    lineDelay: 320,
     charStagger: 14,
   },
   7: {
     role: 'resolution',
-    lines: ['Its gravity draws other thoughts into orbit.'],
+    copy: {
+      header: 'Vision creates gravity.',
+      subtext: 'Other ideas gather around it, forming something larger.',
+      instruction: 'Follow the universe outward.',
+    },
     transitionDuration: 750,
     lingerPrevious: 260,
-    lineDelay: 200,
+    lineDelay: 300,
     charStagger: 14,
   },
 };
@@ -133,8 +159,36 @@ interface TextBlockInstance {
   exitDuration?: number;
 }
 
+type TextPartKind = 'header' | 'subtext' | 'instruction' | 'line';
+
+interface TextPart {
+  kind: TextPartKind;
+  text: string;
+  sourceIndex: number;
+}
+
+function getTextParts(config: StateTextConfig): TextPart[] {
+  if (config.copy) {
+    return getCopyParts(config.copy);
+  }
+
+  return (config.lines ?? []).map((text, sourceIndex) => ({
+    kind: 'line',
+    text,
+    sourceIndex,
+  }));
+}
+
+function getCopyParts(copy: StateTextCopy): TextPart[] {
+  return [
+    { kind: 'header', text: copy.header, sourceIndex: 0 },
+    { kind: 'subtext', text: copy.subtext, sourceIndex: 1 },
+    { kind: 'instruction', text: copy.instruction, sourceIndex: 2 },
+  ];
+}
+
 function hasText(config: StateTextConfig, state: TextSceneState): boolean {
-  return config.lines.length > 0 || state === '2';
+  return getTextParts(config).length > 0 || state === '2';
 }
 
 interface TypographySpec {
@@ -340,12 +394,14 @@ function State2CumulativeText({
 }) {
   const [currentBeat, setCurrentBeat] = useState(-1);
   const [beatPhase, setBeatPhase] = useState<LinePhase>('hidden');
+  const [partVisibilities, setPartVisibilities] = useState([false, false, false]);
 
   useEffect(() => {
     if (!isVisible) {
       const frameId = requestAnimationFrame(() => {
         setCurrentBeat(-1);
         setBeatPhase('hidden');
+        setPartVisibilities([false, false, false]);
       });
       return () => cancelAnimationFrame(frameId);
     }
@@ -354,11 +410,22 @@ function State2CumulativeText({
     const showBeat = (index: number) => {
       setCurrentBeat(index);
       setBeatPhase('hidden');
+      setPartVisibilities([false, false, false]);
       timers.push(setTimeout(() => setBeatPhase('active'), 60));
+      [0, 220, 520].forEach((delay, partIndex) => {
+        timers.push(
+          setTimeout(() => {
+            setPartVisibilities((current) =>
+              current.map((visible, index) => visible || index === partIndex)
+            );
+          }, 60 + delay)
+        );
+      });
     };
 
     const hideBeat = () => {
       setBeatPhase('leaving');
+      setPartVisibilities([true, true, true]);
     };
 
     timers.push(setTimeout(() => showBeat(0), 0));
@@ -376,21 +443,34 @@ function State2CumulativeText({
     return () => timers.forEach(clearTimeout);
   }, [isVisible]);
 
-  const beats = [
-    { lines: ['A spark of gravity gathers mass.', 'But it is not an idea yet.'] },
-    { lines: ['Hold', 'and pressure pulls it tighter.', 'What was scattered begins to take shape.'], emphasisLine: 0 },
-    { lines: ['Release', 'the core,', 'or let it collapse.'], emphasisLine: 0 },
+  const beats: StateTextCopy[] = [
+    {
+      header: 'Time shapes it.',
+      subtext: 'The spark begins to gather form.',
+      instruction: 'Hold to keep it forming.',
+    },
+    {
+      header: 'Pressure gives it mass.',
+      subtext: 'Held long enough, it starts pulling more into itself.',
+      instruction: 'Keep holding.',
+    },
+    {
+      header: 'Commitment gives it direction.',
+      subtext: 'It stops drifting and starts becoming real.',
+      instruction: 'Release when it stabilises.',
+    },
   ];
 
   if (currentBeat < 0 || currentBeat >= beats.length) return null;
   const beat = beats[currentBeat];
+  const beatParts = getCopyParts(beat);
 
   const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
 
   return (
     <div className="box-border flex w-full flex-col items-center justify-center px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:items-center sm:justify-center">
       <div
-        className="font-orbitron text-[17px] sm:text-[20px] md:text-[23px] font-normal leading-snug sm:leading-relaxed text-white tracking-[0.1em] transition-all ease-out"
+        className="font-orbitron font-normal leading-snug sm:leading-relaxed transition-all ease-out"
         style={{
           opacity: isExiting ? 0 : 1,
           transform: `translate3d(0, ${isExiting ? -6 : 0}px, 0)`,
@@ -401,102 +481,28 @@ function State2CumulativeText({
           textShadow: '0 0 1px rgba(255,255,255,0.08)',
         }}
       >
-        {beat.lines.map((line, li) => (
+        {beatParts.map((part, li) => {
+          const partPhase: LinePhase = partVisibilities[li] ? linePhase : 'hidden';
+          const isInstruction = part.kind === 'instruction';
+          const className = isInstruction
+            ? 'mt-[0.75em] text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]'
+            : part.kind === 'subtext'
+              ? 'text-[15px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
+              : 'text-[17px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
+          const charStagger = isInstruction ? 8 : part.kind === 'subtext' ? 10 : 12;
+
+          return (
           <div
-            key={li}
+            key={part.kind}
+            className={className}
             style={{
-              marginTop: li > 0 ? '0.2em' : 0,
-              fontSize: li === beat.emphasisLine ? 'clamp(20px, 1.3em, 30px)' : undefined,
+              marginTop: li > 0 && !isInstruction ? '0.28em' : undefined,
             }}
           >
-            {renderCharReveal(line, linePhase, transitionDuration, 12, { x: 8, y: 0 }, 'transition-all ease-out')}
+            {renderCharReveal(part.text, partPhase, transitionDuration, charStagger, { x: 8, y: 0 }, 'transition-all ease-out')}
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RevealTextSequence({
-  isVisible,
-  isExiting,
-  transitionDuration = 800,
-}: {
-  isVisible: boolean;
-  isExiting?: boolean;
-  transitionDuration?: number;
-}) {
-  const [currentBeat, setCurrentBeat] = useState(0);
-  const [beatPhase, setBeatPhase] = useState<LinePhase>('hidden');
-  const firstBeatVisibleMs = 1400;
-  const replacementPauseMs = 80;
-
-  useEffect(() => {
-    if (!isVisible) {
-      const frameId = requestAnimationFrame(() => {
-        setCurrentBeat(0);
-        setBeatPhase('hidden');
-      });
-      return () => cancelAnimationFrame(frameId);
-    }
-
-    const timers: ReturnType<typeof setTimeout>[] = [];
-
-    timers.push(setTimeout(() => setBeatPhase('active'), 60));
-    timers.push(setTimeout(() => setBeatPhase('leaving'), firstBeatVisibleMs));
-    timers.push(
-      setTimeout(() => {
-        setCurrentBeat(1);
-        setBeatPhase('hidden');
-      }, firstBeatVisibleMs + transitionDuration)
-    );
-    timers.push(
-      setTimeout(() => {
-        setBeatPhase('active');
-      }, firstBeatVisibleMs + transitionDuration + replacementPauseMs)
-    );
-
-    return () => timers.forEach(clearTimeout);
-  }, [firstBeatVisibleMs, isVisible, replacementPauseMs, transitionDuration]);
-
-  const beats = [
-    {
-      lines: ['At the edge of fantasy and reality,'],
-      className: 'text-black',
-      textShadow: '0 0 10px rgba(255,255,255,0.52), 0 0 22px rgba(255,255,255,0.34)',
-    },
-    {
-      lines: [
-        'Not to invent from nothing,',
-        'but to read the stars already forming —',
-        'and chart what they could become.',
-      ],
-      className: 'text-white',
-      textShadow: '0 0 1px rgba(255,255,255,0.12)',
-    },
-  ];
-
-  const beat = beats[currentBeat] ?? beats[0];
-  const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
-
-  return (
-    <div className="box-border flex w-full flex-col items-center justify-center px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)]">
-      <div
-        className={`font-orbitron text-[16px] sm:text-[19px] md:text-[22px] font-normal leading-snug sm:leading-relaxed tracking-[0.1em] transition-all ease-out ${beat.className}`}
-        style={{
-          opacity: linePhase === 'leaving' ? 0 : linePhase === 'hidden' ? 0 : 1,
-          transform: `translate3d(0, ${linePhase === 'leaving' ? -8 : linePhase === 'hidden' ? 6 : 0}px, 0)`,
-          filter: `blur(${linePhase === 'leaving' ? 4 : linePhase === 'hidden' ? 2 : 0}px)`,
-          transitionDuration: `${transitionDuration}ms`,
-          transitionProperty: 'opacity, transform, filter',
-          textShadow: beat.textShadow,
-        }}
-      >
-        {beat.lines.map((line, li) => (
-          <div key={line} style={{ marginTop: li > 0 ? '0.2em' : 0 }}>
-            {renderCharReveal(line, linePhase, transitionDuration, 14, { x: 12, y: 0 }, 'transition-all ease-out')}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -509,7 +515,7 @@ function createTextInstance(state: TextSceneState, id: number): TextBlockInstanc
     state,
     config,
     phase: 'enter',
-    lineVisibilities: state === '2' || state === 6 ? [false] : config.lines.map(() => false),
+    lineVisibilities: state === '2' ? [false] : getTextParts(config).map(() => false),
   };
 }
 
@@ -580,7 +586,7 @@ export function StateText({ state }: { state: TextSceneState }) {
     nextIdRef.current += 1;
     setActive(nextInstance);
 
-    if (nextInstance.state === '2' || nextInstance.state === 6) {
+    if (nextInstance.state === '2') {
       queueTimer(() => {
         setActive((current) =>
           current?.id === nextInstance.id
@@ -589,7 +595,7 @@ export function StateText({ state }: { state: TextSceneState }) {
         );
       }, 0);
     } else {
-      nextConfig.lines.forEach((_, i) => {
+      getTextParts(nextConfig).forEach((_, i) => {
         const delay = nextConfig.lineDelays?.[i] ??
           (i === 0 ? Math.min(nextConfig.lineDelay, 200) : nextConfig.lineDelay * i);
         queueTimer(() => {
@@ -667,28 +673,6 @@ export function StateText({ state }: { state: TextSceneState }) {
       );
     }
 
-    if (instance.state === 6) {
-      return (
-        <div
-          key={`${mode}-${instance.id}-${instance.state}`}
-          className="absolute top-0 left-[10vw] h-[50dvh] w-[80vw] flex items-center justify-center transition-all ease-out sm:inset-0 sm:h-auto sm:w-auto sm:items-center"
-          style={{
-            opacity: isLeaving ? 0 : 1,
-            transform: `translate3d(0, ${blockY}px, 0)`,
-            filter: `blur(${isLeaving ? 4 : isGhost ? 2 : 0}px)`,
-            transitionDuration: `${duration}ms`,
-            transitionProperty: 'opacity, transform, filter',
-          }}
-        >
-          <RevealTextSequence
-            isVisible={!isLeaving}
-            isExiting={isGhost || isLeaving}
-            transitionDuration={duration}
-          />
-        </div>
-      );
-    }
-
     return (
       <div
         key={`${mode}-${instance.id}-${instance.state}`}
@@ -702,7 +686,7 @@ export function StateText({ state }: { state: TextSceneState }) {
         }}
       >
         <div className="flex flex-col items-center justify-center text-center px-5">
-          {config.lines.map((line, i) => {
+          {getTextParts(config).map((part, i) => {
             const lineWasVisible = instance.lineVisibilities[i];
             const linePhase: LinePhase = !lineWasVisible
               ? 'hidden'
@@ -712,29 +696,37 @@ export function StateText({ state }: { state: TextSceneState }) {
                   ? 'ghost'
                   : 'active';
             const typography = getRoleTypography(config.role);
-            const textShadow =
-              linePhase === 'ghost'
+            const isInstruction = part.kind === 'instruction';
+            const isSubtext = part.kind === 'subtext';
+            const isEmphasis = part.kind === 'line' && config.emphasisLines?.includes(part.sourceIndex);
+            const textShadow = isInstruction
+              ? '0 0 1px rgba(255,255,255,0.05)'
+              : linePhase === 'ghost'
                 ? '0 0 1px rgba(255,255,255,0.04)'
                 : linePhase === 'leaving'
                   ? '0 0 1px rgba(255,255,255,0.02)'
                   : typography.textShadow;
-
-            const isEmphasis = config.emphasisLines?.includes(i);
+            const textClasses = isInstruction
+              ? `${typography.fontClass} text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]`
+              : isSubtext
+                ? `${typography.fontClass} text-[15px] font-normal tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]`
+                : `${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''}`;
+            const charStagger = isInstruction ? 8 : isSubtext ? 10 : config.charStagger;
             return (
               <div
                 key={i}
-                className={`${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''} leading-snug sm:leading-relaxed break-keep`}
+                className={`${textClasses} leading-snug sm:leading-relaxed break-keep`}
                 style={{
                   textShadow,
-                  marginTop: i > 0 ? '0.2em' : 0,
+                  marginTop: isInstruction ? '0.75em' : i > 0 ? '0.3em' : 0,
                   fontSize: isEmphasis ? 'clamp(20px, 1.3em, 30px)' : undefined,
                 }}
               >
                 {renderCharReveal(
-                  line,
+                  part.text,
                   linePhase,
                   config.transitionDuration,
-                  config.charStagger,
+                  charStagger,
                   { x: 12, y: 0 },
                   'transition-all ease-out'
                 )}
