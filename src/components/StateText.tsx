@@ -467,42 +467,56 @@ function State2CumulativeText({
 
   const linePhase: LinePhase = isExiting ? 'leaving' : beatPhase;
 
-  return (
-    <div className="box-border flex w-full flex-col items-center justify-center px-5 py-2 text-center break-keep sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:items-center sm:justify-center">
+  const containerStyle = {
+    opacity: isExiting ? 0 : 1,
+    transform: `translate3d(0, ${isExiting ? -6 : 0}px, 0)`,
+    filter: `blur(${isExiting ? 2 : 0}px)`,
+    transitionDuration: `${isExiting ? transitionDuration : 500}ms`,
+    transitionProperty: isExiting ? 'opacity, transform, filter' : 'transform',
+    pointerEvents: 'none',
+    textShadow: '0 0 1px rgba(255,255,255,0.08)',
+  };
+
+  const renderBeatPart = (part: TextPart, li: number) => {
+    const partPhase: LinePhase = partVisibilities[li] ? linePhase : 'hidden';
+    const isInstruction = part.kind === 'instruction';
+    const className = isInstruction
+      ? 'text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]'
+      : part.kind === 'subtext'
+        ? 'text-[15px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
+        : 'text-[17px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
+    const charStagger = isInstruction ? 8 : part.kind === 'subtext' ? 10 : 12;
+
+    return (
       <div
-        className="font-orbitron font-normal leading-snug sm:leading-relaxed transition-all ease-out"
+        key={part.kind}
+        className={className}
         style={{
-          opacity: isExiting ? 0 : 1,
-          transform: `translate3d(0, ${isExiting ? -6 : 0}px, 0)`,
-          filter: `blur(${isExiting ? 2 : 0}px)`,
-          transitionDuration: `${isExiting ? transitionDuration : 500}ms`,
-          transitionProperty: isExiting ? 'opacity, transform, filter' : 'transform',
-          pointerEvents: 'none',
-          textShadow: '0 0 1px rgba(255,255,255,0.08)',
+          marginTop: li > 0 && !isInstruction ? '0.28em' : undefined,
         }}
       >
-        {beatParts.map((part, li) => {
-          const partPhase: LinePhase = partVisibilities[li] ? linePhase : 'hidden';
-          const isInstruction = part.kind === 'instruction';
-          const className = isInstruction
-            ? 'mt-[0.75em] text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]'
-            : part.kind === 'subtext'
-              ? 'text-[15px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
-              : 'text-[17px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
-          const charStagger = isInstruction ? 8 : part.kind === 'subtext' ? 10 : 12;
+        {renderCharReveal(part.text, partPhase, transitionDuration, charStagger, { x: 8, y: 0 }, 'transition-all ease-out')}
+      </div>
+    );
+  };
 
-          return (
-          <div
-            key={part.kind}
-            className={className}
-            style={{
-              marginTop: li > 0 && !isInstruction ? '0.28em' : undefined,
-            }}
-          >
-            {renderCharReveal(part.text, partPhase, transitionDuration, charStagger, { x: 8, y: 0 }, 'transition-all ease-out')}
-          </div>
-          );
-        })}
+  return (
+    <div className="pointer-events-none absolute inset-0 box-border text-center break-keep">
+      <div className="absolute inset-x-0 top-[20%] px-5">
+        <div
+          className="mx-auto flex w-full flex-col items-center justify-center font-orbitron font-normal leading-snug transition-all ease-out sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:leading-relaxed"
+          style={containerStyle}
+        >
+          {beatParts.filter((part) => part.kind !== 'instruction').map((part) => renderBeatPart(part, part.sourceIndex))}
+        </div>
+      </div>
+      <div className="absolute inset-x-0 bottom-[20%] px-5">
+        <div
+          className="mx-auto flex w-full flex-col items-center justify-center font-orbitron font-normal leading-snug transition-all ease-out sm:w-[min(92vw,1120px)] sm:max-w-[calc(100vw-2rem)] sm:leading-relaxed"
+          style={containerStyle}
+        >
+          {beatParts.filter((part) => part.kind === 'instruction').map((part) => renderBeatPart(part, part.sourceIndex))}
+        </div>
       </div>
     </div>
   );
@@ -685,8 +699,10 @@ export function StateText({ state }: { state: TextSceneState }) {
           transitionProperty: 'opacity, transform, filter',
         }}
       >
-        <div className="flex flex-col items-center justify-center text-center px-5">
-          {getTextParts(config).map((part, i) => {
+        <div className="absolute inset-x-0 top-[20%] px-5 text-center">
+          <div className="flex flex-col items-center justify-center">
+            {getTextParts(config).filter((part) => part.kind !== 'instruction').map((part) => {
+            const i = part.sourceIndex;
             const lineWasVisible = instance.lineVisibilities[i];
             const linePhase: LinePhase = !lineWasVisible
               ? 'hidden'
@@ -718,7 +734,7 @@ export function StateText({ state }: { state: TextSceneState }) {
                 className={`${textClasses} leading-snug sm:leading-relaxed break-keep`}
                 style={{
                   textShadow,
-                  marginTop: isInstruction ? '0.75em' : i > 0 ? '0.3em' : 0,
+                  marginTop: i > 0 ? '0.3em' : 0,
                   fontSize: isEmphasis ? 'clamp(20px, 1.3em, 30px)' : undefined,
                 }}
               >
@@ -733,6 +749,41 @@ export function StateText({ state }: { state: TextSceneState }) {
               </div>
             );
           })}
+          </div>
+        </div>
+        <div className="absolute inset-x-0 bottom-[20%] px-5 text-center">
+          <div className="flex flex-col items-center justify-center">
+            {getTextParts(config).filter((part) => part.kind === 'instruction').map((part) => {
+              const i = part.sourceIndex;
+              const lineWasVisible = instance.lineVisibilities[i];
+              const linePhase: LinePhase = !lineWasVisible
+                ? 'hidden'
+                : isLeaving
+                  ? 'leaving'
+                  : isGhost
+                    ? 'ghost'
+                    : 'active';
+              const typography = getRoleTypography(config.role);
+              const textShadow = '0 0 1px rgba(255,255,255,0.05)';
+              const textClasses = `${typography.fontClass} text-[11px] font-medium uppercase tracking-[0.22em] text-white/45 sm:text-[12px] md:text-[13px]`;
+              return (
+                <div
+                  key={i}
+                  className={`${textClasses} leading-snug sm:leading-relaxed break-keep`}
+                  style={{ textShadow }}
+                >
+                  {renderCharReveal(
+                    part.text,
+                    linePhase,
+                    config.transitionDuration,
+                    8,
+                    { x: 12, y: 0 },
+                    'transition-all ease-out'
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
