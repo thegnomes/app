@@ -26,6 +26,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   const gapTriggeredRef = useRef(false);
   const endedRef = useRef(false);
   const playAttemptRef = useRef(0);
+  const isActiveRef = useRef(isActive);
 
   useEffect(() => {
     videoRef.current?.load();
@@ -34,6 +35,10 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  useEffect(() => {
+    isActiveRef.current = isActive;
+  }, [isActive]);
 
   const clearTimers = useCallback(() => {
     if (stallTimerRef.current) {
@@ -45,6 +50,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   }, []);
 
   const triggerEnded = useCallback(() => {
+    if (!isActiveRef.current) return;
     if (endedRef.current) return;
     endedRef.current = true;
     clearTimers();
@@ -53,6 +59,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
 
   const startFallbackReveal = useCallback(
     (playAttempt: number) => {
+      if (!isActiveRef.current) return;
       if (playAttemptRef.current !== playAttempt || endedRef.current) return;
 
       clearTimers();
@@ -61,6 +68,7 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       if (currentPhase === 'astronaut') {
         fallbackTimersRef.current.push(
           setTimeout(() => {
+            if (!isActiveRef.current) return;
             if (playAttemptRef.current === playAttempt) {
               triggerEnded();
             }
@@ -76,11 +84,13 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       const gapDelay = currentPhase === 'gap' ? 0 : PLAY_FAILURE_GAP_DELAY_MS;
       fallbackTimersRef.current.push(
         setTimeout(() => {
+          if (!isActiveRef.current) return;
           if (playAttemptRef.current !== playAttempt || endedRef.current) return;
           gapTriggeredRef.current = true;
           setPhase('gap');
         }, gapDelay),
         setTimeout(() => {
+          if (!isActiveRef.current) return;
           if (playAttemptRef.current === playAttempt) {
             triggerEnded();
           }
@@ -99,6 +109,14 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       video.pause();
       clearTimers();
       endedRef.current = false;
+      gapTriggeredRef.current = false;
+
+      try {
+        video.currentTime = 0;
+      } catch {
+        // Ignore mobile media seek restrictions.
+      }
+
       requestAnimationFrame(() => {
         setPhase(null);
       });
@@ -125,13 +143,21 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   }, [clearTimers, isActive, startFallbackReveal]);
 
   useEffect(() => {
+    if (!isActive) return;
     if (phase !== 'gap') return;
+
+    const playAttempt = playAttemptRef.current;
+
     const timer = setTimeout(() => {
+      if (!isActiveRef.current) return;
+      if (playAttemptRef.current !== playAttempt) return;
+
       setPhase('astronaut');
       onAstronautPhase?.();
     }, GAP_DURATION_MS);
+
     return () => clearTimeout(timer);
-  }, [phase, onAstronautPhase]);
+  }, [isActive, phase, onAstronautPhase]);
 
   useEffect(() => {
     if (!isActive) {
@@ -140,6 +166,8 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   }, [isActive]);
 
   const handleTimeUpdate = () => {
+    if (!isActiveRef.current) return;
+
     const video = videoRef.current;
     if (!video) return;
     const t = video.currentTime;
@@ -147,10 +175,11 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
     // Reset stall timer whenever time progresses
     if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
     stallTimerRef.current = setTimeout(() => {
+      if (!isActiveRef.current) return;
       startFallbackReveal(playAttemptRef.current);
     }, STALL_THRESHOLD_MS);
 
-    if (phase === 'zoom' && t >= ZOOM_OUT_END_S && !gapTriggeredRef.current) {
+    if (phaseRef.current === 'zoom' && t >= ZOOM_OUT_END_S && !gapTriggeredRef.current) {
       gapTriggeredRef.current = true;
       setPhase('gap');
     }

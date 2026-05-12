@@ -35,9 +35,18 @@ function App() {
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [introInputLockedUntil, setIntroInputLockedUntil] = useState(0);
   const showDisclaimerRef = useRef(true);
+  const textStateRef = useRef<TextSceneState>(textState);
+  const showFinalVideoRef = useRef(showFinalVideo);
   useEffect(() => {
     showDisclaimerRef.current = showDisclaimer;
   }, [showDisclaimer]);
+  useEffect(() => {
+    textStateRef.current = textState;
+  }, [textState]);
+
+  useEffect(() => {
+    showFinalVideoRef.current = showFinalVideo;
+  }, [showFinalVideo]);
   const redirectedRef = useRef(false);
   const textSequenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalVideoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -125,7 +134,10 @@ function App() {
   }, [redirectToScene02]);
 
   const handleAstronautPhase = useCallback(() => {
+    if (!showFinalVideoRef.current) return;
+    if (textStateRef.current !== 7) return;
     if (astronautTextTriggeredRef.current) return;
+
     astronautTextTriggeredRef.current = true;
     setTextState(6);
   }, []);
