@@ -576,10 +576,10 @@ function App() {
 
       {/* Persistent View Work CTA — visible after disclaimer closes */}
       {assetsLoaded && !showDisclaimer && !showFinalVideo && (
-        <div className="pointer-events-none fixed top-3 right-3 z-50 sm:top-4 sm:right-4">
+        <div className="pointer-events-none fixed right-0 top-1/2 z-50 -translate-y-1/2">
           <a
             href="/mywork.html"
-            className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-white/80 backdrop-blur-md transition-all hover:border-white/25 hover:bg-black/60 hover:text-white sm:px-4 sm:py-2 sm:text-[11px] sm:gap-2"
+            className="pointer-events-auto inline-flex items-center rounded-l-full border border-r-0 border-cyan-300/60 bg-cyan-950/35 px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.55),inset_0_0_14px_rgba(34,211,238,0.18)] backdrop-blur-md transition-all hover:border-cyan-200/85 hover:bg-cyan-900/45 hover:text-white hover:shadow-[0_0_26px_rgba(34,211,238,0.78),inset_0_0_18px_rgba(34,211,238,0.24)] sm:px-4 sm:py-2.5 sm:text-[11px]"
           >
             View Work
           </a>
