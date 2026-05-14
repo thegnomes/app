@@ -391,7 +391,7 @@ function GalaxySlide({ item, isActive, videoRef }: GalaxySlideProps) {
             loop
             preload="metadata"
             className={cn(
-              'absolute inset-0 h-full w-full object-contain transition-all duration-700 ease-out',
+              'absolute inset-0 h-full w-full object-contain mix-blend-screen transition-all duration-700 ease-out',
               isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-35 blur-[1px]'
             )}
             style={{ opacity: videoReady ? undefined : 0 }}

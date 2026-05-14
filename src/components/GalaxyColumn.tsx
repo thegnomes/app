@@ -101,7 +101,7 @@ export function GalaxyColumn({
             playsInline
             loop
             preload="metadata"
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain mix-blend-screen"
             style={{ opacity: videoReady ? 1 : 0, transition: 'opacity 0.8s ease-out' }}
             onCanPlay={() => setVideoReady(true)}
             onCanPlayThrough={() => setVideoReady(true)}
