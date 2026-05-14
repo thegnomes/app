@@ -92,7 +92,7 @@ export function GalaxyColumn({
           <img
             src={posterSrc}
             alt=""
-            className="absolute inset-0 h-full w-full object-contain"
+            className="absolute inset-0 h-full w-full object-contain mix-blend-screen"
             style={{ opacity: videoReady ? 0 : 1, transition: 'opacity 0.8s ease-out' }}
           />
           <video
