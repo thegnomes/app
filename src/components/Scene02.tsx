@@ -439,7 +439,7 @@ export function Scene02({ isActive, playAstro }: Scene02Props) {
               <img
                 src={astroPoster}
                 alt=""
-                className="absolute inset-0 h-full w-full origin-center object-contain object-center"
+                className="absolute inset-0 h-full w-full origin-center object-contain object-center mix-blend-screen"
                 style={{
                   transform: `scale(${scaleAstro})`,
                   transition: 'transform 10s ease-out, opacity 1.2s ease-out',
