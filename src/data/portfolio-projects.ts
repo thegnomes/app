@@ -37,12 +37,12 @@ export const totoProject: PortfolioProject = {
   titleAccent: '#washnotwipe',
   tag: 'Creative Direction',
   year: '2018 - 2021',
-  coreCompetency: 'Campaign Platform & Production Direction',
+  coreCompetency: 'Campaign Platform & Marketing Team Build',
   description:
-    'Championed #washnotwipe as a reusable hygiene campaign platform, then helped bring it to life across TVC, OOH, influencer content, and campaign extensions.',
+    'Established and led Onezine’s marketing arm, with TOTO’s #washnotwipe becoming a key retained campaign platform across TVC, OOH, influencer content, and campaign extensions.',
   client: 'TOTO via Onezine',
-  role: 'Creative Direction / Production Lead / Campaign Execution',
-  deliverables: 'Campaign concept, copywriting, TVC storyboarding, casting, directing, location planning, OOH media selection, influencer coordination, client management, V2 campaign extension',
+  role: 'Creative Direction / Campaign Platform Lead / Marketing Arm Build',
+  deliverables: 'Campaign concept, copywriting, TVC storyboarding, casting, directing, location planning, OOH media selection, influencer coordination, client management, V2 campaign extension, marketing arm setup, account servicing structure, retained client growth',
   philosophyLabel: 'Brief',
   philosophyHeading:
     'The challenge was to build top-of-mind awareness without making toilet hygiene feel awkward, crude, or overly functional.',
@@ -109,6 +109,11 @@ export const totoProject: PortfolioProject = {
       heading: 'The line had to work beyond one asset.',
       body: '#washnotwipe was shaped as a campaign spine that could travel across key visuals, OOH, social, influencer content, and later extensions while keeping the central behaviour intact.',
     },
+    {
+      label: 'Structure',
+      heading: 'The campaign became proof of a larger operating capability.',
+      body: '#washnotwipe was the visible campaign output, but it also helped establish how Onezine’s marketing arm could service retained accounts — from strategy and creative direction to production, coordination, rollout assets, and ongoing campaign extensions.',
+    },
   ],
   nextProject: { name: 'OxyTap', accent: 'Ecosystem', href: '/oxytap-portfolio.html' },
   socials: [
@@ -116,9 +121,9 @@ export const totoProject: PortfolioProject = {
   ],
   outcomeStats: [
     { value: '4', suffix: ' Years', label: 'Agency-of-choice account' },
-    { prefix: 'S$', value: '200', suffix: 'K', label: 'First-year account growth' },
-    { value: '3', suffix: '-Part', label: 'TVC launch campaign' },
-    { value: 'V2', label: 'Influencer / Home Tour extension' },
+    { prefix: 'S$', value: '250', suffix: 'K', label: 'First-year marketing arm revenue' },
+    { value: '12', label: 'Person marketing unit' },
+    { value: '6', label: 'Key accounts served' },
   ],
 };
 
