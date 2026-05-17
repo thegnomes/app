@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { PortfolioProject } from '@/data/portfolio-projects';
 import { isSafari } from '@/lib/isSafari';
 import { useScrollLock } from '@/hooks/useScrollLock';
@@ -138,28 +138,11 @@ function VideoPlayer({
   poster?: string;
 }) {
   const resolved = resolveAssetUrl(src);
-  const isExternal = resolved.startsWith('http');
   const safariStyle = isSafari ? { mixBlendMode: 'screen' as const, filter: 'brightness(1)' as const } : undefined;
   const [failed, setFailed] = useState(false);
+
   if (failed) return null;
-  if (isExternal) {
-    return (
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster={poster ? resolveAssetUrl(poster) : undefined}
-        className={className}
-        style={safariStyle}
-        onError={() => setFailed(true)}
-      >
-        <source src={resolved} type={`video/${resolved.replace(/.*\./, '')}`} />
-      </video>
-    );
-  }
-  const base = resolved.replace(/\.(mp4|webm|mov|ogg)$/i, '');
+
   return (
     <video
       autoPlay
@@ -172,10 +155,23 @@ function VideoPlayer({
       style={safariStyle}
       onError={() => setFailed(true)}
     >
-      <source src={`${base}.webm`} type="video/webm" />
-      <source src={`${base}.mp4`} type="video/mp4" />
+      <source src={resolved} type={getVideoMimeType(resolved)} />
     </video>
   );
+}
+
+function getVideoMimeType(src: string): string | undefined {
+  const extension = src.split(/[?#]/)[0]?.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  if (!extension) return undefined;
+
+  return `video/${extension === 'mov' ? 'quicktime' : extension}`;
+}
+
+function VideoSource({ src, type }: { src?: string; type?: string }) {
+  if (!src) return null;
+  const resolved = resolveAssetUrl(src);
+
+  return <source src={resolved} type={type ?? getVideoMimeType(resolved)} />;
 }
 
 function ScrollFlowTextFX({ top, bottom, accentColor }: { top: string; bottom: string; accentColor?: string }) {
@@ -267,7 +263,6 @@ const SECTION_LABELS = [
 
 function SectionTimeline() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const onScroll = () => {
@@ -280,14 +275,6 @@ function SectionTimeline() {
       const min = Math.min(...centers);
       const idx = centers.indexOf(min);
       if (idx !== -1) setActiveIndex(idx);
-
-      const first = document.getElementById(SECTION_LABELS[0].id);
-      const last = document.getElementById(SECTION_LABELS[SECTION_LABELS.length - 1].id);
-      if (first && last) {
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const scrollProgress = window.scrollY / docHeight;
-        setProgress(Math.min(1, Math.max(0, scrollProgress)));
-      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -405,10 +392,9 @@ function Hero({ project }: { project: PortfolioProject }) {
             preload="metadata"
             className="absolute inset-0 w-full h-full object-cover scale-105"
           >
-            {/* TODO: add heroVideoMp4 / heroVideoWebm sources when assets exist */}
-            {project.heroVideoWebm && <source src={resolveAssetUrl(project.heroVideoWebm)} type="video/webm" />}
-            {project.heroVideoMp4 && <source src={resolveAssetUrl(project.heroVideoMp4)} type="video/mp4" />}
-            {project.heroVideo && <source src={resolveAssetUrl(project.heroVideo)} type="video/mp4" />}
+            <VideoSource src={project.heroVideoWebm} type="video/webm" />
+            <VideoSource src={project.heroVideoMp4} type="video/mp4" />
+            <VideoSource src={project.heroVideo} />
           </video>
         ) : null}
         <div className="absolute inset-0 bg-white/5" />
@@ -1051,16 +1037,15 @@ function AnimatedStat({
   delay?: number;
 }) {
   const { ref, inView } = useInView(0.3);
-  const [display, setDisplay] = useState('0');
   const numericValue = parseFloat(value);
   const hasDecimal = value.includes('.');
   const isNumeric = !isNaN(numericValue);
+  const [display, setDisplay] = useState('0');
+  const renderedDisplay = isNumeric ? display : value;
 
   useEffect(() => {
-    if (!inView || !isNumeric) {
-      if (!isNumeric) setDisplay(value);
-      return;
-    }
+    if (!inView || !isNumeric) return;
+
     const duration = 2000;
     const startTime = performance.now();
     const startVal = 0;
@@ -1105,7 +1090,7 @@ function AnimatedStat({
         }}
       >
         <span className="text-neutral-400">{prefix}</span>
-        <span style={{ color: accentColor || '#f59e0b' }}>{display}</span>
+        <span style={{ color: accentColor || '#f59e0b' }}>{renderedDisplay}</span>
         <span className="text-neutral-400">{suffix}</span>
       </div>
       <p
@@ -1390,6 +1375,8 @@ function extractProjectAssets(project: PortfolioProject): string[] {
   const assets = new Set<string>();
 
   if (project.heroVideo) assets.add(project.heroVideo);
+  if (project.heroVideoWebm) assets.add(project.heroVideoWebm);
+  if (project.heroVideoMp4) assets.add(project.heroVideoMp4);
 
   project.gallery.forEach((item) => assets.add(item.src));
 
