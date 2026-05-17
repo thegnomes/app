@@ -112,6 +112,25 @@
   font-family: 'Bitcount Prop Single', 'Courier New', monospace !important;
 }
 
+.disclaimer-dialog,
+.disclaimer-dialog * {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+.disclaimer-dialog-title {
+  font-family: 'Smooch Sans', system-ui, sans-serif !important;
+  letter-spacing: 0.03em;
+}
+
+.disclaimer-dialog-chrome,
+.disclaimer-dialog-button {
+  font-family: 'Orbitron', system-ui, sans-serif !important;
+}
+
+.disclaimer-dialog-copy {
+  letter-spacing: 0;
+}
+
 @keyframes disclaimer-caret-blink {
   0%,
   45% {

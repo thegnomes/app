@@ -46,7 +46,7 @@ function DisclaimerTerminal({
     <DialogContent
       showCloseButton={false}
       data-testid="disclaimer-terminal"
-      className="max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
+      className="disclaimer-dialog max-w-none border-0 bg-transparent p-0 shadow-none flex items-center justify-center"
     >
       {/* Monitor frame */}
       <div
@@ -119,7 +119,7 @@ function DisclaimerTerminal({
           <div className="relative z-10 flex flex-col">
             {/* Title bar */}
             <div
-              className="mb-3 flex items-center justify-between border-b-2 pb-2 text-[11px] uppercase tracking-[0.2em] sm:text-[13px]"
+              className="disclaimer-dialog-chrome mb-3 flex items-center justify-between border-b-2 pb-2 text-[11px] uppercase tracking-[0.18em] sm:text-[12px]"
               style={{ borderColor: NEON.faint, color: NEON.textBright, fontFamily: "'Orbitron', sans-serif" }}
             >
               <span>System Notice</span>
@@ -128,7 +128,7 @@ function DisclaimerTerminal({
 
             <DialogHeader className="gap-2 text-left">
               <DialogTitle
-                className="text-[20px] font-semibold uppercase leading-none sm:text-[26px]"
+                className="disclaimer-dialog-title text-[24px] font-semibold uppercase leading-tight sm:text-[30px] md:text-[34px]"
                 style={{ color: NEON.title, fontFamily: "'Russo One', sans-serif" }}
               >
                 Before you enter
@@ -140,12 +140,12 @@ function DisclaimerTerminal({
 
             {/* Main text area */}
             <div
-              className="mt-4 rounded p-5 text-[15px] font-medium leading-[1.55] sm:mt-5 sm:p-6 sm:text-[17px] md:text-[18px]"
+              className="disclaimer-dialog-copy mt-4 rounded p-5 text-[16px] font-normal leading-[1.7] sm:mt-5 sm:p-6 sm:text-[18px] md:text-[19px]"
               style={{
                 background: 'rgba(0, 0, 0, 0.45)',
                 border: `2px solid ${NEON.faint}`,
                 color: NEON.text,
-                textShadow: `0 0 6px ${NEON.glow}`,
+                textShadow: `0 0 4px ${NEON.faint}`,
                 fontFamily: "'Orbitron', sans-serif",
               }}
             >
@@ -157,7 +157,7 @@ function DisclaimerTerminal({
               {/* Loading bar */}
               <div className="space-y-1.5">
                 <div
-                  className="flex items-center justify-between text-[11px] uppercase tracking-[0.14em] sm:text-[13px]"
+                  className="disclaimer-dialog-chrome flex items-center justify-between text-[11px] uppercase tracking-[0.14em] sm:text-[12px]"
                   style={{ color: NEON.textBright, fontFamily: "'Orbitron', sans-serif" }}
                 >
                   <span>Loading assets</span>
@@ -184,7 +184,7 @@ function DisclaimerTerminal({
                   type="button"
                   onClick={onClose}
                   disabled={!assetsLoaded}
-                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[13px]"
+                  className="disclaimer-dialog-button min-h-[48px] border-2 px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors disabled:opacity-40 disabled:cursor-not-allowed sm:text-[14px]"
                   style={{
                     borderColor: NEON.primary,
                     background: 'rgba(0, 240, 255, 0.08)',
@@ -198,7 +198,7 @@ function DisclaimerTerminal({
                 <button
                   type="button"
                   onClick={onSkip}
-                  className="min-h-[48px] border-2 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.16em] transition-colors sm:text-[13px]"
+                  className="disclaimer-dialog-button min-h-[48px] border-2 px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors sm:text-[14px]"
                   style={{
                     borderColor: NEON.faint,
                     background: 'rgba(0, 0, 0, 0.45)',
@@ -213,7 +213,7 @@ function DisclaimerTerminal({
 
               {!assetsLoaded && (
                 <div
-                  className="text-center text-[11px] uppercase tracking-[0.14em]"
+                  className="disclaimer-dialog-chrome text-center text-[11px] uppercase tracking-[0.12em]"
                   style={{ color: NEON.dim, fontFamily: "'Orbitron', sans-serif" }}
                 >
                   Please wait while assets load…
@@ -225,7 +225,7 @@ function DisclaimerTerminal({
 
         {/* Monitor brand */}
         <div
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.3em]"
+          className="disclaimer-dialog-chrome absolute -bottom-2 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-[0.28em]"
           style={{ color: '#1a2a32', fontFamily: "'Orbitron', sans-serif" }}
         >
           LEAVEEVERYTHINGTOCHANCE
