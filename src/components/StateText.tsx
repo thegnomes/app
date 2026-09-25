@@ -26,6 +26,8 @@ interface StateTextConfig {
   lineDelay: number;
   lineDelays?: number[];
   charStagger: number;
+  subtextCharStagger?: number;
+  instructionCharStagger?: number;
   emphasisLines?: number[];
 }
 
@@ -136,11 +138,13 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'a traveller appears—charting a course through uncertainty.',
       instruction: 'Enter the portfolio.',
     },
-    transitionDuration: 900,
+    transitionDuration: 600,
     lingerPrevious: 420,
     lineDelay: 320,
-    lineDelays: [800, 3000, 5300],
-    charStagger: 28,
+    lineDelays: [800, 2100, 3400],
+    charStagger: 14,
+    subtextCharStagger: 10,
+    instructionCharStagger: 8,
   },
   7: {
     role: 'resolution',
@@ -740,7 +744,11 @@ export function StateText({ state }: { state: TextSceneState }) {
               : isSubtext
                 ? `${typography.fontClass} text-[23px] font-normal tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]`
                 : `${typography.fontClass} ${typography.sizeClass} ${typography.trackingClass} ${typography.toneClass} ${typography.uppercase ? 'uppercase' : ''}`;
-            const charStagger = isInstruction ? 16 : isSubtext ? 20 : config.charStagger;
+            const charStagger = isInstruction
+              ? (config.instructionCharStagger ?? 16)
+              : isSubtext
+                ? (config.subtextCharStagger ?? 20)
+                : config.charStagger;
             return (
               <div
                 key={i}
@@ -789,7 +797,7 @@ export function StateText({ state }: { state: TextSceneState }) {
                     part.text,
                     linePhase,
                     config.transitionDuration,
-                    16,
+                    config.instructionCharStagger ?? 16,
                     { x: 12, y: 0 },
                     'transition-all ease-out'
                   )}

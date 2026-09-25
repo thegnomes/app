@@ -12,7 +12,7 @@ type VideoTextPhase = 'zoom' | 'gap' | 'astronaut' | null;
 
 const GAP_DURATION_MS = 1200;
 const PLAY_FAILURE_GAP_DELAY_MS = 1200;
-const FALLBACK_ASTRONAUT_READ_MS = 8500;
+const FALLBACK_ASTRONAUT_READ_MS = 5500;
 
 const ZOOM_OUT_END_S = 5.5;
 const STALL_THRESHOLD_MS = 4000;
@@ -25,7 +25,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   const fallbackTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const gapTriggeredRef = useRef(false);
   const endedRef = useRef(false);
-  const astronautStartedAtRef = useRef<number | null>(null);
   const playAttemptRef = useRef(0);
   const isActiveRef = useRef(isActive);
 
@@ -53,16 +52,9 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
   const triggerEnded = useCallback(() => {
     if (!isActiveRef.current) return;
     if (endedRef.current) return;
-    const remainingReadMs = astronautStartedAtRef.current === null
-      ? 0
-      : FALLBACK_ASTRONAUT_READ_MS - (performance.now() - astronautStartedAtRef.current);
     endedRef.current = true;
     clearTimers();
-    if (remainingReadMs > 0) {
-      fallbackTimersRef.current.push(setTimeout(() => onEnded?.(), remainingReadMs));
-    } else {
-      onEnded?.();
-    }
+    onEnded?.();
   }, [clearTimers, onEnded]);
 
   const startFallbackReveal = useCallback(
@@ -117,7 +109,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       video.pause();
       clearTimers();
       endedRef.current = false;
-      astronautStartedAtRef.current = null;
       gapTriggeredRef.current = false;
 
       try {
@@ -134,7 +125,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
 
     clearTimers();
     endedRef.current = false;
-    astronautStartedAtRef.current = null;
     gapTriggeredRef.current = false;
     const playAttempt = playAttemptRef.current + 1;
     playAttemptRef.current = playAttempt;
@@ -163,7 +153,6 @@ export function FinalVideoOverlay({ isActive, onEnded, onAstronautPhase }: Final
       if (playAttemptRef.current !== playAttempt) return;
 
       setPhase('astronaut');
-      astronautStartedAtRef.current = performance.now();
       onAstronautPhase?.();
     }, GAP_DURATION_MS);
 
