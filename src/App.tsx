@@ -18,12 +18,12 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 5200;
-const IGNITION_TEXT_DURATION_MS = 5200;
+const FINAL_VIDEO_DELAY_MS = 8500;
+const IGNITION_TEXT_DURATION_MS = 8500;
 const SPARK_TO_FORMATION_DELAY_MS = 1600;
-const COLLAPSE_TEXT_DURATION_MS = 5500;
+const COLLAPSE_TEXT_DURATION_MS = 8800;
 const POST_DISCLAIMER_INPUT_LOCK_MS = 1400;
-const AUTO_ZOOM_DELAY_MS = 6000;
+const AUTO_ZOOM_DELAY_MS = 8500;
 
 function App() {
   const [state, setState] = useState<AppState>(0);
