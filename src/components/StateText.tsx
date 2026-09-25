@@ -48,9 +48,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'Both begin as potential, waiting for the right conditions.',
       instruction: 'Watch closely.',
     },
-    transitionDuration: 1400,
+    transitionDuration: 600,
     lingerPrevious: 0,
     lineDelay: 100,
+    lineDelays: [800, 2100, 3400],
     charStagger: 18,
   },
   1: {
@@ -60,10 +61,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'Energy for a star. Inspiration for an idea.',
       instruction: 'Click and hold to commit to an idea.',
     },
-    transitionDuration: 1400,
+    transitionDuration: 600,
     lingerPrevious: 420,
     lineDelay: 360,
-    lineDelays: [1500, 1900, 2400],
+    lineDelays: [2200, 3500, 4800],
     charStagger: 16,
   },
   8: {
@@ -81,6 +82,7 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
     transitionDuration: 900,
     lingerPrevious: 320,
     lineDelay: 0,
+    lineDelays: [700],
     charStagger: 12,
     autoExitDelay: 2200,
   },
@@ -99,9 +101,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'The idea crosses from thought into form.',
       instruction: 'Let it unfold.',
     },
-    transitionDuration: 1100,
+    transitionDuration: 600,
     lingerPrevious: 260,
     lineDelay: 260,
+    lineDelays: [800, 2100, 3400],
     charStagger: 12,
   },
   4: {
@@ -119,11 +122,12 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'The idea fades before it can hold.',
       instruction: 'Try again with steadier intent.',
     },
-    transitionDuration: 1100,
+    transitionDuration: 600,
     lingerPrevious: 320,
     lineDelay: 260,
+    lineDelays: [1100, 2400, 3700],
     charStagger: 10,
-    autoExitDelay: 3400,
+    autoExitDelay: 5500,
   },
   6: {
     role: 'reveal',
@@ -132,9 +136,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'a traveller appears—charting a course through uncertainty.',
       instruction: 'Enter the portfolio.',
     },
-    transitionDuration: 1400,
+    transitionDuration: 600,
     lingerPrevious: 420,
     lineDelay: 320,
+    lineDelays: [800, 2100, 3400],
     charStagger: 14,
   },
   7: {
@@ -144,9 +149,10 @@ const STATE_TEXT_CONFIG: Record<TextSceneState, StateTextConfig> = {
       subtext: 'Other ideas gather around it, forming something larger.',
       instruction: 'Follow the universe outward.',
     },
-    transitionDuration: 1300,
+    transitionDuration: 600,
     lingerPrevious: 260,
     lineDelay: 300,
+    lineDelays: [800, 2100, 3400],
     charStagger: 14,
   },
 };
@@ -341,11 +347,13 @@ function renderCharReveal(
   }
 
   const elements: ReactNode[] = [];
+  const plainText = segments.map((segment) => segment.text).join('');
   let charIndex = 0;
 
   for (const segment of segments) {
     const chars = segment.text.split('');
     for (const char of chars) {
+      const isSpaceAfterComma = /\s/.test(char) && /,\s*$/.test(plainText.slice(0, charIndex));
       const isHidden = linePhase === 'hidden';
       const isGhost = linePhase === 'ghost';
       const isLeaving = linePhase === 'leaving';
@@ -357,7 +365,7 @@ function renderCharReveal(
       elements.push(
         <span
           key={`${char}-${charIndex}`}
-          className={`inline-block ${className || ''}`}
+          className={`${isSpaceAfterComma ? 'hidden sm:inline-block' : 'inline-block'} ${className || ''}`}
           style={{
             opacity: isLeaving ? 0 : isGhost ? 0.18 : isHidden ? 0 : 1,
             transform: `translate3d(${tx}px, ${ty}px, 0)`,
@@ -377,6 +385,9 @@ function renderCharReveal(
           {char}
         </span>
       );
+      if (char === ',' && plainText.slice(charIndex + 1).trim()) {
+        elements.push(<br key={`comma-break-${charIndex}`} className="sm:hidden" />);
+      }
       charIndex++;
     }
   }
@@ -387,7 +398,7 @@ function renderCharReveal(
 function State2CumulativeText({
   isVisible,
   isExiting,
-  transitionDuration = 600,
+  transitionDuration = 350,
 }: {
   isVisible: boolean;
   isExiting?: boolean;
@@ -413,7 +424,7 @@ function State2CumulativeText({
       setBeatPhase('hidden');
       setPartVisibilities([false, false, false]);
       timers.push(setTimeout(() => setBeatPhase('active'), 60));
-      [0, 220, 520].forEach((delay, partIndex) => {
+      [500, 1200, 2000].forEach((delay, partIndex) => {
         timers.push(
           setTimeout(() => {
             setPartVisibilities((current) =>
@@ -486,7 +497,7 @@ function State2CumulativeText({
       : part.kind === 'subtext'
         ? 'text-[23px] tracking-[0.08em] text-white/80 sm:text-[18px] md:text-[20px]'
         : 'text-[26px] tracking-[0.1em] text-white sm:text-[20px] md:text-[23px]';
-    const charStagger = isInstruction ? 8 : part.kind === 'subtext' ? 10 : 12;
+    const charStagger = 6;
 
     return (
       <div
@@ -683,7 +694,7 @@ export function StateText({ state }: { state: TextSceneState }) {
           <State2CumulativeText
             isVisible={instance.lineVisibilities[0] ?? false}
             isExiting={isGhost || isLeaving}
-            transitionDuration={duration}
+            transitionDuration={isGhost || isLeaving ? duration : 350}
           />
         </div>
       );

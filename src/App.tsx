@@ -18,9 +18,10 @@ import {
   STATE2_DURATION,
 } from '@/lib/particles/constants';
 
-const FINAL_VIDEO_DELAY_MS = 900;
-const IGNITION_TEXT_DURATION_MS = 3000;
-const SPARK_TO_FORMATION_DELAY_MS = 420;
+const FINAL_VIDEO_DELAY_MS = 5200;
+const IGNITION_TEXT_DURATION_MS = 5200;
+const SPARK_TO_FORMATION_DELAY_MS = 1600;
+const COLLAPSE_TEXT_DURATION_MS = 5500;
 const POST_DISCLAIMER_INPUT_LOCK_MS = 1400;
 const AUTO_ZOOM_DELAY_MS = 6000;
 
@@ -491,7 +492,7 @@ function App() {
         setState(1);
         setTextState(1);
         setShowFinalVideo(false);
-      }, 2500);
+      }, COLLAPSE_TEXT_DURATION_MS);
       return () => clearTimeout(t);
     }
   }, [state]);
